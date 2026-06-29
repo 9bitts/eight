@@ -9,6 +9,7 @@ import {
   Globe,
   Pin,
   Sparkles,
+  Bookmark,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
@@ -20,6 +21,7 @@ import { SharePostButton } from "@/components/feed/SharePostButton";
 import { QuoteRepostButton } from "@/components/feed/QuoteRepostButton";
 import { QuotedPostCard } from "@/components/feed/QuotedPostCard";
 import { toggleLike, toggleRepost } from "@/lib/actions";
+import { toggleBookmark } from "@/lib/actions/bookmarks";
 import type { FeedPost } from "@/lib/types";
 
 const BLUE = "#176a88";
@@ -85,6 +87,11 @@ export function PostCard({
 
   const onRepost = async () => {
     await toggleRepost(post.id);
+    router.refresh();
+  };
+
+  const onBookmark = async () => {
+    await toggleBookmark(post.id);
     router.refresh();
   };
 
@@ -182,11 +189,53 @@ export function PostCard({
         )}
 
         {showActions && (
-          <div className="flex items-center justify-between mt-3" style={{ maxWidth: 400 }}>
+          <div className="flex items-center justify-between mt-3" style={{ maxWidth: 440 }}>
             <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} />
-            <ActionBtn icon={Repeat2} count={post.reposts} color="#1a9c5b" active={post.reposted} onClick={onRepost} />
+            <div className="flex items-center gap-0.5">
+              <ActionBtn
+                icon={Repeat2}
+                count={0}
+                color="#1a9c5b"
+                active={post.reposted}
+                onClick={onRepost}
+              />
+              {post.reposts > 0 ? (
+                <Link
+                  href={`/post/${post.id}/reposts`}
+                  style={{ color: MUTED, fontSize: 13.5, textDecoration: "none", minWidth: 12 }}
+                >
+                  {post.reposts}
+                </Link>
+              ) : null}
+            </div>
             <QuoteRepostButton postId={post.id} />
-            <ActionBtn icon={Heart} count={post.likes} color={ORANGE} active={post.liked} fill onClick={onLike} />
+            <div className="flex items-center gap-0.5">
+              <ActionBtn
+                icon={Heart}
+                count={0}
+                color={ORANGE}
+                active={post.liked}
+                fill
+                onClick={onLike}
+              />
+              {post.likes > 0 ? (
+                <Link
+                  href={`/post/${post.id}/curtidas`}
+                  style={{ color: MUTED, fontSize: 13.5, textDecoration: "none", minWidth: 12 }}
+                >
+                  {post.likes}
+                </Link>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onBookmark}
+              className="p-1.5 rounded-full transition-colors"
+              style={{ color: post.saved ? BLUE : MUTED, background: "transparent", border: "none", cursor: "pointer" }}
+              aria-label={post.saved ? "Remover dos salvos" : "Salvar"}
+            >
+              <Bookmark size={18} strokeWidth={2} fill={post.saved ? BLUE : "none"} />
+            </button>
             <SharePostButton postId={post.id} />
           </div>
         )}

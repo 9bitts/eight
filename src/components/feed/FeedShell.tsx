@@ -16,6 +16,7 @@ import {
   Shield,
   List,
   Flag,
+  Bookmark,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
@@ -129,6 +130,7 @@ export function FeedShell({
               <NavLink href="/messages" icon={Mail} label={t("nav.messages")} />
               <NavLink href="/cases" icon={Sparkles} label={t("nav.cases")} />
               <NavLink href="/listas" icon={List} label={t("nav.lists")} />
+              <NavLink href="/salvos" icon={Bookmark} label={t("nav.saved")} />
               <NavLink href={`/${user.handle}`} icon={User} label={t("nav.profile")} />
               {user.verificationStatus !== "VERIFIED" && (
                 <NavLink href="/verificacao" icon={BadgeCheck} label={t("nav.verification")} />

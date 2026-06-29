@@ -8,6 +8,7 @@ import {
   findOrCreateConversation,
 } from "@/lib/messages";
 import { rateLimit } from "@/lib/rate-limit";
+import { createNotificationIfAllowed } from "@/lib/notifications";
 
 async function requireProfile() {
   const session = await auth();
@@ -65,13 +66,7 @@ export async function sendDirectMessage(conversationId: string, body: string) {
     data: { lastReadAt: new Date() },
   });
 
-  await prisma.notification.create({
-    data: {
-      recipientId: other.profileId,
-      actorId: profileId,
-      type: "MESSAGE",
-    },
-  });
+  await createNotificationIfAllowed(other.profileId, profileId, "MESSAGE");
 
   revalidatePath("/messages");
   revalidatePath(`/messages/${conversationId}`);

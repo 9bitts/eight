@@ -19,6 +19,8 @@ import {
   deleteAccount,
 } from "@/lib/actions/settings";
 import { EditProfileSection, type ProfileEditData } from "@/components/settings/EditProfileSection";
+import { NotificationPrefsSection } from "@/components/settings/NotificationPrefsSection";
+import type { NotificationPrefs } from "@/lib/notifications";
 import type { ConnectionProfile, SessionUser } from "@/lib/types";
 
 const INK = "var(--eight-ink)";
@@ -80,6 +82,7 @@ export function SettingsClient({
   totpEnabled,
   hasPassword,
   profile,
+  notificationPrefs,
 }: {
   user: SessionUser;
   notificationCount: number;
@@ -88,6 +91,7 @@ export function SettingsClient({
   totpEnabled: boolean;
   hasPassword: boolean;
   profile: ProfileEditData;
+  notificationPrefs: NotificationPrefs;
 }) {
   const router = useRouter();
   const { t, locale, setLocale } = useLocale();
@@ -169,6 +173,8 @@ export function SettingsClient({
         {error && <p className="signup-error mx-4 mt-3">{error}</p>}
 
         <EditProfileSection profile={profile} />
+
+        <NotificationPrefsSection initial={notificationPrefs} />
 
         <section className="py-4 border-b" style={{ borderColor: LINE }}>
           <h2 className="px-4 pb-2" style={{ fontWeight: 700, fontSize: 16, color: INK }}>

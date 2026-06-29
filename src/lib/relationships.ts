@@ -222,3 +222,57 @@ export async function removeFollowsBetween(a: string, b: string) {
     },
   });
 }
+
+const profileSelect = {
+  id: true,
+  displayName: true,
+  handle: true,
+  specialty: true,
+  registrationType: true,
+  registrationNumber: true,
+  verified: true,
+} as const;
+
+export async function getPostLikers(
+  postId: string,
+  viewerProfileId: string
+): Promise<ConnectionProfile[]> {
+  const hiddenIds = await getBlockedProfileIds(viewerProfileId);
+
+  const rows = await prisma.like.findMany({
+    where: {
+      postId,
+      profileId: hiddenIds.length ? { notIn: hiddenIds } : undefined,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: { profile: { select: profileSelect } },
+  });
+
+  return mapConnections(
+    rows.map((r) => r.profile),
+    viewerProfileId
+  );
+}
+
+export async function getPostReposters(
+  postId: string,
+  viewerProfileId: string
+): Promise<ConnectionProfile[]> {
+  const hiddenIds = await getBlockedProfileIds(viewerProfileId);
+
+  const rows = await prisma.repost.findMany({
+    where: {
+      postId,
+      profileId: hiddenIds.length ? { notIn: hiddenIds } : undefined,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: { profile: { select: profileSelect } },
+  });
+
+  return mapConnections(
+    rows.map((r) => r.profile),
+    viewerProfileId
+  );
+}

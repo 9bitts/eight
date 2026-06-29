@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchLinkPreview } from "@/lib/link-preview";
 import { extractFirstUrl } from "@/lib/post-text";
 import { syncHashtags, notifyMentions } from "@/lib/post-utils";
+import { createNotificationIfAllowed } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
 import type { CreatePostInput } from "@/lib/types";
 
@@ -22,10 +23,7 @@ async function notify(
   type: "LIKE" | "REPOST" | "FOLLOW" | "REPLY" | "MENTION",
   postId?: string
 ) {
-  if (recipientId === actorId) return;
-  await prisma.notification.create({
-    data: { recipientId, actorId, type, postId: postId ?? null },
-  });
+  await createNotificationIfAllowed(recipientId, actorId, type, postId);
 }
 
 async function buildLinkFields(body: string) {

@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Flag } from "lucide-react";
+import { dismissReport } from "@/lib/actions/reports";
 
 const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
@@ -27,16 +30,26 @@ export type AdminReport = {
 };
 
 export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  const onDismiss = (reportId: string) => {
+    startTransition(async () => {
+      await dismissReport(reportId);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="min-h-screen" style={{ background: "var(--eight-shell-bg)", color: INK }}>
       <header className="border-b px-6 py-4" style={{ borderColor: LINE, background: "var(--eight-card-bg)" }}>
         <Link href="/feed" style={{ color: MUTED, fontSize: 14, textDecoration: "none" }}>← Voltar</Link>
         <h1 style={{ fontWeight: 800, fontSize: 22, marginTop: 4 }}>Denúncias · Admin</h1>
-        <p style={{ color: MUTED, fontSize: 14 }}>{reports.length} denúncia(s) recentes</p>
+        <p style={{ color: MUTED, fontSize: 14 }}>{reports.length} denúncia(s) pendentes</p>
       </header>
 
       {reports.length === 0 ? (
-        <p className="p-8 text-center" style={{ color: MUTED }}>Nenhuma denúncia registrada.</p>
+        <p className="p-8 text-center" style={{ color: MUTED }}>Nenhuma denúncia pendente.</p>
       ) : (
         reports.map((r) => (
           <div key={r.id} className="border-b px-6 py-4" style={{ borderColor: LINE, background: "var(--eight-card-bg)" }}>
@@ -52,7 +65,7 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
                 {r.details && (
                   <p style={{ fontSize: 14, marginTop: 8, color: "var(--eight-body-text)" }}>{r.details}</p>
                 )}
-                <div className="flex gap-3 mt-3">
+                <div className="flex gap-3 mt-3 items-center flex-wrap">
                   {r.targetType === "POST" ? (
                     <Link href={`/post/${r.targetId}`} style={{ color: "#176a88", fontWeight: 600, fontSize: 13 }}>
                       Ver publicação →
@@ -64,6 +77,21 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
                   ) : (
                     <span style={{ color: MUTED, fontSize: 13 }}>Perfil removido</span>
                   )}
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => onDismiss(r.id)}
+                    className="rounded-full px-3 py-1 font-semibold"
+                    style={{
+                      fontSize: 12,
+                      border: "1px solid var(--eight-line)",
+                      background: "var(--eight-card-bg)",
+                      color: "#176a88",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Marcar como revisada
+                  </button>
                 </div>
               </div>
             </div>

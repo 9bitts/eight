@@ -107,6 +107,12 @@ model Profile {
   verifiedAt              DateTime?
   pinnedPostId        String?   @unique
   teleconsultUrl       String?
+  notifyLike           Boolean            @default(true)
+  notifyRepost         Boolean            @default(true)
+  notifyFollow         Boolean            @default(true)
+  notifyReply          Boolean            @default(true)
+  notifyMention        Boolean            @default(true)
+  notifyMessage        Boolean            @default(true)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -133,6 +139,7 @@ model Profile {
   viewsReceived      ProfileView[]         @relation("viewsReceived")
   viewsMade          ProfileView[]         @relation("viewsMade")
   reportsSent        Report[]              @relation("reportsSent")
+  bookmarks          Bookmark[]
 }
 
 // ─── Posts e conteúdo (feed estilo X) ────────────────────────────────────
@@ -173,6 +180,7 @@ model Post {
   likes         Like[]
   repostRecords Repost[]
   comments      Comment[]
+  bookmarks     Bookmark[]
 
   @@index([authorId, createdAt])
   @@index([threadId])
@@ -424,10 +432,24 @@ model Report {
   targetId   String
   reason     ReportReason
   details    String?      @db.VarChar(500)
+  reviewedAt DateTime?
   createdAt  DateTime     @default(now())
 
   reporter Profile @relation("reportsSent", fields: [reporterId], references: [id], onDelete: Cascade)
 
   @@unique([reporterId, targetType, targetId])
   @@index([targetType, targetId, createdAt])
+  @@index([reviewedAt, createdAt])
+}
+
+model Bookmark {
+  profileId String
+  postId    String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, postId])
+  @@index([profileId, createdAt])
 }

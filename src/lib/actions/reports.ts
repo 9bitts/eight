@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -61,6 +62,7 @@ export async function getReportsForAdmin() {
   if (!session?.user?.isAdmin) throw new Error("Não autorizado");
 
   const rows = await prisma.report.findMany({
+    where: { reviewedAt: null },
     orderBy: { createdAt: "desc" },
     take: 100,
     include: {
@@ -81,4 +83,16 @@ export async function getReportsForAdmin() {
     ...r,
     targetHandle: r.targetType === "PROFILE" ? handleById.get(r.targetId) ?? null : null,
   }));
+}
+
+export async function dismissReport(reportId: string) {
+  const session = await auth();
+  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+
+  await prisma.report.update({
+    where: { id: reportId },
+    data: { reviewedAt: new Date() },
+  });
+
+  revalidatePath("/admin/denuncias");
 }

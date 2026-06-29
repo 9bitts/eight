@@ -48,6 +48,7 @@ export type FeedPost = {
   linkPreview: LinkPreviewData | null;
   poll: PollData | null;
   isOwner: boolean;
+  saved: boolean;
   isClinicalCase: boolean;
   caseTags: string[];
   caseSpecialty: string | null;

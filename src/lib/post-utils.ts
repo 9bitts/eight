@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { extractHashtags, extractMentions } from "@/lib/post-text";
+import { createNotificationIfAllowed } from "@/lib/notifications";
 
 export function publishedWhere() {
   const now = new Date();
@@ -33,14 +34,7 @@ export async function notifyMentions(
   for (const handle of handles) {
     const profile = await prisma.profile.findUnique({ where: { handle } });
     if (profile && profile.id !== actorId) {
-      await prisma.notification.create({
-        data: {
-          recipientId: profile.id,
-          actorId,
-          type: "MENTION",
-          postId,
-        },
-      });
+      await createNotificationIfAllowed(profile.id, actorId, "MENTION", postId);
     }
   }
 }

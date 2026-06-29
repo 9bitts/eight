@@ -167,7 +167,19 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
           videoUrl: post.repostOf.videoUrl,
         }
       : null,
+    saved: false,
   };
+}
+
+async function enrichSaved(posts: FeedPost[], profileId?: string) {
+  if (!profileId || posts.length === 0) return posts;
+  const ids = posts.map((p) => p.id);
+  const rows = await prisma.bookmark.findMany({
+    where: { profileId, postId: { in: ids } },
+    select: { postId: true },
+  });
+  const set = new Set(rows.map((r) => r.postId));
+  return posts.map((p) => ({ ...p, saved: set.has(p.id) }));
 }
 
 export async function getSessionUser(userId: string): Promise<SessionUser | null> {
@@ -261,7 +273,7 @@ export async function getFeedPosts(
     }
   }
 
-  return mapped;
+  return enrichSaved(mapped, viewerProfileId);
 }
 
 export async function getThreadPosts(
@@ -585,6 +597,21 @@ export async function getProfileReplies(
     include: postInclude,
   });
   return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+}
+
+export async function getSavedPosts(viewerProfileId: string): Promise<FeedPost[]> {
+  const bookmarks = await prisma.bookmark.findMany({
+    where: { profileId: viewerProfileId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      post: { include: postInclude },
+    },
+  });
+
+  return bookmarks
+    .filter((b) => b.post.parentId === null)
+    .map((b) => ({ ...mapPost(b.post as RawPost, viewerProfileId), saved: true }));
 }
 
 export { formatCount };
