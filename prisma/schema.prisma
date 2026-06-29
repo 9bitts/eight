@@ -113,6 +113,7 @@ model Profile {
   notifyReply          Boolean            @default(true)
   notifyMention        Boolean            @default(true)
   notifyMessage        Boolean            @default(true)
+  notifyEmail          Boolean            @default(false)
   suspended            Boolean            @default(false)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -141,6 +142,9 @@ model Profile {
   viewsMade          ProfileView[]         @relation("viewsMade")
   reportsSent        Report[]              @relation("reportsSent")
   bookmarks          Bookmark[]
+  pushSubscriptions  PushSubscription[]
+  messageRequestsSent     MessageRequest[] @relation("messageRequestsSent")
+  messageRequestsReceived MessageRequest[] @relation("messageRequestsReceived")
 }
 
 // ─── Posts e conteúdo (feed estilo X) ────────────────────────────────────
@@ -165,6 +169,7 @@ model Post {
   isClinicalCase Boolean  @default(false)
   caseTags       String[] @default([])
   caseSpecialty  String?
+  caseReviewedAt DateTime?
   hidden         Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -454,4 +459,39 @@ model Bookmark {
 
   @@id([profileId, postId])
   @@index([profileId, createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  profileId String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+enum MessageRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model MessageRequest {
+  id          String               @id @default(cuid())
+  fromId      String
+  toId        String
+  body        String               @db.VarChar(300)
+  status      MessageRequestStatus @default(PENDING)
+  createdAt   DateTime             @default(now())
+  respondedAt DateTime?
+
+  from Profile @relation("messageRequestsSent", fields: [fromId], references: [id], onDelete: Cascade)
+  to   Profile @relation("messageRequestsReceived", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([toId, status, createdAt])
 }

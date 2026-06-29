@@ -1,14 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { extractHashtags, extractMentions } from "@/lib/post-text";
-import { createNotificationIfAllowed } from "@/lib/notifications";
-
-export function publishedWhere() {
-  const now = new Date();
-  return {
-    hidden: false,
-    OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
-  };
-}
+import { createNotificationIfAllowed } from "@/lib/notifications-server";
 
 export async function syncHashtags(postId: string, body: string) {
   const tags = extractHashtags(body);

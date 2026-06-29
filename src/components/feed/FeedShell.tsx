@@ -199,6 +199,7 @@ export function FeedShell({
                   <NavLink href="/admin/verificacoes" icon={Shield} label={t("nav.admin")} />
                   <NavLink href="/admin/convites" icon={Shield} label="Convites" />
                   <NavLink href="/admin/denuncias" icon={Flag} label="Denúncias" />
+                  <NavLink href="/admin/casos" icon={Sparkles} label="Casos" />
                 </>
               )}
               <NavLink href="/settings" icon={Settings} label={t("nav.settings")} />

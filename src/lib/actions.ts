@@ -5,8 +5,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { fetchLinkPreview } from "@/lib/link-preview";
 import { extractFirstUrl } from "@/lib/post-text";
-import { syncHashtags, notifyMentions } from "@/lib/post-utils";
-import { createNotificationIfAllowed } from "@/lib/notifications";
+import { syncHashtags, notifyMentions } from "@/lib/post-server";
+import { createNotificationIfAllowed } from "@/lib/notifications-server";
 import { rateLimit } from "@/lib/rate-limit";
 import type { CreatePostInput } from "@/lib/types";
 
@@ -199,6 +199,49 @@ export async function cancelScheduledPost(postId: string) {
   revalidatePath("/feed");
 }
 
+export async function rescheduleScheduledPost(postId: string, scheduledAtIso: string) {
+  const profileId = await requireProfile();
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
+  if (!post.scheduledAt || post.scheduledAt <= new Date()) {
+    throw new Error("Esta publicação já foi enviada ou não está agendada.");
+  }
+
+  const scheduledAt = new Date(scheduledAtIso);
+  if (Number.isNaN(scheduledAt.getTime()) || scheduledAt <= new Date()) {
+    throw new Error("Escolha uma data e hora no futuro.");
+  }
+
+  await prisma.post.update({ where: { id: postId }, data: { scheduledAt } });
+  revalidatePath("/agendados");
+  revalidatePath("/feed");
+}
+
+export async function editScheduledPost(postId: string, body: string) {
+  const profileId = await requireProfile();
+  const text = body.trim();
+  if (!text || text.length > 500) throw new Error("Texto inválido");
+
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
+  if (!post.scheduledAt || post.scheduledAt <= new Date()) {
+    throw new Error("Esta publicação já foi enviada ou não está agendada.");
+  }
+
+  const linkFields = await buildLinkFields(text);
+
+  await prisma.post.update({
+    where: { id: postId },
+    data: { body: text, ...linkFields },
+  });
+
+  await syncHashtags(postId, text);
+  await notifyMentions(text, profileId, postId);
+
+  revalidatePath("/agendados");
+  revalidatePath("/feed");
+}
+
 export async function pinPost(postId: string) {
   const profileId = await requireProfile();
   const post = await prisma.post.findUnique({ where: { id: postId } });
@@ -346,6 +389,15 @@ export async function markNotificationsRead() {
   const profileId = await requireProfile();
   await prisma.notification.updateMany({
     where: { recipientId: profileId, read: false },
+    data: { read: true },
+  });
+  revalidatePath("/notifications");
+}
+
+export async function markNotificationRead(notificationId: string) {
+  const profileId = await requireProfile();
+  await prisma.notification.updateMany({
+    where: { id: notificationId, recipientId: profileId },
     data: { read: true },
   });
   revalidatePath("/notifications");

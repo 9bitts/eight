@@ -9,7 +9,7 @@ const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
 const MUTED = "var(--eight-muted)";
 
-const FIELDS: { key: keyof NotificationPrefs; label: string }[] = [
+const FIELDS: { key: keyof Omit<NotificationPrefs, "notifyEmail">; label: string }[] = [
   { key: "notifyLike", label: "Curtidas" },
   { key: "notifyRepost", label: "Reposts" },
   { key: "notifyFollow", label: "Novos seguidores" },
@@ -18,15 +18,21 @@ const FIELDS: { key: keyof NotificationPrefs; label: string }[] = [
   { key: "notifyMessage", label: "Mensagens diretas" },
 ];
 
-export function NotificationPrefsSection({ initial }: { initial: NotificationPrefs }) {
+export function NotificationPrefsSection({
+  initial,
+  onPrefsChange,
+}: {
+  initial: NotificationPrefs;
+  onPrefsChange?: (prefs: NotificationPrefs) => void;
+}) {
   const router = useRouter();
   const [prefs, setPrefs] = useState(initial);
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
 
-  const toggle = (key: keyof NotificationPrefs) => {
-    const next = { ...prefs, [key]: !prefs[key] };
+  const save = (next: NotificationPrefs) => {
     setPrefs(next);
+    onPrefsChange?.(next);
     setSaved(false);
     startTransition(async () => {
       await saveNotificationPrefs(next);
@@ -35,10 +41,14 @@ export function NotificationPrefsSection({ initial }: { initial: NotificationPre
     });
   };
 
+  const toggle = (key: keyof Omit<NotificationPrefs, "notifyEmail">) => {
+    save({ ...prefs, [key]: !prefs[key] });
+  };
+
   return (
     <section className="py-4 border-b" style={{ borderColor: LINE }}>
       <h2 className="px-4 pb-2" style={{ fontWeight: 700, fontSize: 16, color: INK }}>
-        Notificações
+        Notificações no app
       </h2>
       <p className="px-4 pb-3" style={{ fontSize: 13, color: MUTED }}>
         Escolha quais alertas você quer receber na eight.

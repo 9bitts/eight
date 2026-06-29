@@ -69,9 +69,9 @@ function StatusBanner({ status, reason }: { status: VerificationStatus; reason: 
         <Icon size={22} style={{ color: styles.color }} />
         <span style={{ fontWeight: 800, fontSize: 16, color: INK }}>{VERIFICATION_LABELS[status]}</span>
       </div>
-      <p style={{ fontSize: 14, lineHeight: 1.5, color: "#516b75" }}>{VERIFICATION_DESCRIPTIONS[status]}</p>
+      <p style={{ fontSize: 14, lineHeight: 1.5, color: MUTED }}>{VERIFICATION_DESCRIPTIONS[status]}</p>
       {status === "REJECTED" && reason && (
-        <p className="mt-2 p-3 rounded-lg" style={{ background: "rgba(255,255,255,.7)", fontSize: 13, color: INK }}>
+        <p className="mt-2 p-3 rounded-lg" style={{ background: CARD, fontSize: 13, color: INK }}>
           <strong>Motivo:</strong> {reason}
         </p>
       )}
@@ -127,12 +127,12 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
   const canEdit = profile.verificationStatus !== "VERIFIED";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f9fa", fontFamily: "var(--font-body), system-ui, sans-serif" }}>
-      <header className="px-6 py-4 border-b" style={{ background: "#fff", borderColor: LINE }}>
+    <div style={{ minHeight: "100vh", background: "var(--eight-shell-bg)", fontFamily: "var(--font-body), system-ui, sans-serif" }}>
+      <header className="px-6 py-4 border-b" style={{ background: "var(--eight-header-bg)", borderColor: LINE }}>
         <div className="mx-auto" style={{ maxWidth: 560 }}>
           <Link href="/feed" style={{ fontSize: 13, color: BLUE }}>← Voltar ao feed</Link>
           <h1 style={{ fontWeight: 800, fontSize: 22, color: INK, marginTop: 4 }}>Verificação profissional</h1>
-          <p style={{ fontSize: 14, color: "#7a8f97" }}>
+          <p style={{ fontSize: 14, color: MUTED }}>
             @{profile.handle} · {formatRegistration(form.registrationType, form.registrationNumber, form.registrationCountry)}
           </p>
         </div>
@@ -144,7 +144,7 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
 
         {canEdit && (
           <>
-            <section className="rounded-xl border p-4 mb-4" style={{ borderColor: LINE, background: "#fff" }}>
+            <section className="rounded-xl border p-4 mb-4" style={{ borderColor: LINE, background: CARD }}>
               <h2 style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: INK }}>Dados do registro</h2>
               <label className="signup-label">Especialidade</label>
               <input
@@ -189,11 +189,11 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
               </button>
             </section>
 
-            <section className="rounded-xl border p-4" style={{ borderColor: LINE, background: "#fff" }}>
+            <section className="rounded-xl border p-4" style={{ borderColor: LINE, background: CARD }}>
               <h2 style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, color: INK }}>
                 Documento comprobatório (opcional)
               </h2>
-              <p style={{ fontSize: 13, color: "#7a8f97", marginBottom: 12, lineHeight: 1.45 }}>
+              <p style={{ fontSize: 13, color: MUTED, marginBottom: 12, lineHeight: 1.45 }}>
                 Envie foto ou PDF da carteira do CRM, COREN ou documento equivalente. Isso acelera a aprovação.
               </p>
               {profile.verificationDocumentUrl && (
@@ -223,7 +223,7 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading || pending}
                 className="flex items-center justify-center gap-2 w-full rounded-full py-3 font-bold"
-                style={{ border: `1px solid ${LINE}`, background: "#fff", cursor: "pointer", color: BLUE }}
+                style={{ border: `1px solid ${LINE}`, background: CARD, cursor: "pointer", color: BLUE }}
               >
                 {uploading ? <Loader2 size={18} className="spin" /> : <Upload size={18} />}
                 {uploading ? "Enviando…" : "Enviar documento"}
@@ -236,7 +236,7 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
           <div className="text-center py-8">
             <BadgeCheck size={56} style={{ color: BLUE, margin: "0 auto 12px" }} fill={BLUE} stroke="#fff" />
             <p style={{ fontWeight: 700, fontSize: 18, color: INK }}>Selo verificado ativo</p>
-            <p style={{ color: "#7a8f97", marginTop: 8 }}>O selo azul aparece em todas as suas publicações.</p>
+            <p style={{ color: MUTED, marginTop: 8 }}>O selo azul aparece em todas as suas publicações.</p>
           </div>
         )}
       </main>

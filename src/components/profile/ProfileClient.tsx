@@ -11,6 +11,7 @@ import { VerificationBanner } from "@/components/verification/VerificationBanner
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { toggleFollow } from "@/lib/actions";
 import { startConversation } from "@/lib/actions/messages";
+import { sendMessageRequest } from "@/lib/actions/message-requests";
 import { toggleBlock } from "@/lib/actions/relationships";
 import { formatSpec } from "@/lib/format";
 import type { FeedPost, SessionUser } from "@/lib/types";
@@ -51,6 +52,7 @@ export function ProfileClient({
   profile,
   posts,
   replies,
+  likes,
   user,
   isOwnProfile,
   isFollowing,
@@ -64,6 +66,7 @@ export function ProfileClient({
   profile: ProfileData;
   posts: FeedPost[];
   replies: FeedPost[];
+  likes: FeedPost[];
   user: SessionUser;
   isOwnProfile: boolean;
   isFollowing: boolean;
@@ -76,9 +79,11 @@ export function ProfileClient({
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
-  const [tab, setTab] = useState<"posts" | "replies">("posts");
+  const [tab, setTab] = useState<"posts" | "replies" | "likes">("posts");
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestBody, setRequestBody] = useState("");
 
   const copyProfileLink = () => {
     const url = `${window.location.origin}/${profile.handle}`;
@@ -114,10 +119,35 @@ export function ProfileClient({
   const onMessage = () => {
     startTransition(async () => {
       try {
-        const { conversationId } = await startConversation(profile.id);
-        router.push(`/messages/${conversationId}`);
+        const result = await startConversation(profile.id);
+        if ("conversationId" in result && result.conversationId) {
+          router.push(`/messages/${result.conversationId}`);
+          return;
+        }
+        if ("needsRequest" in result && result.needsRequest) {
+          setRequestOpen(true);
+          return;
+        }
       } catch (e) {
         alert(e instanceof Error ? e.message : "Não foi possível abrir a conversa.");
+      }
+    });
+  };
+
+  const onSendRequest = () => {
+    if (!requestBody.trim()) return;
+    startTransition(async () => {
+      try {
+        const result = await sendMessageRequest(profile.id, requestBody);
+        if ("conversationId" in result && result.conversationId) {
+          router.push(`/messages/${result.conversationId}`);
+          return;
+        }
+        setRequestOpen(false);
+        setRequestBody("");
+        alert("Pedido enviado! A pessoa precisa aceitar para vocês conversarem.");
+      } catch (e) {
+        alert(e instanceof Error ? e.message : "Erro ao enviar pedido.");
       }
     });
   };
@@ -348,38 +378,46 @@ export function ProfileClient({
         {!blockedByViewer && (
           <>
             <div className="flex border-b" style={{ borderColor: LINE }}>
-              {(["posts", "replies"] as const).map((t) => (
+              {(
+                [
+                  { id: "posts" as const, label: "Publicações" },
+                  { id: "replies" as const, label: "Respostas" },
+                  ...(isOwnProfile ? [{ id: "likes" as const, label: "Curtidas" }] : []),
+                ]
+              ).map((t) => (
                 <button
-                  key={t}
+                  key={t.id}
                   type="button"
-                  onClick={() => setTab(t)}
+                  onClick={() => setTab(t.id)}
                   className="flex-1 py-3 font-bold"
                   style={{
                     fontSize: 14,
                     border: "none",
-                    borderBottom: tab === t ? `3px solid ${BLUE}` : "3px solid transparent",
+                    borderBottom: tab === t.id ? `3px solid ${BLUE}` : "3px solid transparent",
                     background: "transparent",
-                    color: tab === t ? INK : MUTED,
+                    color: tab === t.id ? INK : MUTED,
                     cursor: "pointer",
                   }}
                 >
-                  {t === "posts" ? "Publicações" : "Respostas"}
+                  {t.label}
                 </button>
               ))}
             </div>
             <div>
-              {(tab === "posts" ? posts : replies).length === 0 ? (
+              {(tab === "posts" ? posts : tab === "replies" ? replies : likes).length === 0 ? (
                 <p className="px-4 py-8 text-center" style={{ color: MUTED }}>
                   {tab === "posts"
                     ? isOwnProfile
                       ? "Você ainda não publicou nada."
                       : "Nenhuma publicação ainda."
-                    : isOwnProfile
-                      ? "Você ainda não respondeu nada."
-                      : "Nenhuma resposta ainda."}
+                    : tab === "replies"
+                      ? isOwnProfile
+                        ? "Você ainda não respondeu nada."
+                        : "Nenhuma resposta ainda."
+                      : "Você ainda não curtiu nenhuma publicação."}
                 </p>
               ) : (
-                (tab === "posts" ? posts : replies).map((p) => (
+                (tab === "posts" ? posts : tab === "replies" ? replies : likes).map((p) => (
                   <PostCard key={p.id} post={p} />
                 ))
               )}
@@ -387,6 +425,53 @@ export function ProfileClient({
           </>
         )}
       </main>
+
+      {requestOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,.45)" }}
+          onClick={() => setRequestOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-5"
+            style={{ background: CARD, border: `1px solid ${LINE}` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontWeight: 800, fontSize: 17, color: INK }}>Pedido de mensagem</h3>
+            <p style={{ fontSize: 14, color: MUTED, marginTop: 8, lineHeight: 1.45 }}>
+              Vocês ainda não se seguem mutuamente. Envie uma mensagem introdutória para{" "}
+              <strong>{profile.displayName}</strong> aceitar.
+            </p>
+            <textarea
+              className="field w-full mt-4"
+              rows={3}
+              maxLength={300}
+              value={requestBody}
+              onChange={(e) => setRequestBody(e.target.value)}
+              placeholder="Olá, gostaria de conversar sobre..."
+            />
+            <div className="flex gap-2 mt-4 justify-end">
+              <button
+                type="button"
+                onClick={() => setRequestOpen(false)}
+                className="rounded-full px-4 py-2 font-bold"
+                style={{ border: `1px solid ${LINE}`, background: CARD, color: MUTED, cursor: "pointer" }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={onSendRequest}
+                disabled={pending || !requestBody.trim()}
+                className="rounded-full px-4 py-2 font-bold"
+                style={{ border: "none", background: BLUE, color: "#fff", cursor: "pointer" }}
+              >
+                {pending ? "…" : "Enviar pedido"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </FeedShell>
   );
 }

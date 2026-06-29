@@ -4,7 +4,8 @@ import { SettingsClient } from "@/components/settings/SettingsClient";
 import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
 import { getBlockedUsers, getMutedUsers } from "@/lib/relationships";
 import { getProfileForEdit } from "@/lib/actions/profile";
-import { getNotificationPrefs } from "@/lib/notifications";
+import { getNotificationPrefs, countPushSubscriptions } from "@/lib/notifications";
+import { getVapidPublicKey } from "@/lib/push";
 import { prisma } from "@/lib/prisma";
 
 export default async function SettingsPage() {
@@ -19,12 +20,14 @@ export default async function SettingsPage() {
     select: { totpEnabled: true, passwordHash: true, locale: true },
   });
 
-  const [blocked, muted, notificationCount, profileData, notificationPrefs] = await Promise.all([
+  const [blocked, muted, notificationCount, profileData, notificationPrefs, pushCount] =
+    await Promise.all([
     getBlockedUsers(user.profileId),
     getMutedUsers(user.profileId),
     getUnreadNotificationCount(user.profileId),
     getProfileForEdit(user.profileId),
     getNotificationPrefs(user.profileId),
+    countPushSubscriptions(user.profileId),
   ]);
 
   if (!profileData) redirect("/signup/complete");
@@ -39,6 +42,8 @@ export default async function SettingsPage() {
       hasPassword={!!dbUser?.passwordHash}
       profile={profileData}
       notificationPrefs={notificationPrefs}
+      vapidPublicKey={getVapidPublicKey()}
+      pushSubscribed={pushCount > 0}
     />
   );
 }

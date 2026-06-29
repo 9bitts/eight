@@ -63,7 +63,7 @@ export function AdminInvitesClient({
             Envie convites para profissionais entrarem na eight
           </p>
           {!emailConfigured && (
-            <p className="mt-2 p-3 rounded-lg" style={{ background: "#fff8e6", fontSize: 13, color: "#8a6d00" }}>
+            <p className="mt-2 p-3 rounded-lg" style={{ background: "var(--eight-surface-subtle)", fontSize: 13, color: "#8a6d00" }}>
               SMTP não configurado — convites serão criados, mas e-mails não serão enviados automaticamente.
             </p>
           )}

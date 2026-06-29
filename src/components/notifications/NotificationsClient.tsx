@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Repeat2, UserPlus, MessageCircle, BadgeCheck, Mail } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Heart, Repeat2, UserPlus, MessageCircle, BadgeCheck, Mail, CheckCheck } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { timeAgo } from "@/lib/format";
+import { markNotificationsRead, markNotificationRead } from "@/lib/actions";
 import type { SessionUser } from "@/lib/types";
 
 const INK = "var(--eight-ink)";
@@ -63,7 +66,13 @@ function notifText(n: Notif): string {
   }
 }
 
-function NotifRow({ n }: { n: Notif }) {
+function NotifRow({
+  n,
+  onRead,
+}: {
+  n: Notif;
+  onRead: (id: string) => void;
+}) {
   const href =
     n.type === "VERIFICATION_APPROVED" || n.type === "VERIFICATION_REJECTED"
       ? "/verificacao"
@@ -72,9 +81,13 @@ function NotifRow({ n }: { n: Notif }) {
         : n.postId
         ? `/post/${n.postId}`
         : `/${n.actor.handle}`;
+
   return (
     <Link
       href={href}
+      onClick={() => {
+        if (!n.read) onRead(n.id);
+      }}
       className="flex gap-3 px-4 py-4 border-b"
       style={{
         borderColor: LINE,
@@ -108,18 +121,59 @@ export function NotificationsClient({
   notifications: Notif[];
   notificationCount: number;
 }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [items, setItems] = useState(notifications);
+  const unreadCount = items.filter((n) => !n.read).length;
+
+  const markAllRead = () => {
+    startTransition(async () => {
+      await markNotificationsRead();
+      setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+      router.refresh();
+    });
+  };
+
+  const markOneRead = (id: string) => {
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    startTransition(async () => {
+      await markNotificationRead(id);
+    });
+  };
+
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
       <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
+        <div
+          className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between gap-3"
+          style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}
+        >
           <h1 style={{ fontWeight: 800, fontSize: 20 }}>Notificações</h1>
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={markAllRead}
+              disabled={pending}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold"
+              style={{
+                fontSize: 13,
+                border: `1px solid ${LINE}`,
+                background: CARD,
+                color: BLUE,
+                cursor: pending ? "wait" : "pointer",
+              }}
+            >
+              <CheckCheck size={16} />
+              {pending ? "…" : "Marcar todas como lidas"}
+            </button>
+          )}
         </div>
-        {notifications.length === 0 ? (
+        {items.length === 0 ? (
           <p className="px-4 py-12 text-center" style={{ color: MUTED }}>
             Nenhuma notificação por enquanto.
           </p>
         ) : (
-          notifications.map((n) => <NotifRow key={n.id} n={n} />)
+          items.map((n) => <NotifRow key={n.id} n={n} onRead={markOneRead} />)
         )}
       </main>
     </FeedShell>

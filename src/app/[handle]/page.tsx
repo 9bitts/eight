@@ -5,6 +5,7 @@ import { ProfileClient } from "@/components/profile/ProfileClient";
 import {
   getFeedPosts,
   getProfileByHandle,
+  getProfileLikedPosts,
   getProfileReplies,
   getSessionUser,
   getUnreadNotificationCount,
@@ -37,10 +38,11 @@ export default async function ProfilePage({ params }: Props) {
 
   const isOwnProfile = profile.id === user.profileId;
 
-  const [posts, replies, notificationCount, following, blockStatus, muted, analytics] =
+  const [posts, replies, likes, notificationCount, following, blockStatus, muted, analytics] =
     await Promise.all([
       getFeedPosts(user.profileId, "forYou", profile.id),
       getProfileReplies(profile.id, user.profileId),
+      isOwnProfile ? getProfileLikedPosts(profile.id, user.profileId) : Promise.resolve([]),
       getUnreadNotificationCount(user.profileId),
       isFollowing(user.profileId, profile.id),
       getBlockStatus(user.profileId, profile.id),
@@ -83,6 +85,7 @@ export default async function ProfilePage({ params }: Props) {
       }}
       posts={posts}
       replies={replies}
+      likes={likes}
       user={user}
       isOwnProfile={profile.id === user.profileId}
       isFollowing={following}

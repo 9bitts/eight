@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { validateClinicalCaseBody } from "@/lib/cases";
-import { syncHashtags } from "@/lib/post-utils";
+import { syncHashtags } from "@/lib/post-server";
 
 async function requireVerifiedProfile() {
   const session = await auth();

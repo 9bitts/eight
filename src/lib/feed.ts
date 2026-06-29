@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { formatSpec, timeAgo, formatCount } from "@/lib/format";
-import { publishedWhere } from "@/lib/post-utils";
+import { publishedWhere } from "@/lib/post-filters";
 import { getBlockedProfileIds, getMutedProfileIds } from "@/lib/relationships";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
@@ -250,15 +250,17 @@ export async function getFeedPosts(
       ...publishedWhere(),
       ...authorWhere,
     },
-    orderBy:
-      tab === "forYou" && !authorId
-        ? [{ author: { verified: "desc" } }, { createdAt: "desc" }]
-        : { createdAt: "desc" },
-    take: 50,
+    orderBy: { createdAt: "desc" },
+    take: tab === "forYou" && !authorId ? 150 : 50,
     include: postInclude,
   });
 
-  const mapped = posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+  const ordered =
+    tab === "forYou" && !authorId
+      ? await rankForYouPosts(posts as RawPost[], viewerProfileId)
+      : (posts as RawPost[]);
+
+  const mapped = ordered.slice(0, 50).map((p) => mapPost(p, viewerProfileId));
 
   if (authorId) {
     const profile = await prisma.profile.findUnique({
@@ -275,6 +277,52 @@ export async function getFeedPosts(
   }
 
   return enrichSaved(mapped, viewerProfileId);
+}
+
+async function rankForYouPosts<T extends RawPost>(
+  posts: T[],
+  viewerProfileId: string
+): Promise<T[]> {
+  const [following, viewer] = await Promise.all([
+    prisma.follow.findMany({
+      where: { followerId: viewerProfileId },
+      select: { followingId: true },
+    }),
+    prisma.profile.findUnique({
+      where: { id: viewerProfileId },
+      select: { specialty: true, registrationCountry: true },
+    }),
+  ]);
+
+  const followingSet = new Set(following.map((f) => f.followingId));
+  const specialty = viewer?.specialty?.toLowerCase() ?? "";
+  const country = viewer?.registrationCountry ?? "";
+  const now = Date.now();
+
+  const scored = posts.map((post) => {
+    let score = 0;
+    const hours = (now - post.createdAt.getTime()) / 3_600_000;
+
+    score += Math.max(0, 72 - hours) * 1.4;
+    if (hours < 8) score += 10;
+    if (post.author.verified) score += 14;
+    if (followingSet.has(post.authorId)) score += 32;
+    if (specialty && post.author.specialty?.toLowerCase() === specialty) score += 20;
+    const authorCountry = (post.author as { registrationCountry?: string | null }).registrationCountry;
+    if (country && authorCountry === country) score += 8;
+    score +=
+      (post._count.likes + post._count.repostRecords * 2 + post._count.replies) * 2.5;
+
+    return { post, score };
+  });
+
+  scored.sort(
+    (a, b) =>
+      b.score - a.score ||
+      b.post.createdAt.getTime() - a.post.createdAt.getTime()
+  );
+
+  return scored.map((s) => s.post);
 }
 
 export async function getThreadPosts(
@@ -365,7 +413,7 @@ export async function getSuggestions(viewerProfileId: string): Promise<Suggestio
   const addFrom = async (where: Record<string, unknown>, take = 8) => {
     if (candidates.length >= 5) return;
     const rows = await prisma.profile.findMany({
-      where: { id: { notIn: Array.from(excludeIds) }, ...where },
+      where: { suspended: false, id: { notIn: Array.from(excludeIds) }, ...where },
       orderBy: { createdAt: "desc" },
       take,
       select,
@@ -526,6 +574,7 @@ export async function searchProfiles(query: string, limit = 10, verifiedOnly = f
 
   return prisma.profile.findMany({
     where: {
+      suspended: false,
       ...(verifiedOnly ? { verificationStatus: "VERIFIED" } : {}),
       ...(blockedIds.length ? { id: { notIn: blockedIds } } : {}),
       OR: [
@@ -571,6 +620,22 @@ export async function searchPosts(
     include: postInclude,
   });
   return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+}
+
+export async function getProfileLikedPosts(
+  profileId: string,
+  viewerProfileId: string
+): Promise<FeedPost[]> {
+  const likes = await prisma.like.findMany({
+    where: { profileId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: { post: { include: postInclude } },
+  });
+
+  return likes
+    .filter((l) => !l.post.hidden && l.post.parentId === null)
+    .map((l) => mapPost(l.post as RawPost, viewerProfileId));
 }
 
 export async function getScheduledPosts(viewerProfileId: string) {

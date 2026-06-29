@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user?.profileId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+
+  const ip = clientIp(req);
+  const limited = rateLimit(`mentions:${session.user.profileId}:${ip}`, 60, 60_000);
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim().toLowerCase();

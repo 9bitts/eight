@@ -5,10 +5,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import {
   assertCanMessage,
-  findOrCreateConversation,
 } from "@/lib/messages";
 import { rateLimit } from "@/lib/rate-limit";
-import { createNotificationIfAllowed } from "@/lib/notifications";
+import { createNotificationIfAllowed } from "@/lib/notifications-server";
 
 async function requireProfile() {
   const session = await auth();
@@ -18,10 +17,8 @@ async function requireProfile() {
 }
 
 export async function startConversation(targetProfileId: string) {
-  const profileId = await requireProfile();
-  await assertCanMessage(profileId, targetProfileId);
-  const conversationId = await findOrCreateConversation(profileId, targetProfileId);
-  return { conversationId };
+  const { tryStartConversation } = await import("@/lib/actions/message-requests");
+  return tryStartConversation(targetProfileId);
 }
 
 export async function sendDirectMessage(conversationId: string, body: string) {

@@ -7,12 +7,20 @@ import { FeedShell } from "@/components/feed/FeedShell";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { formatMessageTime, type ConversationPreview } from "@/lib/messages";
+import type { MessageRequestPreview } from "@/lib/message-requests";
+import {
+  acceptMessageRequest,
+  rejectMessageRequest,
+} from "@/lib/actions/message-requests";
 import type { SessionUser } from "@/lib/types";
+import { useTransition } from "react";
 
 const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
 const CARD = "var(--eight-card-bg)";
 const MUTED = "var(--eight-muted)";
+const BLUE = "#176a88";
+const ORANGE = "#e05930";
 
 function ConversationRow({ c }: { c: ConversationPreview }) {
   return (
@@ -50,23 +58,90 @@ function ConversationRow({ c }: { c: ConversationPreview }) {
   );
 }
 
+function RequestRow({
+  r,
+  onAccept,
+  onReject,
+  pending,
+}: {
+  r: MessageRequestPreview;
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
+  pending: boolean;
+}) {
+  return (
+    <div className="px-4 py-3 border-b" style={{ borderColor: LINE, background: "var(--eight-nav-active)" }}>
+      <div className="flex gap-3">
+        <Avatar name={r.fromName} size={44} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <Link href={`/${r.fromHandle}`} style={{ fontWeight: 700, color: INK, textDecoration: "none" }}>
+              {r.fromName}
+            </Link>
+            {r.fromVerified && <VerifiedBadge size={14} />}
+          </div>
+          <div style={{ fontSize: 13, color: MUTED }}>@{r.fromHandle}</div>
+          <p style={{ fontSize: 14, color: INK, marginTop: 6, lineHeight: 1.45 }}>{r.body}</p>
+          <div className="flex gap-2 mt-3">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => onAccept(r.id)}
+              className="rounded-full px-4 py-1.5 font-bold"
+              style={{ fontSize: 13, border: "none", background: BLUE, color: "#fff", cursor: "pointer" }}
+            >
+              Aceitar
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => onReject(r.id)}
+              className="rounded-full px-4 py-1.5 font-bold"
+              style={{ fontSize: 13, border: `1px solid ${LINE}`, background: CARD, color: ORANGE, cursor: "pointer" }}
+            >
+              Recusar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MessagesClient({
   user,
   notificationCount,
   conversations,
+  requests,
   canMessage,
 }: {
   user: SessionUser;
   notificationCount: number;
   conversations: ConversationPreview[];
+  requests: MessageRequestPreview[];
   canMessage: boolean;
 }) {
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     const id = setInterval(() => router.refresh(), 8000);
     return () => clearInterval(id);
   }, [router]);
+
+  const onAccept = (id: string) => {
+    startTransition(async () => {
+      const { conversationId } = await acceptMessageRequest(id);
+      router.push(`/messages/${conversationId}`);
+    });
+  };
+
+  const onReject = (id: string) => {
+    startTransition(async () => {
+      await rejectMessageRequest(id);
+      router.refresh();
+    });
+  };
 
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
@@ -80,12 +155,23 @@ export function MessagesClient({
           )}
           {canMessage && (
             <p style={{ fontSize: 13, color: MUTED, marginTop: 6 }}>
-              Converse com profissionais verificados. Abra uma conversa pelo perfil de um colega.
+              Converse com profissionais verificados. Sem seguimento mútuo, envie um pedido primeiro.
             </p>
           )}
         </div>
 
-        {conversations.length === 0 ? (
+        {requests.length > 0 && (
+          <section>
+            <h2 className="px-4 py-2 font-bold" style={{ fontSize: 13, color: MUTED, borderBottom: `1px solid ${LINE}` }}>
+              Pedidos de mensagem ({requests.length})
+            </h2>
+            {requests.map((r) => (
+              <RequestRow key={r.id} r={r} onAccept={onAccept} onReject={onReject} pending={pending} />
+            ))}
+          </section>
+        )}
+
+        {conversations.length === 0 && requests.length === 0 ? (
           <p className="px-4 py-12 text-center" style={{ color: MUTED, lineHeight: 1.5 }}>
             {canMessage
               ? "Nenhuma conversa ainda. Visite o perfil de um colega verificado e toque em Mensagem."

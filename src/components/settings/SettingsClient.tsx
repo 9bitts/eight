@@ -19,7 +19,7 @@ import {
   deleteAccount,
 } from "@/lib/actions/settings";
 import { EditProfileSection, type ProfileEditData } from "@/components/settings/EditProfileSection";
-import { NotificationPrefsSection } from "@/components/settings/NotificationPrefsSection";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import type { NotificationPrefs } from "@/lib/notifications";
 import type { ConnectionProfile, SessionUser } from "@/lib/types";
 
@@ -83,6 +83,8 @@ export function SettingsClient({
   hasPassword,
   profile,
   notificationPrefs,
+  vapidPublicKey,
+  pushSubscribed,
 }: {
   user: SessionUser;
   notificationCount: number;
@@ -92,6 +94,8 @@ export function SettingsClient({
   hasPassword: boolean;
   profile: ProfileEditData;
   notificationPrefs: NotificationPrefs;
+  vapidPublicKey: string | null;
+  pushSubscribed: boolean;
 }) {
   const router = useRouter();
   const { t, locale, setLocale } = useLocale();
@@ -174,7 +178,11 @@ export function SettingsClient({
 
         <EditProfileSection profile={profile} />
 
-        <NotificationPrefsSection initial={notificationPrefs} />
+        <NotificationSettings
+          initial={notificationPrefs}
+          vapidPublicKey={vapidPublicKey}
+          pushSubscribed={pushSubscribed}
+        />
 
         <section className="py-4 border-b" style={{ borderColor: LINE }}>
           <h2 className="px-4 pb-2" style={{ fontWeight: 700, fontSize: 16, color: INK }}>

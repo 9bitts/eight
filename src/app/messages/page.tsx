@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { MessagesClient } from "@/components/messages/MessagesClient";
 import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
 import { getConversationPreviews } from "@/lib/messages";
+import { getPendingMessageRequests } from "@/lib/message-requests";
 
 export default async function MessagesPage() {
   const session = await auth();
@@ -11,8 +12,9 @@ export default async function MessagesPage() {
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");
 
-  const [conversations, notificationCount] = await Promise.all([
+  const [conversations, requests, notificationCount] = await Promise.all([
     getConversationPreviews(user.profileId),
+    getPendingMessageRequests(user.profileId),
     getUnreadNotificationCount(user.profileId),
   ]);
 
@@ -21,6 +23,7 @@ export default async function MessagesPage() {
       user={user}
       notificationCount={notificationCount}
       conversations={conversations}
+      requests={requests}
       canMessage={user.verified}
     />
   );

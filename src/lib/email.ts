@@ -79,3 +79,20 @@ export async function sendVerificationRejectedEmail(
     `,
   });
 }
+
+export async function sendActivityEmail(to: string, message: string, actionUrl: string) {
+  return sendEmail({
+    to,
+    subject: `${message} — eight`,
+    html: `
+      <p>${message}</p>
+      <p><a href="${actionUrl}">Ver na eight</a></p>
+      <p style="color:#7a8f97;font-size:13px">
+        Você recebeu este e-mail porque ativou alertas por e-mail nas configurações.
+        Desative em Configurações → Notificações.
+      </p>
+      <p style="color:#7a8f97;font-size:13px">Doctor8 · eight</p>
+    `,
+    text: `${message}\n\n${actionUrl}`,
+  });
+}
