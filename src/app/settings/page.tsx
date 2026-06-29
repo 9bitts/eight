@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { SettingsClient } from "@/components/settings/SettingsClient";
 import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
 import { getBlockedUsers, getMutedUsers } from "@/lib/relationships";
+import { getProfileForEdit } from "@/lib/actions/profile";
+import { prisma } from "@/lib/prisma";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -11,11 +13,19 @@ export default async function SettingsPage() {
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");
 
-  const [blocked, muted, notificationCount] = await Promise.all([
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { totpEnabled: true, passwordHash: true, locale: true },
+  });
+
+  const [blocked, muted, notificationCount, profileData] = await Promise.all([
     getBlockedUsers(user.profileId),
     getMutedUsers(user.profileId),
     getUnreadNotificationCount(user.profileId),
+    getProfileForEdit(user.profileId),
   ]);
+
+  if (!profileData) redirect("/signup/complete");
 
   return (
     <SettingsClient
@@ -23,6 +33,9 @@ export default async function SettingsPage() {
       notificationCount={notificationCount}
       blocked={blocked}
       muted={muted}
+      totpEnabled={dbUser?.totpEnabled ?? false}
+      hasPassword={!!dbUser?.passwordHash}
+      profile={profileData}
     />
   );
 }

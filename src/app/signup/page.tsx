@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { BadgeCheck, ArrowLeft, ArrowRight, Loader2, Check, X } from "lucide-react";
 import Logo from "@/components/Logo";
@@ -42,6 +42,7 @@ type FormData = {
   registrationNumber: string;
   registrationCountry: string;
   location: string;
+  inviteCode: string;
 };
 
 const INITIAL: FormData = {
@@ -54,6 +55,7 @@ const INITIAL: FormData = {
   registrationNumber: "",
   registrationCountry: "BR",
   location: "",
+  inviteCode: "",
 };
 
 function StepDots({ step, total }: { step: number; total: number }) {
@@ -366,11 +368,25 @@ function StepProfessional({
 }
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="signup-wrap" style={{ padding: 40, textAlign: "center" }}>Carregando…</div>}>
+      <SignupPageInner />
+    </Suspense>
+  );
+}
+
+function SignupPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<FormData>(INITIAL);
   const [loading, setLoading] = useState(false);
   const [globalError, setGlobalError] = useState("");
+
+  useEffect(() => {
+    const invite = searchParams.get("invite");
+    if (invite) setData((d) => ({ ...d, inviteCode: invite }));
+  }, [searchParams]);
 
   const patch = (p: Partial<FormData>) => setData((d) => ({ ...d, ...p }));
 

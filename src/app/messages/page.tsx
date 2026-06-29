@@ -1,10 +1,27 @@
-import PlaceholderPage from "@/components/PlaceholderPage";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { MessagesClient } from "@/components/messages/MessagesClient";
+import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
+import { getConversationPreviews } from "@/lib/messages";
 
-export default function MessagesPage() {
+export default async function MessagesPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const user = await getSessionUser(session.user.id);
+  if (!user) redirect("/signup/complete");
+
+  const [conversations, notificationCount] = await Promise.all([
+    getConversationPreviews(user.profileId),
+    getUnreadNotificationCount(user.profileId),
+  ]);
+
   return (
-    <PlaceholderPage
-      title="Mensagens"
-      description="Mensagens diretas entre profissionais — em breve na eight."
+    <MessagesClient
+      user={user}
+      notificationCount={notificationCount}
+      conversations={conversations}
+      canMessage={user.verified}
     />
   );
 }

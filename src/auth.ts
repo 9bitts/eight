@@ -5,6 +5,7 @@ import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
+import { verifyTotp } from "@/lib/totp";
 import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 
@@ -47,10 +48,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "E-mail", type: "email" },
         password: { label: "Senha", type: "password" },
+        totp: { label: "2FA", type: "text" },
       },
       async authorize(credentials) {
         const email = credentials?.email?.toString().trim().toLowerCase();
         const password = credentials?.password?.toString() ?? "";
+        const totp = credentials?.totp?.toString().trim() ?? "";
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({
@@ -61,6 +64,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
+
+        if (user.totpEnabled && user.totpSecret) {
+          if (!totp || !verifyTotp(totp, user.totpSecret)) {
+            return null;
+          }
+        }
 
         const adminEmails =
           process.env.ADMIN_EMAILS?.split(",")

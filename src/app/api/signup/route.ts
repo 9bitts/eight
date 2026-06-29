@@ -7,6 +7,12 @@ import {
   isValidEmail,
   passwordError,
 } from "@/lib/validators";
+import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import {
+  inviteRequired,
+  validateInvite,
+  markInviteUsed,
+} from "@/lib/invites";
 
 type SignupBody = {
   displayName?: string;
@@ -18,10 +24,15 @@ type SignupBody = {
   registrationNumber?: string;
   registrationCountry?: string;
   location?: string;
+  inviteCode?: string;
 };
 
 export async function POST(req: Request) {
   try {
+    const ip = clientIp(req);
+    const limited = rateLimit(`signup:${ip}`, 5, 60_000);
+    if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
+
     const body = (await req.json()) as SignupBody;
 
     const displayName = body.displayName?.trim() ?? "";
@@ -33,6 +44,25 @@ export async function POST(req: Request) {
     const registrationNumber = body.registrationNumber?.trim() ?? "";
     const registrationCountry = body.registrationCountry?.trim() ?? "";
     const location = body.location?.trim() ?? "";
+    const inviteCode = body.inviteCode?.trim() ?? "";
+
+    if (inviteRequired()) {
+      if (!inviteCode) {
+        return NextResponse.json(
+          { error: "Cadastro apenas por convite. Use o link enviado por e-mail." },
+          { status: 403 }
+        );
+      }
+      const check = await validateInvite(inviteCode, email);
+      if (!check.ok) {
+        return NextResponse.json({ error: check.error }, { status: 403 });
+      }
+    } else if (inviteCode) {
+      const check = await validateInvite(inviteCode, email);
+      if (!check.ok) {
+        return NextResponse.json({ error: check.error }, { status: 400 });
+      }
+    }
 
     if (!displayName || displayName.length < 2) {
       return NextResponse.json({ error: "Informe seu nome completo." }, { status: 400 });
@@ -96,6 +126,10 @@ export async function POST(req: Request) {
       },
       include: { profile: true },
     });
+
+    if (inviteCode) {
+      await markInviteUsed(inviteCode, user.id);
+    }
 
     return NextResponse.json({
       ok: true,

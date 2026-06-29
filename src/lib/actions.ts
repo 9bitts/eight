@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchLinkPreview } from "@/lib/link-preview";
 import { extractFirstUrl } from "@/lib/post-text";
 import { syncHashtags, notifyMentions } from "@/lib/post-utils";
+import { rateLimit } from "@/lib/rate-limit";
 import type { CreatePostInput } from "@/lib/types";
 
 async function requireProfile() {
@@ -91,6 +92,9 @@ async function createSinglePost(
 
 export async function createPost(input: CreatePostInput) {
   const profileId = await requireProfile();
+
+  const limited = rateLimit(`post:${profileId}`, 20, 60_000);
+  if (!limited.ok) throw new Error(`Aguarde ${limited.retryAfterSec}s antes de publicar novamente.`);
 
   const scheduledAt = input.scheduledAt ? new Date(input.scheduledAt) : null;
   if (scheduledAt && scheduledAt <= new Date()) {
@@ -245,6 +249,43 @@ export async function toggleRepost(postId: string) {
     await prisma.repost.create({ data: { profileId, postId } });
     await notify(post.authorId, profileId, "REPOST", postId);
   }
+  revalidatePath("/feed");
+  revalidatePath(`/post/${postId}`);
+}
+
+export async function createQuotePost(postId: string, body: string) {
+  const profileId = await requireProfile();
+  const limited = rateLimit(`post:${profileId}`, 20, 60_000);
+  if (!limited.ok) throw new Error("Muitas publicações. Aguarde um momento.");
+
+  const original = await prisma.post.findUnique({ where: { id: postId } });
+  if (!original) throw new Error("Publicação não encontrada");
+
+  const text = body.trim();
+  if (!text) throw new Error("Adicione um comentário à citação.");
+  if (text.length > 500) throw new Error("Máximo 500 caracteres");
+
+  const linkFields = await buildLinkFields(text);
+
+  const post = await prisma.post.create({
+    data: {
+      authorId: profileId,
+      body: text,
+      repostOfId: postId,
+      ...linkFields,
+    },
+  });
+
+  await prisma.repost.upsert({
+    where: { profileId_postId: { profileId, postId } },
+    create: { profileId, postId },
+    update: {},
+  });
+
+  await syncHashtags(post.id, text);
+  await notifyMentions(post.id, text, profileId);
+  await notify(original.authorId, profileId, "REPOST", post.id);
+
   revalidatePath("/feed");
   revalidatePath(`/post/${postId}`);
 }

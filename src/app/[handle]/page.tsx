@@ -9,6 +9,7 @@ import {
   isFollowing,
 } from "@/lib/feed";
 import { getBlockStatus, isMuted } from "@/lib/relationships";
+import { recordProfileView, getProfileAnalytics } from "@/lib/analytics";
 
 const RESERVED = new Set([
   "feed",
@@ -21,6 +22,8 @@ const RESERVED = new Set([
   "messages",
   "cases",
   "settings",
+  "listas",
+  "agendados",
 ]);
 
 type Props = { params: { handle: string } };
@@ -38,13 +41,31 @@ export default async function ProfilePage({ params }: Props) {
   const profile = await getProfileByHandle(handle);
   if (!profile) notFound();
 
-  const [posts, notificationCount, following, blockStatus, muted] = await Promise.all([
-    getFeedPosts(user.profileId, "forYou", profile.id),
-    getUnreadNotificationCount(user.profileId),
-    isFollowing(user.profileId, profile.id),
-    getBlockStatus(user.profileId, profile.id),
-    isMuted(user.profileId, profile.id),
-  ]);
+  const isOwnProfile = profile.id === user.profileId;
+
+  const [posts, notificationCount, following, blockStatus, muted, analytics] =
+    await Promise.all([
+      getFeedPosts(user.profileId, "forYou", profile.id),
+      getUnreadNotificationCount(user.profileId),
+      isFollowing(user.profileId, profile.id),
+      getBlockStatus(user.profileId, profile.id),
+      isMuted(user.profileId, profile.id),
+      isOwnProfile ? getProfileAnalytics(profile.id) : Promise.resolve(null),
+    ]);
+
+  if (!isOwnProfile && !blockStatus.isBlocked) {
+    await recordProfileView(profile.id, user.profileId);
+  }
+
+  const teleconsultUrl =
+    profile.teleconsultUrl ||
+    (profile.verified ? process.env.NEXT_PUBLIC_DOCTOR8_TELECONSULT_URL ?? null : null);
+
+  const canMessage =
+    user.verified &&
+    profile.verified &&
+    !blockStatus.isBlocked &&
+    profile.id !== user.profileId;
 
   return (
     <ProfileClient
@@ -61,6 +82,9 @@ export default async function ProfilePage({ params }: Props) {
         followers: profile._count.followers,
         following: profile._count.following,
         postsCount: profile._count.posts,
+        teleconsultUrl,
+        avatarUrl: profile.avatarUrl,
+        bannerUrl: profile.bannerUrl,
       }}
       posts={posts}
       user={user}
@@ -69,7 +93,9 @@ export default async function ProfilePage({ params }: Props) {
       blockedByViewer={blockStatus.blockedByViewer}
       blockedByTarget={blockStatus.blockedByTarget}
       isMuted={muted}
+      canMessage={canMessage}
       notificationCount={notificationCount}
+      analytics={analytics}
     />
   );
 }

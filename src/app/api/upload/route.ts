@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 import { auth } from "@/auth";
+import { uploadFile } from "@/lib/storage";
+import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const MAX_IMAGE = 5 * 1024 * 1024;
 const MAX_VIDEO = 50 * 1024 * 1024;
@@ -17,6 +16,10 @@ export async function POST(req: Request) {
   if (!session?.user?.profileId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+
+  const ip = clientIp(req);
+  const limited = rateLimit(`upload:${session.user.profileId}:${ip}`, 30, 60_000);
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
@@ -36,15 +39,9 @@ export async function POST(req: Request) {
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const id = randomUUID();
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-
-  const filename = `${id}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, filename), buffer);
+  const url = await uploadFile(buffer, ext, file.type);
 
-  const url = `/uploads/${filename}`;
   return NextResponse.json({
     url,
     type: isVideo ? "video" : isGif ? "gif" : "image",

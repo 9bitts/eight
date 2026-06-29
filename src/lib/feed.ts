@@ -17,6 +17,17 @@ const postInclude = {
   },
   likes: { select: { profileId: true } },
   repostRecords: { select: { profileId: true } },
+  repostOf: {
+    include: {
+      author: {
+        select: {
+          displayName: true,
+          handle: true,
+          verified: true,
+        },
+      },
+    },
+  },
 } as const;
 
 type RawPost = {
@@ -35,6 +46,9 @@ type RawPost = {
   linkTitle: string | null;
   linkDesc: string | null;
   linkImage: string | null;
+  isClinicalCase: boolean;
+  caseTags: string[];
+  caseSpecialty: string | null;
   author: {
     displayName: string;
     handle: string;
@@ -54,6 +68,13 @@ type RawPost = {
   _count: { likes: number; repostRecords: number; replies: number };
   likes: { profileId: string }[];
   repostRecords: { profileId: string }[];
+  repostOf: {
+    id: string;
+    body: string;
+    images: string[];
+    videoUrl: string | null;
+    author: { displayName: string; handle: string; verified: boolean };
+  } | null;
 };
 
 function mapPoll(
@@ -130,6 +151,20 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
       : null,
     poll: mapPoll(post.poll, viewerProfileId),
     isOwner: viewerProfileId === post.authorId,
+    isClinicalCase: post.isClinicalCase,
+    caseTags: post.caseTags,
+    caseSpecialty: post.caseSpecialty,
+    quotedPost: post.repostOf
+      ? {
+          id: post.repostOf.id,
+          name: post.repostOf.author.displayName,
+          handle: post.repostOf.author.handle,
+          body: post.repostOf.body,
+          verified: post.repostOf.author.verified,
+          images: post.repostOf.images,
+          videoUrl: post.repostOf.videoUrl,
+        }
+      : null,
   };
 }
 
@@ -196,6 +231,7 @@ export async function getFeedPosts(
     where: {
       parentId: null,
       threadId: null,
+      isClinicalCase: false,
       ...publishedWhere(),
       ...authorWhere,
     },
@@ -414,6 +450,27 @@ export async function getPostsByHashtag(
   return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
 }
 
+export async function getClinicalCasePosts(
+  viewerProfileId: string
+): Promise<FeedPost[]> {
+  const blockedIds = await getBlockedProfileIds(viewerProfileId);
+
+  const posts = await prisma.post.findMany({
+    where: {
+      isClinicalCase: true,
+      parentId: null,
+      threadId: null,
+      ...(blockedIds.length ? { authorId: { notIn: blockedIds } } : {}),
+      ...publishedWhere(),
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: postInclude,
+  });
+
+  return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+}
+
 export async function getProfileByHandle(handle: string) {
   return prisma.profile.findUnique({
     where: { handle: handle.toLowerCase() },
@@ -492,6 +549,20 @@ export async function searchPosts(
     },
     take: limit,
     orderBy: { createdAt: "desc" },
+    include: postInclude,
+  });
+  return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+}
+
+export async function getScheduledPosts(viewerProfileId: string) {
+  const now = new Date();
+  const posts = await prisma.post.findMany({
+    where: {
+      authorId: viewerProfileId,
+      parentId: null,
+      scheduledAt: { gt: now },
+    },
+    orderBy: { scheduledAt: "asc" },
     include: postInclude,
   });
   return posts.map((p) => mapPost(p as RawPost, viewerProfileId));

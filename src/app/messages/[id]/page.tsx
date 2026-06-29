@@ -1,0 +1,31 @@
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { ConversationClient } from "@/components/messages/ConversationClient";
+import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
+import { getConversationMessages } from "@/lib/messages";
+
+type Props = { params: { id: string } };
+
+export default async function ConversationPage({ params }: Props) {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const user = await getSessionUser(session.user.id);
+  if (!user) redirect("/signup/complete");
+
+  const data = await getConversationMessages(params.id, user.profileId);
+  if (!data) notFound();
+
+  const notificationCount = await getUnreadNotificationCount(user.profileId);
+
+  return (
+    <ConversationClient
+      user={user}
+      notificationCount={notificationCount}
+      conversationId={params.id}
+      otherName={data.otherName}
+      otherHandle={data.otherHandle}
+      initialMessages={data.messages}
+    />
+  );
+}

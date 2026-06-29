@@ -10,14 +10,17 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerificationBanner } from "@/components/verification/VerificationBanner";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { toggleFollow } from "@/lib/actions";
+import { startConversation } from "@/lib/actions/messages";
 import { toggleBlock } from "@/lib/actions/relationships";
 import { formatSpec } from "@/lib/format";
 import type { FeedPost, SessionUser } from "@/lib/types";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 
 type ProfileData = {
   id: string;
@@ -32,6 +35,16 @@ type ProfileData = {
   followers: number;
   following: number;
   postsCount: number;
+  teleconsultUrl: string | null;
+  avatarUrl: string | null;
+  bannerUrl: string | null;
+};
+
+type ProfileAnalytics = {
+  views7d: number;
+  views30d: number;
+  scheduledCount: number;
+  postCount: number;
 };
 
 export function ProfileClient({
@@ -43,7 +56,9 @@ export function ProfileClient({
   blockedByViewer,
   blockedByTarget,
   isMuted,
+  canMessage,
   notificationCount,
+  analytics,
 }: {
   profile: ProfileData;
   posts: FeedPost[];
@@ -53,7 +68,9 @@ export function ProfileClient({
   blockedByViewer: boolean;
   blockedByTarget: boolean;
   isMuted: boolean;
+  canMessage: boolean;
   notificationCount: number;
+  analytics: ProfileAnalytics | null;
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
@@ -82,13 +99,24 @@ export function ProfileClient({
     });
   };
 
+  const onMessage = () => {
+    startTransition(async () => {
+      try {
+        const { conversationId } = await startConversation(profile.id);
+        router.push(`/messages/${conversationId}`);
+      } catch (e) {
+        alert(e instanceof Error ? e.message : "Não foi possível abrir a conversa.");
+      }
+    });
+  };
+
   if (blockedByTarget) {
     return (
       <FeedShell user={user} notificationCount={notificationCount}>
-        <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
+        <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
           <div className="px-4 py-16 text-center">
             <h1 style={{ fontWeight: 800, fontSize: 20, color: INK }}>Perfil indisponível</h1>
-            <p style={{ color: "#7a8f97", marginTop: 8, fontSize: 15 }}>
+            <p style={{ color: MUTED, marginTop: 8, fontSize: 15 }}>
               Você não tem permissão para ver este perfil.
             </p>
           </div>
@@ -99,14 +127,39 @@ export function ProfileClient({
 
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
         <div
           className="sticky top-0 z-10 px-4 py-3"
-          style={{ background: "rgba(255,255,255,.92)", borderBottom: `1px solid ${LINE}` }}
+          style={{ background: "var(--eight-header-bg)", borderBottom: `1px solid ${LINE}` }}
         >
           <h1 style={{ fontWeight: 800, fontSize: 18 }}>{profile.displayName}</h1>
-          <p style={{ color: "#7a8f97", fontSize: 13 }}>{profile.postsCount} publicações</p>
+          <p style={{ color: MUTED, fontSize: 13 }}>{profile.postsCount} publicações</p>
         </div>
+
+        {isOwnProfile && analytics && (
+          <div
+            className="mx-4 mt-3 px-4 py-3 rounded-xl border grid grid-cols-2 gap-3"
+            style={{ borderColor: LINE, background: "var(--eight-nav-active)" }}
+          >
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>{analytics.views7d}</div>
+              <div style={{ fontSize: 12, color: MUTED }}>visualizações (7 dias)</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>{analytics.views30d}</div>
+              <div style={{ fontSize: 12, color: MUTED }}>visualizações (30 dias)</div>
+            </div>
+            {analytics.scheduledCount > 0 && (
+              <Link
+                href="/agendados"
+                className="col-span-2 text-center py-2 rounded-lg font-semibold"
+                style={{ fontSize: 13, background: CARD, color: BLUE, textDecoration: "none", border: `1px solid ${LINE}` }}
+              >
+                {analytics.scheduledCount} post{analytics.scheduledCount > 1 ? "s" : ""} agendado{analytics.scheduledCount > 1 ? "s" : ""} →
+              </Link>
+            )}
+          </div>
+        )}
 
         {isOwnProfile && <VerificationBanner user={user} />}
 
@@ -118,21 +171,45 @@ export function ProfileClient({
               onClick={onUnblock}
               disabled={pending}
               className="mt-2 rounded-full px-4 py-1.5 font-bold"
-              style={{ border: `1px solid ${LINE}`, background: "#fff", cursor: "pointer", fontSize: 13, color: ORANGE }}
+              style={{ border: `1px solid ${LINE}`, background: CARD, cursor: "pointer", fontSize: 13, color: ORANGE }}
             >
               Desbloquear
             </button>
           </div>
         )}
 
-        <div style={{ height: 120, background: `linear-gradient(135deg, ${BLUE}, ${INK})` }} />
+        <div
+          style={{
+            height: 120,
+            background: profile.bannerUrl
+              ? `url(${profile.bannerUrl}) center/cover`
+              : `linear-gradient(135deg, ${BLUE}, #0c2b36)`,
+          }}
+        />
 
         <div className="px-4 pb-4">
           <div className="flex justify-between items-end -mt-10 mb-3 gap-2">
-            <div style={{ border: "4px solid #fff", borderRadius: "50%" }}>
-              <Avatar name={profile.displayName} size={80} />
+            <div style={{ border: `4px solid ${CARD}`, borderRadius: "50%" }}>
+              <Avatar name={profile.displayName} size={80} imageUrl={profile.avatarUrl} />
             </div>
             <div className="flex items-center gap-2">
+              {!isOwnProfile && !blockedByViewer && canMessage && (
+                <button
+                  type="button"
+                  onClick={onMessage}
+                  disabled={pending}
+                  className="rounded-full px-4 py-2 font-bold"
+                  style={{
+                    fontSize: 14,
+                    border: `1px solid ${LINE}`,
+                    color: BLUE,
+                    background: CARD,
+                    cursor: "pointer",
+                  }}
+                >
+                  Mensagem
+                </button>
+              )}
               {!isOwnProfile && !blockedByViewer && (
                 <button
                   type="button"
@@ -166,6 +243,7 @@ export function ProfileClient({
                     border: `1px solid ${LINE}`,
                     color: INK,
                     textDecoration: "none",
+                    background: CARD,
                   }}
                 >
                   Editar perfil
@@ -178,40 +256,62 @@ export function ProfileClient({
             <span style={{ fontWeight: 800, fontSize: 20, color: INK }}>{profile.displayName}</span>
             {profile.verified && <VerifiedBadge size={20} />}
             {isMuted && !isOwnProfile && (
-              <span style={{ fontSize: 12, color: "#7a8f97", marginLeft: 4 }}>· silenciado</span>
+              <span style={{ fontSize: 12, color: MUTED, marginLeft: 4 }}>· silenciado</span>
             )}
           </div>
-          <div style={{ color: "#7a8f97", fontSize: 15 }}>@{profile.handle}</div>
+          <div style={{ color: MUTED, fontSize: 15 }}>@{profile.handle}</div>
 
           {profile.bio && (
-            <p style={{ marginTop: 12, fontSize: 15, lineHeight: 1.5, color: "#1b3a45" }}>{profile.bio}</p>
+            <p style={{ marginTop: 12, fontSize: 15, lineHeight: 1.5, color: "var(--eight-body-text)" }}>{profile.bio}</p>
           )}
 
           <div style={{ marginTop: 8, fontSize: 14, color: ORANGE, fontWeight: 600 }}>{spec}</div>
           {profile.location && (
-            <div style={{ marginTop: 4, fontSize: 14, color: "#7a8f97" }}>{profile.location}</div>
+            <div style={{ marginTop: 4, fontSize: 14, color: MUTED }}>{profile.location}</div>
           )}
 
-          <div className="flex gap-4 mt-3" style={{ fontSize: 14, color: "#7a8f97" }}>
+          {profile.verified && profile.teleconsultUrl && (
+            <a
+              href={profile.teleconsultUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center mt-3 px-4 py-2 rounded-full font-bold"
+              style={{
+                fontSize: 13,
+                background: "#e8f4f8",
+                color: BLUE,
+                textDecoration: "none",
+              }}
+            >
+              Teleconsulta Doctor8 →
+            </a>
+          )}
+
+          <div className="flex gap-4 mt-3" style={{ fontSize: 14, color: MUTED }}>
             <Link
               href={`/${profile.handle}/following`}
-              style={{ textDecoration: "none", color: "#7a8f97" }}
+              style={{ textDecoration: "none", color: MUTED }}
             >
               <strong style={{ color: INK }}>{profile.following}</strong> seguindo
             </Link>
             <Link
               href={`/${profile.handle}/followers`}
-              style={{ textDecoration: "none", color: "#7a8f97" }}
+              style={{ textDecoration: "none", color: MUTED }}
             >
               <strong style={{ color: INK }}>{profile.followers}</strong> seguidores
             </Link>
+            {isOwnProfile && (
+              <Link href="/listas" style={{ textDecoration: "none", color: BLUE, fontWeight: 600 }}>
+                Listas
+              </Link>
+            )}
           </div>
         </div>
 
         {!blockedByViewer && (
           <div style={{ borderTop: `1px solid ${LINE}` }}>
             {posts.length === 0 ? (
-              <p className="px-4 py-8 text-center" style={{ color: "#7a8f97" }}>
+              <p className="px-4 py-8 text-center" style={{ color: MUTED }}>
                 {isOwnProfile ? "Você ainda não publicou nada." : "Nenhuma publicação ainda."}
               </p>
             ) : (

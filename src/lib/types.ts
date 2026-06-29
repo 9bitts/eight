@@ -47,6 +47,18 @@ export type FeedPost = {
   linkPreview: LinkPreviewData | null;
   poll: PollData | null;
   isOwner: boolean;
+  isClinicalCase: boolean;
+  caseTags: string[];
+  caseSpecialty: string | null;
+  quotedPost: {
+    id: string;
+    name: string;
+    handle: string;
+    body: string;
+    verified: boolean;
+    images: string[];
+    videoUrl: string | null;
+  } | null;
 };
 
 export type FeedTab = "forYou" | "following";

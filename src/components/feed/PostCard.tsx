@@ -8,6 +8,7 @@ import {
   Repeat2,
   Globe,
   Pin,
+  Sparkles,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
@@ -16,13 +17,16 @@ import { PostBody } from "@/components/feed/PostBody";
 import { PostMedia, PollCard, LinkPreviewCard } from "@/components/feed/PostMedia";
 import { PostMenu } from "@/components/feed/PostMenu";
 import { SharePostButton } from "@/components/feed/SharePostButton";
+import { QuoteRepostButton } from "@/components/feed/QuoteRepostButton";
+import { QuotedPostCard } from "@/components/feed/QuotedPostCard";
 import { toggleLike, toggleRepost } from "@/lib/actions";
 import type { FeedPost } from "@/lib/types";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const MUTED = "var(--eight-muted)";
 
 function ActionBtn({
   icon: Icon,
@@ -49,7 +53,7 @@ function ActionBtn({
       {count > 0 && <span>{count}</span>}
     </>
   );
-  const style = { color: active ? color : "#6b818b", fontSize: 13.5 };
+  const style = { color: active ? color : MUTED, fontSize: 13.5 };
 
   if (href) {
     return (
@@ -93,8 +97,19 @@ export function PostCard({
       </Link>
       <div className="flex-1 min-w-0">
         {post.isPinned && (
-          <div className="flex items-center gap-1 mb-1" style={{ fontSize: 12, color: "#7a8f97", fontWeight: 600 }}>
+          <div className="flex items-center gap-1 mb-1" style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>
             <Pin size={12} /> Fixado
+          </div>
+        )}
+        {post.isClinicalCase && (
+          <div
+            className="flex items-center gap-1 mb-1"
+            style={{ fontSize: 12, color: ORANGE, fontWeight: 700 }}
+          >
+            <Sparkles size={12} /> Caso clínico
+            {post.caseSpecialty && (
+              <span style={{ color: MUTED, fontWeight: 500 }}>· {post.caseSpecialty}</span>
+            )}
           </div>
         )}
         <div className="flex items-center gap-1 flex-wrap">
@@ -102,12 +117,12 @@ export function PostCard({
             {post.name}
           </Link>
           {post.verified && <VerifiedBadge size={17} />}
-          <span style={{ color: "#7a8f97", fontSize: 14 }}>
-            <Link href={`/${post.handle}`} style={{ color: "#7a8f97", textDecoration: "none" }}>
+          <span style={{ color: MUTED, fontSize: 14 }}>
+            <Link href={`/${post.handle}`} style={{ color: MUTED, textDecoration: "none" }}>
               @{post.handle}
             </Link>
             {" · "}
-            <Link href={postUrl} style={{ color: "#7a8f97", textDecoration: "none" }}>
+            <Link href={postUrl} style={{ color: MUTED, textDecoration: "none" }}>
               {post.time}
             </Link>
             {post.edited && <span> · editado</span>}
@@ -126,9 +141,31 @@ export function PostCard({
           )}
         </div>
 
-        <Link href={postUrl} style={{ textDecoration: "none" }}>
+        {post.isClinicalCase && post.caseTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {post.caseTags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: "2px 8px",
+                  borderRadius: 99,
+                  background: "#fdeee8",
+                  color: ORANGE,
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <Link href={postUrl} style={{ textDecoration: "none", color: "var(--eight-body-text)" }}>
           <PostBody text={post.body} />
         </Link>
+
+        {post.quotedPost && <QuotedPostCard quoted={post.quotedPost} />}
 
         <PostMedia images={post.images} videoUrl={post.videoUrl} gifUrl={post.gifUrl} />
 
@@ -145,10 +182,10 @@ export function PostCard({
         )}
 
         {showActions && (
-          <div className="flex items-center justify-between mt-3" style={{ maxWidth: 360 }}>
+          <div className="flex items-center justify-between mt-3" style={{ maxWidth: 400 }}>
             <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} />
             <ActionBtn icon={Repeat2} count={post.reposts} color="#1a9c5b" active={post.reposted} onClick={onRepost} />
-            <ActionBtn icon={Heart} count={post.likes} color={ORANGE} active={post.liked} fill onClick={onLike} />
+            <QuoteRepostButton postId={post.id} />
             <ActionBtn icon={Heart} count={post.likes} color={ORANGE} active={post.liked} fill onClick={onLike} />
             <SharePostButton postId={post.id} />
           </div>

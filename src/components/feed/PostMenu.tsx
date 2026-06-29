@@ -4,8 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Pin, Pencil, Trash2 } from "lucide-react";
 import { deletePost, editPost, pinPost } from "@/lib/actions";
+import { ReportDialog } from "@/components/moderation/ReportDialog";
 
-const LINE = "#e4ebee";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const INK = "var(--eight-ink)";
 
 export function PostMenu({
   postId,
@@ -21,6 +24,7 @@ export function PostMenu({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [editText, setEditText] = useState(body);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -32,7 +36,39 @@ export function PostMenu({
     return () => document.removeEventListener("click", close);
   }, []);
 
-  if (!isOwner) return null;
+  if (!isOwner) {
+    return (
+      <>
+        <div className="relative ml-auto" ref={ref}>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            style={{ color: "var(--eight-muted)", background: "none", border: "none", cursor: "pointer", padding: 4 }}
+          >
+            ···
+          </button>
+          {open && (
+            <div
+              className="absolute right-0 top-8 z-20 rounded-xl shadow-lg border py-1 min-w-[160px]"
+              style={{ background: CARD, borderColor: LINE }}
+            >
+              <button
+                type="button"
+                onClick={() => { setReporting(true); setOpen(false); }}
+                className="flex items-center gap-2 w-full px-4 py-2.5 text-left"
+                style={{ fontSize: 14, color: "#e05930", background: "none", border: "none", cursor: "pointer" }}
+              >
+                Denunciar
+              </button>
+            </div>
+          )}
+        </div>
+        {reporting && (
+          <ReportDialog targetType="POST" targetId={postId} onClose={() => setReporting(false)} />
+        )}
+      </>
+    );
+  }
 
   const onDelete = async () => {
     if (!confirm("Apagar esta publicação?")) return;
@@ -77,7 +113,7 @@ export function PostMenu({
             type="button"
             onClick={() => setEditing(false)}
             className="rounded-full px-4 py-1.5"
-            style={{ border: `1px solid ${LINE}`, background: "#fff", cursor: "pointer" }}
+            style={{ border: `1px solid ${LINE}`, background: CARD, cursor: "pointer" }}
           >
             Cancelar
           </button>
@@ -98,7 +134,7 @@ export function PostMenu({
       {open && (
         <div
           className="absolute right-0 top-8 z-20 rounded-xl shadow-lg border py-1 min-w-[160px]"
-          style={{ background: "#fff", borderColor: LINE }}
+          style={{ background: CARD, borderColor: LINE }}
         >
           <MenuBtn icon={Pencil} label="Editar" onClick={() => { setEditing(true); setOpen(false); }} />
           <MenuBtn icon={Pin} label={isPinned ? "Desafixar" : "Fixar no perfil"} onClick={onPin} />
@@ -127,7 +163,7 @@ function MenuBtn({
       className="flex items-center gap-2 w-full px-4 py-2.5 text-left"
       style={{
         fontSize: 14,
-        color: danger ? "#e05930" : "#0c2b36",
+        color: danger ? "#e05930" : INK,
         background: "none",
         border: "none",
         cursor: "pointer",

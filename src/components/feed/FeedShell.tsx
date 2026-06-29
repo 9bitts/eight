@@ -14,16 +14,19 @@ import {
   LogOut,
   BadgeCheck,
   Shield,
+  List,
+  Flag,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import type { SessionUser } from "@/lib/types";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
-const INK = "#0c2b36";
-const BG = "#f7f9fa";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const BG = "var(--eight-shell-bg)";
+const LINE = "var(--eight-line)";
 
 function LogoMark() {
   return (
@@ -59,9 +62,9 @@ function NavLink({
       href={href}
       className="flex items-center gap-4 px-4 py-3 rounded-full w-full transition-colors relative"
       style={{
-        color: active ? INK : "#516b75",
+        color: active ? INK : "var(--eight-nav-text)",
         fontWeight: active ? 700 : 500,
-        background: active ? "#eaf1f4" : "transparent",
+        background: active ? "var(--eight-nav-active)" : "transparent",
         fontSize: 17,
         textDecoration: "none",
       }}
@@ -102,6 +105,7 @@ export function FeedShell({
   children: React.ReactNode;
   rightRail?: React.ReactNode;
 }) {
+  const { t } = useLocale();
   const shortName =
     user.displayName.length > 16
       ? user.displayName.split(" ")[0]
@@ -119,19 +123,24 @@ export function FeedShell({
               <LogoMark />
             </Link>
             <nav className="flex flex-col gap-1 mt-2">
-              <NavLink href="/feed" icon={Home} label="Início" />
-              <NavLink href="/explore" icon={Search} label="Explorar" />
-              <NavLink href="/notifications" icon={Bell} label="Notificações" badge={notificationCount} />
-              <NavLink href="/messages" icon={Mail} label="Mensagens" />
-              <NavLink href="/cases" icon={Sparkles} label="Casos clínicos" />
-              <NavLink href={`/${user.handle}`} icon={User} label="Perfil" />
+              <NavLink href="/feed" icon={Home} label={t("nav.home")} />
+              <NavLink href="/explore" icon={Search} label={t("nav.explore")} />
+              <NavLink href="/notifications" icon={Bell} label={t("nav.notifications")} badge={notificationCount} />
+              <NavLink href="/messages" icon={Mail} label={t("nav.messages")} />
+              <NavLink href="/cases" icon={Sparkles} label={t("nav.cases")} />
+              <NavLink href="/listas" icon={List} label={t("nav.lists")} />
+              <NavLink href={`/${user.handle}`} icon={User} label={t("nav.profile")} />
               {user.verificationStatus !== "VERIFIED" && (
-                <NavLink href="/verificacao" icon={BadgeCheck} label="Verificação" />
+                <NavLink href="/verificacao" icon={BadgeCheck} label={t("nav.verification")} />
               )}
               {user.isAdmin && (
-                <NavLink href="/admin/verificacoes" icon={Shield} label="Admin" />
+                <>
+                  <NavLink href="/admin/verificacoes" icon={Shield} label={t("nav.admin")} />
+                  <NavLink href="/admin/convites" icon={Shield} label="Convites" />
+                  <NavLink href="/admin/denuncias" icon={Flag} label="Denúncias" />
+                </>
               )}
-              <NavLink href="/settings" icon={Settings} label="Configurações" />
+              <NavLink href="/settings" icon={Settings} label={t("nav.settings")} />
             </nav>
             <button
               type="button"
@@ -146,7 +155,7 @@ export function FeedShell({
                 cursor: "pointer",
               }}
             >
-              <span className="hidden xl:inline">Publicar</span>
+              <span className="hidden xl:inline">{t("nav.publish")}</span>
               <span className="xl:hidden">+</span>
             </button>
             <div className="mt-auto flex items-center gap-2 p-2 rounded-full">
@@ -161,14 +170,14 @@ export function FeedShell({
                 >
                   {shortName}
                 </Link>
-                <div style={{ color: "#7a8f97", fontSize: 13 }}>@{user.handle}</div>
+                <div style={{ color: "var(--eight-muted)", fontSize: 13 }}>@{user.handle}</div>
               </div>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/" })}
                 title="Sair"
                 className="hidden xl:flex p-2 rounded-full"
-                style={{ color: "#7a8f97", background: "transparent", border: "none", cursor: "pointer" }}
+                style={{ color: "var(--eight-muted)", background: "transparent", border: "none", cursor: "pointer" }}
               >
                 <LogOut size={18} />
               </button>

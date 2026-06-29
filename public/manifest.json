@@ -1,0 +1,18 @@
+{
+  "name": "eight — Doctor8",
+  "short_name": "eight",
+  "description": "A rede dos profissionais de saúde verificados.",
+  "start_url": "/feed",
+  "display": "standalone",
+  "background_color": "#0a242e",
+  "theme_color": "#176a88",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

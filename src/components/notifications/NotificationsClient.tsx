@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Repeat2, UserPlus, MessageCircle, BadgeCheck } from "lucide-react";
+import { Heart, Repeat2, UserPlus, MessageCircle, BadgeCheck, Mail } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -33,6 +33,7 @@ function NotifIcon({ type }: { type: string }) {
   if (type === "VERIFICATION_APPROVED" || type === "VERIFICATION_REJECTED") {
     return <BadgeCheck {...props} />;
   }
+  if (type === "MESSAGE") return <Mail {...props} />;
   return <MessageCircle {...props} />;
 }
 
@@ -53,6 +54,8 @@ function notifText(n: Notif): string {
       return "Seu registro profissional foi aprovado — selo verificado liberado!";
     case "VERIFICATION_REJECTED":
       return "Sua verificação precisa de ajustes — veja em Verificação";
+    case "MESSAGE":
+      return `${name} enviou uma mensagem`;
     default:
       return `${name} interagiu com você`;
   }
@@ -62,7 +65,9 @@ function NotifRow({ n }: { n: Notif }) {
   const href =
     n.type === "VERIFICATION_APPROVED" || n.type === "VERIFICATION_REJECTED"
       ? "/verificacao"
-      : n.postId
+      : n.type === "MESSAGE"
+        ? "/messages"
+        : n.postId
         ? `/post/${n.postId}`
         : `/${n.actor.handle}`;
   return (

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Providers from "@/components/Providers";
+import { LOCALE_COOKIE, parseLocale } from "@/lib/i18n";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,6 +10,7 @@ export const metadata: Metadata = {
   description:
     "A rede dos profissionais de saúde. Conhecimento, casos e conexões verificadas, no seu idioma, em qualquer país.",
   metadataBase: new URL("https://doctor8.com.br"),
+  manifest: "/manifest.json",
   openGraph: {
     title: "eight — A rede dos profissionais de saúde",
     description:
@@ -22,8 +26,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const locale = parseLocale(cookies().get(LOCALE_COOKIE)?.value);
+  const theme = parseTheme(cookies().get(THEME_COOKIE)?.value);
+  const htmlLang = locale === "pt" ? "pt-BR" : locale;
+
   return (
-    <html lang="pt-BR">
+    <html lang={htmlLang} data-theme={theme}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -33,7 +41,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers initialLocale={locale} initialTheme={theme}>{children}</Providers>
       </body>
     </html>
   );

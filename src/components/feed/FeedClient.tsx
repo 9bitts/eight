@@ -12,16 +12,20 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { toggleFollow } from "@/lib/actions";
 import { formatCount } from "@/lib/feed";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
 const BLUE = "#176a88";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 
 function FeedTabs({ tab }: { tab: FeedTab }) {
+  const { t } = useLocale();
   const tabs: { id: FeedTab; label: string }[] = [
-    { id: "forYou", label: "Para você" },
-    { id: "following", label: "Seguindo" },
+    { id: "forYou", label: t("feed.forYou") },
+    { id: "following", label: t("feed.following") },
   ];
 
   return (
@@ -33,7 +37,7 @@ function FeedTabs({ tab }: { tab: FeedTab }) {
           className="flex-1 py-3 text-center font-bold transition-colors"
           style={{
             fontSize: 15,
-            color: tab === t.id ? INK : "#7a8f97",
+            color: tab === t.id ? INK : MUTED,
             textDecoration: "none",
             borderBottom: tab === t.id ? `3px solid ${BLUE}` : "3px solid transparent",
           }}
@@ -83,6 +87,7 @@ function RightRail({
   trends: Trend[];
   onFollow: (id: string) => void;
 }) {
+  const { t } = useLocale();
   return (
     <>
       <Link
@@ -91,23 +96,23 @@ function RightRail({
         style={{ background: "#eef3f5", color: "#7a8f97", textDecoration: "none" }}
       >
         <Search size={18} />
-        <span style={{ fontSize: 14 }}>Buscar profissionais, temas…</span>
+        <span style={{ fontSize: 14 }}>{t("feed.searchPlaceholder")}</span>
       </Link>
 
       <div className="rounded-2xl p-4 mb-4" style={{ background: "#eaf1f4" }}>
         <div className="flex items-center gap-2 mb-1">
           <BadgeCheck size={20} style={{ color: BLUE }} fill={BLUE} stroke="#fff" />
-          <span style={{ fontWeight: 700, fontSize: 15 }}>Selo verificado</span>
+          <span style={{ fontWeight: 700, fontSize: 15 }}>{t("feed.verifiedSeal")}</span>
         </div>
         <p style={{ fontSize: 13.5, color: "#516b75", lineHeight: 1.5 }}>
-          Todo perfil com selo teve o registro profissional confirmado.
+          {t("feed.verifiedSealDesc")}
         </p>
       </div>
 
       <div className="rounded-2xl mb-4" style={{ background: "#f4f7f8" }}>
         <div className="flex items-center gap-2 px-4 pt-3 pb-1">
           <TrendingUp size={18} style={{ color: "#e05930" }} />
-          <h3 style={{ fontWeight: 800, fontSize: 16 }}>Em alta na saúde</h3>
+          <h3 style={{ fontWeight: 800, fontSize: 16 }}>{t("feed.trends")}</h3>
         </div>
         {trends.map((t) => (
           <Link
@@ -126,9 +131,11 @@ function RightRail({
 
       {suggestions.length > 0 && (
         <div className="rounded-2xl" style={{ background: "#f4f7f8" }}>
-          <h3 className="px-4 pt-3 pb-1" style={{ fontWeight: 800, fontSize: 16 }}>Quem seguir</h3>
+          <h3 className="px-4 pt-3 pb-1" style={{ fontWeight: 800, fontSize: 16 }}>
+            {t("feed.whoToFollow")}
+          </h3>
           <p className="px-4 pb-1" style={{ fontSize: 12, color: "#7a8f97" }}>
-            Sugestões da sua área e região
+            {t("feed.whoToFollowHint")}
           </p>
           {suggestions.map((s) => (
             <SuggestionRow key={s.id} s={s} onToggle={onFollow} />
@@ -174,11 +181,11 @@ export function FeedClient({
     >
       <main
         className="flex-1 min-w-0"
-        style={{ borderRight: `1px solid ${LINE}`, maxWidth: 620, background: "#fff" }}
+        style={{ borderRight: `1px solid ${LINE}`, maxWidth: 620, background: CARD }}
       >
         <div
           className="sticky top-0 z-10"
-          style={{ background: "rgba(255,255,255,.95)", borderBottom: `1px solid ${LINE}` }}
+          style={{ background: "var(--eight-header-bg)", borderBottom: `1px solid ${LINE}` }}
         >
           <div className="px-4 py-3">
             <h1 style={{ fontWeight: 800, fontSize: 20 }}>Início</h1>

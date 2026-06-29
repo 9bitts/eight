@@ -4,14 +4,17 @@ import { authConfig } from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-const PROTECTED = ["/feed", "/explore", "/notifications", "/messages", "/cases", "/settings", "/post", "/verificacao", "/admin"];
+const PROTECTED = ["/feed", "/explore", "/notifications", "/messages", "/cases", "/settings", "/post", "/verificacao", "/admin", "/listas", "/agendados"];
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
 
   const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname === "/signup";
 
   if (isProtected && !isLoggedIn) {
     const login = new URL("/login", req.nextUrl.origin);
@@ -31,11 +34,14 @@ export const config = {
     "/feed/:path*",
     "/explore/:path*",
     "/notifications",
-    "/messages",
+    "/messages/:path*",
     "/cases",
     "/settings",
+    "/listas/:path*",
+    "/agendados",
     "/post/:path*",
     "/login",
+    "/login/:path*",
     "/signup",
     "/signup/complete",
     "/verificacao",

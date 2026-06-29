@@ -1,6 +1,32 @@
 import { avatarColor, initials } from "@/lib/avatar";
 
-export function Avatar({ name, size = 44 }: { name: string; size?: number }) {
+export function Avatar({
+  name,
+  size = 44,
+  imageUrl,
+}: {
+  name: string;
+  size?: number;
+  imageUrl?: string | null;
+}) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        width={size}
+        height={size}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          flexShrink: 0,
+          objectFit: "cover",
+        }}
+      />
+    );
+  }
+
   return (
     <div
       style={{
