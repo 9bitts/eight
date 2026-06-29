@@ -15,24 +15,29 @@ const INK = "#0c2b36";
 const LINE = "#e4ebee";
 
 export function PostThreadClient({
-  post,
+  posts,
   replies,
   user,
   notificationCount,
+  focusPostId,
 }: {
-  post: FeedPost;
+  posts: FeedPost[];
   replies: FeedPost[];
   user: SessionUser;
   notificationCount: number;
+  focusPostId: string;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
   const [pending, startTransition] = useTransition();
 
+  const root = posts[0];
+  if (!root) return null;
+
   const reply = () => {
     if (!draft.trim() || pending) return;
     startTransition(async () => {
-      await createPost(draft, post.id);
+      await createPost({ body: draft, parentId: root.id });
       setDraft("");
       router.refresh();
     });
@@ -48,10 +53,16 @@ export function PostThreadClient({
           <Link href="/feed" style={{ color: INK }}>
             <ArrowLeft size={20} />
           </Link>
-          <h1 style={{ fontWeight: 800, fontSize: 18 }}>Publicação</h1>
+          <h1 style={{ fontWeight: 800, fontSize: 18 }}>
+            {posts.length > 1 ? "Fio" : "Publicação"}
+          </h1>
         </div>
 
-        <PostCard post={post} showActions />
+        {posts.map((p) => (
+          <div key={p.id} style={p.id === focusPostId ? { background: "#fafcfd" } : undefined}>
+            <PostCard post={p} showActions={p.id === root.id} />
+          </div>
+        ))}
 
         <div className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE }}>
           <Avatar name={user.displayName} />
@@ -77,7 +88,7 @@ export function PostThreadClient({
                   fontSize: 14,
                   opacity: draft.trim() && !pending ? 1 : 0.4,
                   border: "none",
-                  cursor: draft.trim() ? "pointer" : "not-allowed",
+                  cursor: "pointer",
                 }}
               >
                 {pending ? "Enviando…" : "Responder"}

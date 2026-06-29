@@ -8,11 +8,14 @@ import {
   Repeat2,
   Share,
   Globe,
-  MoreHorizontal,
+  Pin,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PostBody } from "@/components/feed/PostBody";
+import { PostMedia, PollCard, LinkPreviewCard } from "@/components/feed/PostMedia";
+import { PostMenu } from "@/components/feed/PostMenu";
 import { toggleLike, toggleRepost } from "@/lib/actions";
 import type { FeedPost } from "@/lib/types";
 
@@ -46,7 +49,6 @@ function ActionBtn({
       {count > 0 && <span>{count}</span>}
     </>
   );
-
   const style = { color: active ? color : "#6b818b", fontSize: 13.5 };
 
   if (href) {
@@ -56,14 +58,8 @@ function ActionBtn({
       </Link>
     );
   }
-
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-1.5 transition-colors"
-      style={style}
-    >
+    <button type="button" onClick={onClick} className="flex items-center gap-1.5 transition-colors" style={style}>
       {inner}
     </button>
   );
@@ -88,12 +84,24 @@ export function PostCard({
     router.refresh();
   };
 
+  const onShare = () => {
+    const url = `${window.location.origin}/post/${post.id}`;
+    navigator.clipboard.writeText(url).then(() => alert("Link copiado!"));
+  };
+
+  const postUrl = post.threadId ? `/post/${post.threadId}` : `/post/${post.id}`;
+
   return (
     <article className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE }}>
       <Link href={`/${post.handle}`}>
         <Avatar name={post.name} />
       </Link>
       <div className="flex-1 min-w-0">
+        {post.isPinned && (
+          <div className="flex items-center gap-1 mb-1" style={{ fontSize: 12, color: "#7a8f97", fontWeight: 600 }}>
+            <Pin size={12} /> Fixado
+          </div>
+        )}
         <div className="flex items-center gap-1 flex-wrap">
           <Link href={`/${post.handle}`} style={{ fontWeight: 700, color: INK, textDecoration: "none" }}>
             {post.name}
@@ -104,64 +112,49 @@ export function PostCard({
               @{post.handle}
             </Link>
             {" · "}
-            <Link href={`/post/${post.id}`} style={{ color: "#7a8f97", textDecoration: "none" }}>
+            <Link href={postUrl} style={{ color: "#7a8f97", textDecoration: "none" }}>
               {post.time}
             </Link>
+            {post.edited && <span> · editado</span>}
           </span>
-          <span className="ml-auto" style={{ color: "#9fb0b6" }}>
-            <MoreHorizontal size={17} />
-          </span>
+          <PostMenu postId={post.id} isOwner={post.isOwner} isPinned={post.isPinned} body={post.body} />
         </div>
         <div
           className="flex items-center gap-1 mt-0.5 mb-1.5"
           style={{ fontSize: 12.5, color: ORANGE, fontWeight: 600 }}
         >
-          <span style={{ background: "#fbe5dd", padding: "1px 8px", borderRadius: 99 }}>
-            {post.spec}
-          </span>
+          <span style={{ background: "#fbe5dd", padding: "1px 8px", borderRadius: 99 }}>{post.spec}</span>
           {post.loc && (
-            <span
-              style={{
-                color: "#9fb0b6",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 3,
-                marginLeft: 4,
-              }}
-            >
+            <span style={{ color: "#9fb0b6", display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 4 }}>
               <Globe size={12} /> {post.loc}
             </span>
           )}
         </div>
-        <Link href={`/post/${post.id}`} style={{ textDecoration: "none" }}>
-          <p style={{ color: "#1b3a45", fontSize: 15.5, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-            {post.body}
-          </p>
+
+        <Link href={postUrl} style={{ textDecoration: "none" }}>
+          <PostBody text={post.body} />
         </Link>
+
+        <PostMedia images={post.images} videoUrl={post.videoUrl} gifUrl={post.gifUrl} />
+
+        {post.linkPreview && !post.images.length && !post.videoUrl && (
+          <LinkPreviewCard preview={post.linkPreview} />
+        )}
+
+        {post.poll && <PollCard poll={post.poll} />}
+
+        {post.threadOrder > 0 && (
+          <Link href={`/post/${post.threadId}`} style={{ fontSize: 13, color: BLUE, fontWeight: 600 }}>
+            Ver fio completo →
+          </Link>
+        )}
+
         {showActions && (
           <div className="flex items-center justify-between mt-3" style={{ maxWidth: 360 }}>
-            <ActionBtn
-              icon={MessageCircle}
-              count={post.replies}
-              color={BLUE}
-              href={`/post/${post.id}`}
-            />
-            <ActionBtn
-              icon={Repeat2}
-              count={post.reposts}
-              color="#1a9c5b"
-              active={post.reposted}
-              onClick={onRepost}
-            />
-            <ActionBtn
-              icon={Heart}
-              count={post.likes}
-              color={ORANGE}
-              active={post.liked}
-              fill
-              onClick={onLike}
-            />
-            <ActionBtn icon={Share} count={0} color={BLUE} />
+            <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} />
+            <ActionBtn icon={Repeat2} count={post.reposts} color="#1a9c5b" active={post.reposted} onClick={onRepost} />
+            <ActionBtn icon={Heart} count={post.likes} color={ORANGE} active={post.liked} fill onClick={onLike} />
+            <ActionBtn icon={Share} count={0} color={BLUE} onClick={onShare} />
           </div>
         )}
       </div>

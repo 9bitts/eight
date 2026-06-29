@@ -32,13 +32,13 @@ export default async function ProfilePage({ params }: Props) {
   if (!session?.user?.id) redirect("/login");
 
   const user = await getSessionUser(session.user.id);
-  if (!user) redirect("/signup");
+  if (!user) redirect("/signup/complete");
 
   const profile = await getProfileByHandle(handle);
   if (!profile) notFound();
 
   const [posts, notificationCount, following] = await Promise.all([
-    getFeedPosts(user.profileId, profile.id),
+    getFeedPosts(user.profileId, "forYou", profile.id),
     getUnreadNotificationCount(user.profileId),
     isFollowing(user.profileId, profile.id),
   ]);

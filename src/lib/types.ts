@@ -1,3 +1,25 @@
+export type PollData = {
+  id: string;
+  endsAt: string;
+  ended: boolean;
+  options: {
+    id: string;
+    text: string;
+    votes: number;
+    percent: number;
+    voted: boolean;
+  }[];
+  totalVotes: number;
+  userVoted: boolean;
+};
+
+export type LinkPreviewData = {
+  url: string;
+  title: string | null;
+  description: string | null;
+  image: string | null;
+};
+
 export type FeedPost = {
   id: string;
   authorId: string;
@@ -13,7 +35,21 @@ export type FeedPost = {
   replies: number;
   body: string;
   verified: boolean;
+  images: string[];
+  videoUrl: string | null;
+  gifUrl: string | null;
+  edited: boolean;
+  scheduled: boolean;
+  scheduledAt: string | null;
+  isPinned: boolean;
+  threadId: string | null;
+  threadOrder: number;
+  linkPreview: LinkPreviewData | null;
+  poll: PollData | null;
+  isOwner: boolean;
 };
+
+export type FeedTab = "forYou" | "following";
 
 export type Suggestion = {
   id: string;
@@ -24,9 +60,26 @@ export type Suggestion = {
   following: boolean;
 };
 
+export type Trend = {
+  tag: string;
+  count: number;
+};
+
 export type SessionUser = {
   profileId: string;
   displayName: string;
   handle: string;
   verified: boolean;
+};
+
+export type CreatePostInput = {
+  body: string;
+  images?: string[];
+  videoUrl?: string;
+  gifUrl?: string;
+  scheduledAt?: string;
+  threadParts?: string[];
+  pollOptions?: string[];
+  pollEndsInHours?: number;
+  parentId?: string;
 };

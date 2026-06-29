@@ -6,8 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import Logo from "@/components/Logo";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
-function LoginForm() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/feed";
@@ -40,36 +41,39 @@ function LoginForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="auth">
-      {error && <p className="signup-error" style={{ marginBottom: 8 }}>{error}</p>}
-
-      <input
-        className="field"
-        type="email"
-        placeholder="E-mail"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        autoFocus
-      />
-      <input
-        className="field"
-        type="password"
-        placeholder="Senha"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button type="submit" className="auth-btn btn-orange" disabled={loading}>
-        {loading ? (
-          <>
-            <Loader2 size={18} className="spin" /> Entrando…
-          </>
-        ) : (
-          "Entrar"
-        )}
-      </button>
-    </form>
+    <>
+      <OAuthButtons mode="login" callbackUrl={callbackUrl} />
+      <div className="divider">ou com e-mail</div>
+      <form onSubmit={onSubmit} className="auth">
+        {error && <p className="signup-error" style={{ marginBottom: 8 }}>{error}</p>}
+        <input
+          className="field"
+          type="email"
+          placeholder="E-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoFocus
+        />
+        <input
+          className="field"
+          type="password"
+          placeholder="Senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit" className="auth-btn btn-orange" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 size={18} className="spin" /> Entrando…
+            </>
+          ) : (
+            "Entrar com e-mail"
+          )}
+        </button>
+      </form>
+    </>
   );
 }
 
@@ -93,11 +97,11 @@ export default function LoginPage() {
         </p>
 
         <Suspense fallback={<p className="lede">Carregando…</p>}>
-          <LoginForm />
+          <LoginContent />
         </Suspense>
 
         <p className="signin">
-          Não tem conta? <Link href="/signup">Criar conta profissional</Link>
+          Não tem conta? <Link href="/signup">Criar conta</Link>
         </p>
         <p className="signin" style={{ marginTop: 12 }}>
           <Link href="/">← Voltar ao início</Link>

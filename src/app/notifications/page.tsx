@@ -10,7 +10,7 @@ export default async function NotificationsPage() {
   if (!session?.user?.id) redirect("/login");
 
   const user = await getSessionUser(session.user.id);
-  if (!user) redirect("/signup");
+  if (!user) redirect("/signup/complete");
 
   const notifications = await prisma.notification.findMany({
     where: { recipientId: user.profileId },

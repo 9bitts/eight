@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { AuthEntry } from "@/components/auth/AuthEntry";
 
 export default function Home() {
   return (
@@ -28,25 +29,7 @@ export default function Home() {
             verificados, no seu idioma, em qualquer país.
           </p>
 
-          <div className="auth">
-            <button className="auth-btn btn-white">
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C17.1 2.9 14.8 2 12 2 6.9 2 2.8 6.1 2.8 11.9S6.9 21.8 12 21.8c6.9 0 9.2-4.8 9.2-7.3 0-.5 0-.9-.1-1.3H12z" />
-              </svg>
-              Continuar com Google
-            </button>
-            <button className="auth-btn btn-line">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
-                <path d="M16.4 12.7c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.1 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.3-.9-2.4-3.7zM14.2 5.9c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.6 1 0 1.9-.5 2.5-1.2z" />
-              </svg>
-              Continuar com a Apple
-            </button>
-            <div className="divider">ou</div>
-            <input className="field" type="email" placeholder="E-mail profissional" />
-            <Link href="/signup" className="auth-btn btn-orange" style={{ textDecoration: "none" }}>
-              Criar conta profissional →
-            </Link>
-          </div>
+          <AuthEntry />
 
           <p className="signin">
             Já faz parte? <Link href="/login">Entrar</Link>

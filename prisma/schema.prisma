@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Auth.js (Etapa 3 — Google/Apple usam estas tabelas) ───────────────────
+// ─── Auth.js ───────────────────────────────────────────────────────────────
 
 model Account {
   id                String  @id @default(cuid())
@@ -44,7 +44,7 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ─── Usuário e perfil público (estilo X: conta + @handle) ─────────────────
+// ─── Usuário e perfil ─────────────────────────────────────────────────────
 
 model User {
   id            String    @id @default(cuid())
@@ -76,41 +76,111 @@ model Profile {
   bannerUrl           String?
   verified            Boolean   @default(false)
   verifiedAt          DateTime?
+  pinnedPostId        String?   @unique
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pinnedPost Post? @relation("ProfilePinned", fields: [pinnedPostId], references: [id], onDelete: SetNull)
 
   posts              Post[]
   likes              Like[]
   reposts            Repost[]
   comments           Comment[]
+  pollVotes          PollVote[]
   followers          Follow[]       @relation("following")
   following          Follow[]       @relation("follower")
   notifications      Notification[] @relation("recipient")
   actorNotifications Notification[] @relation("actor")
 }
 
-// ─── Conteúdo e interações (modelo X) ─────────────────────────────────────
+// ─── Posts e conteúdo (feed estilo X) ────────────────────────────────────
 
 model Post {
-  id         String   @id @default(cuid())
-  authorId   String
-  body       String   @db.VarChar(500)
-  parentId   String?
-  repostOfId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String    @id @default(cuid())
+  authorId    String
+  body        String    @db.VarChar(500)
+  parentId    String?
+  repostOfId  String?
+  images      String[]  @default([])
+  videoUrl    String?
+  gifUrl      String?
+  scheduledAt DateTime?
+  editedAt    DateTime?
+  threadId    String?
+  threadOrder Int       @default(0)
+  linkUrl     String?
+  linkTitle   String?
+  linkDesc    String?   @db.VarChar(300)
+  linkImage   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  author     Profile  @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent     Post?    @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies    Post[]   @relation("Replies")
-  repostOf   Post?    @relation("RepostChain", fields: [repostOfId], references: [id], onDelete: SetNull)
-  reposts    Post[]   @relation("RepostChain")
-
+  author        Profile       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent        Post?         @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Post[]        @relation("Replies")
+  repostOf      Post?         @relation("RepostChain", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts       Post[]        @relation("RepostChain")
+  threadRoot    Post?         @relation("ThreadPosts", fields: [threadId], references: [id], onDelete: SetNull)
+  threadParts   Post[]        @relation("ThreadPosts")
+  pinnedOn      Profile?      @relation("ProfilePinned")
+  poll          Poll?
+  hashtags      PostHashtag[]
   likes         Like[]
   repostRecords Repost[]
   comments      Comment[]
+
+  @@index([authorId, createdAt])
+  @@index([threadId])
+  @@index([scheduledAt])
+}
+
+model Poll {
+  id        String       @id @default(cuid())
+  postId    String       @unique
+  endsAt    DateTime
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  options   PollOption[]
+  votes     PollVote[]
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  pollId    String
+  text      String     @db.VarChar(100)
+  sortOrder Int        @default(0)
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     PollVote[]
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  pollId    String
+  optionId  String
+  profileId String
+  createdAt DateTime   @default(now())
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  profile   Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, pollId])
+}
+
+model Hashtag {
+  id        String        @id @default(cuid())
+  tag       String        @unique
+  posts     PostHashtag[]
+  createdAt DateTime      @default(now())
+}
+
+model PostHashtag {
+  postId    String
+  hashtagId String
+  post      Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag   Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
 }
 
 model Like {

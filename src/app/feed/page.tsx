@@ -5,19 +5,26 @@ import {
   getFeedPosts,
   getSessionUser,
   getSuggestions,
+  getTrendingHashtags,
   getUnreadNotificationCount,
 } from "@/lib/feed";
+import type { FeedTab } from "@/lib/types";
 
-export default async function FeedPage() {
+type Props = { searchParams: { tab?: string } };
+
+export default async function FeedPage({ searchParams }: Props) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const user = await getSessionUser(session.user.id);
-  if (!user) redirect("/signup");
+  if (!user) redirect("/signup/complete");
 
-  const [posts, suggestions, notificationCount] = await Promise.all([
-    getFeedPosts(user.profileId),
+  const tab: FeedTab = searchParams.tab === "following" ? "following" : "forYou";
+
+  const [posts, suggestions, trends, notificationCount] = await Promise.all([
+    getFeedPosts(user.profileId, tab),
     getSuggestions(user.profileId),
+    getTrendingHashtags(),
     getUnreadNotificationCount(user.profileId),
   ]);
 
@@ -26,7 +33,9 @@ export default async function FeedPage() {
       user={user}
       initialPosts={posts}
       initialSuggestions={suggestions}
+      trends={trends}
       notificationCount={notificationCount}
+      tab={tab}
     />
   );
 }

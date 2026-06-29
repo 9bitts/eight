@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Twitter from "next-auth/providers/twitter";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -8,6 +9,15 @@ import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 
 const oauthProviders = [];
+
+if (process.env.AUTH_TWITTER_ID && process.env.AUTH_TWITTER_SECRET) {
+  oauthProviders.push(
+    Twitter({
+      clientId: process.env.AUTH_TWITTER_ID,
+      clientSecret: process.env.AUTH_TWITTER_SECRET,
+    })
+  );
+}
 
 if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
   oauthProviders.push(
@@ -64,4 +74,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      if (user?.id) token.id = user.id;
+
+      if (token.id) {
+        const profile = await prisma.profile.findUnique({
+          where: { userId: token.id as string },
+          select: { id: true, handle: true, verified: true },
+        });
+        if (profile) {
+          token.profileId = profile.id;
+          token.handle = profile.handle;
+          token.verified = profile.verified;
+        } else {
+          delete token.profileId;
+          delete token.handle;
+          delete token.verified;
+        }
+      }
+
+      return token;
+    },
+  },
 });

@@ -8,7 +8,7 @@ export default async function ExplorePage() {
   if (!session?.user?.id) redirect("/login");
 
   const user = await getSessionUser(session.user.id);
-  if (!user) redirect("/signup");
+  if (!user) redirect("/signup/complete");
 
   const notificationCount = await getUnreadNotificationCount(user.profileId);
 

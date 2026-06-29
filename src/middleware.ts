@@ -37,5 +37,6 @@ export const config = {
     "/post/:path*",
     "/login",
     "/signup",
+    "/signup/complete",
   ],
 };
