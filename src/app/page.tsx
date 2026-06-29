@@ -84,7 +84,7 @@ export default function Home() {
         <a href="#">Termos</a>
         <a href="#">Privacidade</a>
         <a href="#">Contato</a>
-        <span>© 2026 eight · Doctor8</span>
+        <span>© 2026 eight · Doctor8 · doctor8.com.br</span>
       </footer>
     </>
   );

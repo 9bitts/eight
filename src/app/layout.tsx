@@ -6,6 +6,15 @@ export const metadata: Metadata = {
   title: "eight — A rede dos profissionais de saúde",
   description:
     "A rede dos profissionais de saúde. Conhecimento, casos e conexões verificadas, no seu idioma, em qualquer país.",
+  metadataBase: new URL("https://doctor8.com.br"),
+  openGraph: {
+    title: "eight — A rede dos profissionais de saúde",
+    description:
+      "A rede dos profissionais de saúde verificados. Doctor8.",
+    url: "https://doctor8.com.br",
+    siteName: "eight",
+    locale: "pt_BR",
+  },
 };
 
 export default function RootLayout({
