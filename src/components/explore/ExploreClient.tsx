@@ -2,17 +2,19 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, TrendingUp, Stethoscope, Globe } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { PostCard } from "@/components/feed/PostCard";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { formatSpec } from "@/lib/format";
-import type { FeedPost, SessionUser } from "@/lib/types";
+import { formatSpec, formatCount } from "@/lib/format";
+import type { BrowseItem } from "@/lib/discovery";
+import type { FeedPost, SessionUser, Trend } from "@/lib/types";
 
 const INK = "#0c2b36";
 const LINE = "#e4ebee";
 const BLUE = "#176a88";
+const ORANGE = "#e05930";
 
 type ProfileResult = {
   id: string;
@@ -47,12 +49,110 @@ function ProfileResultRow({ p }: { p: ProfileResult }) {
   );
 }
 
+function ChipGrid({
+  items,
+  hrefPrefix,
+}: {
+  items: BrowseItem[];
+  hrefPrefix: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2 px-4 pb-4">
+      {items.map((item) => (
+        <Link
+          key={item.slug}
+          href={`${hrefPrefix}/${item.slug}`}
+          className="rounded-full px-3 py-1.5 font-semibold transition-colors"
+          style={{
+            background: "#eef3f5",
+            color: INK,
+            fontSize: 13,
+            textDecoration: "none",
+            border: `1px solid ${LINE}`,
+          }}
+        >
+          {item.label}
+          {item.count > 0 && (
+            <span style={{ color: "#7a8f97", fontWeight: 500, marginLeft: 4 }}>
+              {formatCount(item.count)}
+            </span>
+          )}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function DiscoveryHome({
+  specialties,
+  countries,
+  trends,
+}: {
+  specialties: BrowseItem[];
+  countries: BrowseItem[];
+  trends: Trend[];
+}) {
+  return (
+    <>
+      <section className="py-4 border-b" style={{ borderColor: LINE }}>
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <TrendingUp size={18} style={{ color: ORANGE }} />
+          <h2 style={{ fontWeight: 800, fontSize: 16, color: INK }}>Em alta na saúde</h2>
+        </div>
+        {trends.length === 0 ? (
+          <p className="px-4 text-sm" style={{ color: "#7a8f97" }}>
+            Use hashtags nas publicações para criar tendências.
+          </p>
+        ) : (
+          <div className="px-4 flex flex-col gap-1">
+            {trends.map((t) => (
+              <Link
+                key={t.tag}
+                href={`/explore/tag/${t.tag}`}
+                className="flex justify-between items-center py-2 rounded-lg px-2 -mx-2"
+                style={{ textDecoration: "none" }}
+              >
+                <span style={{ fontWeight: 700, color: INK }}>#{t.tag}</span>
+                <span style={{ fontSize: 13, color: "#7a8f97" }}>
+                  {t.count > 0 ? `${formatCount(t.count)} posts` : "Em alta"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="py-4 border-b" style={{ borderColor: LINE }}>
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <Stethoscope size={18} style={{ color: BLUE }} />
+          <h2 style={{ fontWeight: 800, fontSize: 16, color: INK }}>Por especialidade</h2>
+        </div>
+        <ChipGrid items={specialties} hrefPrefix="/explore/especialidade" />
+      </section>
+
+      <section className="py-4">
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <Globe size={18} style={{ color: BLUE }} />
+          <h2 style={{ fontWeight: 800, fontSize: 16, color: INK }}>Por país</h2>
+        </div>
+        <ChipGrid items={countries} hrefPrefix="/explore/pais" />
+      </section>
+    </>
+  );
+}
+
 export function ExploreClient({
   user,
   notificationCount,
+  specialties,
+  countries,
+  trends,
 }: {
   user: SessionUser;
   notificationCount: number;
+  specialties: BrowseItem[];
+  countries: BrowseItem[];
+  trends: Trend[];
 }) {
   const [query, setQuery] = useState("");
   const [profiles, setProfiles] = useState<ProfileResult[]>([]);
@@ -73,6 +173,13 @@ export function ExploreClient({
       setPosts(data.posts ?? []);
       setSearched(true);
     });
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    setSearched(false);
+    setProfiles([]);
+    setPosts([]);
   };
 
   return (
@@ -120,12 +227,20 @@ export function ExploreClient({
             />
             Somente profissionais verificados
           </label>
+          {searched && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="mt-2 text-sm font-semibold"
+              style={{ color: BLUE, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            >
+              ← Voltar à descoberta
+            </button>
+          )}
         </div>
 
         {!searched && (
-          <p className="px-4 py-12 text-center" style={{ color: "#7a8f97" }}>
-            Encontre colegas por nome, @handle ou especialidade.
-          </p>
+          <DiscoveryHome specialties={specialties} countries={countries} trends={trends} />
         )}
 
         {searched && profiles.length === 0 && posts.length === 0 && (

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ExploreClient } from "@/components/explore/ExploreClient";
-import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
+import { getSessionUser, getTrendingHashtags, getUnreadNotificationCount } from "@/lib/feed";
+import { getTopCountries, getTopSpecialties } from "@/lib/discovery";
 
 export default async function ExplorePage() {
   const session = await auth();
@@ -10,7 +11,20 @@ export default async function ExplorePage() {
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");
 
-  const notificationCount = await getUnreadNotificationCount(user.profileId);
+  const [notificationCount, specialties, countries, trends] = await Promise.all([
+    getUnreadNotificationCount(user.profileId),
+    getTopSpecialties(12),
+    getTopCountries(6),
+    getTrendingHashtags(6),
+  ]);
 
-  return <ExploreClient user={user} notificationCount={notificationCount} />;
+  return (
+    <ExploreClient
+      user={user}
+      notificationCount={notificationCount}
+      specialties={specialties}
+      countries={countries}
+      trends={trends}
+    />
+  );
 }

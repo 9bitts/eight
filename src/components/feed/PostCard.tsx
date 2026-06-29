@@ -6,7 +6,6 @@ import {
   Heart,
   MessageCircle,
   Repeat2,
-  Share,
   Globe,
   Pin,
   LucideIcon,
@@ -16,6 +15,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostBody } from "@/components/feed/PostBody";
 import { PostMedia, PollCard, LinkPreviewCard } from "@/components/feed/PostMedia";
 import { PostMenu } from "@/components/feed/PostMenu";
+import { SharePostButton } from "@/components/feed/SharePostButton";
 import { toggleLike, toggleRepost } from "@/lib/actions";
 import type { FeedPost } from "@/lib/types";
 
@@ -84,11 +84,6 @@ export function PostCard({
     router.refresh();
   };
 
-  const onShare = () => {
-    const url = `${window.location.origin}/post/${post.id}`;
-    navigator.clipboard.writeText(url).then(() => alert("Link copiado!"));
-  };
-
   const postUrl = post.threadId ? `/post/${post.threadId}` : `/post/${post.id}`;
 
   return (
@@ -154,7 +149,8 @@ export function PostCard({
             <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} />
             <ActionBtn icon={Repeat2} count={post.reposts} color="#1a9c5b" active={post.reposted} onClick={onRepost} />
             <ActionBtn icon={Heart} count={post.likes} color={ORANGE} active={post.liked} fill onClick={onLike} />
-            <ActionBtn icon={Share} count={0} color={BLUE} onClick={onShare} />
+            <ActionBtn icon={Heart} count={post.likes} color={ORANGE} active={post.liked} fill onClick={onLike} />
+            <SharePostButton postId={post.id} />
           </div>
         )}
       </div>

@@ -127,6 +127,9 @@ function RightRail({
       {suggestions.length > 0 && (
         <div className="rounded-2xl" style={{ background: "#f4f7f8" }}>
           <h3 className="px-4 pt-3 pb-1" style={{ fontWeight: 800, fontSize: 16 }}>Quem seguir</h3>
+          <p className="px-4 pb-1" style={{ fontSize: 12, color: "#7a8f97" }}>
+            Sugestões da sua área e região
+          </p>
           {suggestions.map((s) => (
             <SuggestionRow key={s.id} s={s} onToggle={onFollow} />
           ))}

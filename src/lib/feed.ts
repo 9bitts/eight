@@ -270,35 +270,76 @@ export async function getReplies(
 }
 
 export async function getSuggestions(viewerProfileId: string): Promise<Suggestion[]> {
-  const [following, blockedIds] = await Promise.all([
+  const [following, blockedIds, viewer] = await Promise.all([
     prisma.follow.findMany({
       where: { followerId: viewerProfileId },
       select: { followingId: true },
     }),
     getBlockedProfileIds(viewerProfileId),
+    prisma.profile.findUnique({
+      where: { id: viewerProfileId },
+      select: { specialty: true, registrationCountry: true },
+    }),
   ]);
-  const excludeIds = [
+
+  const excludeIds = new Set([
     viewerProfileId,
     ...following.map((f) => f.followingId),
     ...blockedIds,
-  ];
+  ]);
 
-  const profiles = await prisma.profile.findMany({
-    where: { id: { notIn: excludeIds } },
-    orderBy: [{ verified: "desc" }, { createdAt: "desc" }],
-    take: 5,
-    select: {
-      id: true,
-      displayName: true,
-      handle: true,
-      specialty: true,
-      registrationType: true,
-      registrationNumber: true,
+  const select = {
+    id: true,
+    displayName: true,
+    handle: true,
+    specialty: true,
+    registrationType: true,
+    registrationNumber: true,
+    verified: true,
+  } as const;
+
+  type Row = {
+    id: string;
+    displayName: string;
+    handle: string;
+    specialty: string | null;
+    registrationType: string | null;
+    registrationNumber: string | null;
+    verified: boolean;
+  };
+
+  const candidates: Row[] = [];
+
+  const addFrom = async (where: Record<string, unknown>, take = 8) => {
+    if (candidates.length >= 5) return;
+    const rows = await prisma.profile.findMany({
+      where: { id: { notIn: Array.from(excludeIds) }, ...where },
+      orderBy: { createdAt: "desc" },
+      take,
+      select,
+    });
+    for (const p of rows) {
+      if (candidates.length >= 5) break;
+      excludeIds.add(p.id);
+      candidates.push(p);
+    }
+  };
+
+  if (viewer?.specialty) {
+    await addFrom({
+      specialty: { equals: viewer.specialty, mode: "insensitive" },
       verified: true,
-    },
-  });
+    });
+  }
+  if (viewer?.registrationCountry) {
+    await addFrom({ registrationCountry: viewer.registrationCountry, verified: true });
+  }
+  if (viewer?.specialty) {
+    await addFrom({ specialty: { equals: viewer.specialty, mode: "insensitive" } });
+  }
+  await addFrom({}, 5);
 
-  return profiles.map((p) => ({
+  return candidates.map((p) => ({
     id: p.id,
     name: p.displayName,
     handle: p.handle,
@@ -351,6 +392,8 @@ export async function getPostsByHashtag(
   });
   if (!hashtag) return [];
 
+  const blockedIds = viewerProfileId ? await getBlockedProfileIds(viewerProfileId) : [];
+
   const links = await prisma.postHashtag.findMany({
     where: { hashtagId: hashtag.id },
     select: { postId: true },
@@ -361,6 +404,7 @@ export async function getPostsByHashtag(
     where: {
       id: { in: links.map((l) => l.postId) },
       parentId: null,
+      ...(blockedIds.length ? { authorId: { notIn: blockedIds } } : {}),
       ...publishedWhere(),
     },
     orderBy: { createdAt: "desc" },
@@ -436,10 +480,14 @@ export async function searchPosts(
 ) {
   const q = query.trim();
   if (!q) return [];
+
+  const blockedIds = viewerProfileId ? await getBlockedProfileIds(viewerProfileId) : [];
+
   const posts = await prisma.post.findMany({
     where: {
       parentId: null,
       body: { contains: q, mode: "insensitive" },
+      ...(blockedIds.length ? { authorId: { notIn: blockedIds } } : {}),
       ...publishedWhere(),
     },
     take: limit,

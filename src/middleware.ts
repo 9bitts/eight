@@ -29,7 +29,7 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/feed/:path*",
-    "/explore",
+    "/explore/:path*",
     "/notifications",
     "/messages",
     "/cases",
