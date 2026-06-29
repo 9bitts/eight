@@ -43,13 +43,13 @@ export default function Home() {
             </button>
             <div className="divider">ou</div>
             <input className="field" type="email" placeholder="E-mail profissional" />
-            <Link href="/feed" className="auth-btn btn-orange" style={{ textDecoration: "none" }}>
+            <Link href="/signup" className="auth-btn btn-orange" style={{ textDecoration: "none" }}>
               Criar conta profissional →
             </Link>
           </div>
 
           <p className="signin">
-            Já faz parte? <Link href="/feed">Entrar</Link>
+            Já faz parte? <Link href="/login">Entrar</Link>
           </p>
 
           <p className="legal">

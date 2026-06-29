@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth.js (Etapa 3 — Google/Apple usam estas tabelas) ───────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Usuário e perfil público (estilo X: conta + @handle) ─────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  profile  Profile?
+}
+
+model Profile {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  handle              String    @unique
+  displayName         String
+  bio                 String?   @db.VarChar(160)
+  specialty           String?
+  registrationType    String?
+  registrationNumber  String?
+  registrationCountry String?
+  location            String?
+  avatarUrl           String?
+  bannerUrl           String?
+  verified            Boolean   @default(false)
+  verifiedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  posts              Post[]
+  likes              Like[]
+  reposts            Repost[]
+  comments           Comment[]
+  followers          Follow[]       @relation("following")
+  following          Follow[]       @relation("follower")
+  notifications      Notification[] @relation("recipient")
+  actorNotifications Notification[] @relation("actor")
+}
+
+// ─── Conteúdo e interações (modelo X) ─────────────────────────────────────
+
+model Post {
+  id         String   @id @default(cuid())
+  authorId   String
+  body       String   @db.VarChar(500)
+  parentId   String?
+  repostOfId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author     Profile  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent     Post?    @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Post[]   @relation("Replies")
+  repostOf   Post?    @relation("RepostChain", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts    Post[]   @relation("RepostChain")
+
+  likes         Like[]
+  repostRecords Repost[]
+  comments      Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  profileId String
+  postId    String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, postId])
+}
+
+model Repost {
+  id        String   @id @default(cuid())
+  profileId String
+  postId    String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, postId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  Profile @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following Profile @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  authorId  String
+  postId    String
+  body      String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  author Profile @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post   Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  actorId     String
+  type        NotificationType
+  postId      String?
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  recipient Profile @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     Profile @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+enum NotificationType {
+  LIKE
+  REPOST
+  FOLLOW
+  REPLY
+  MENTION
+}
