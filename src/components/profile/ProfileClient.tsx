@@ -50,6 +50,7 @@ type ProfileAnalytics = {
 export function ProfileClient({
   profile,
   posts,
+  replies,
   user,
   isOwnProfile,
   isFollowing,
@@ -62,6 +63,7 @@ export function ProfileClient({
 }: {
   profile: ProfileData;
   posts: FeedPost[];
+  replies: FeedPost[];
   user: SessionUser;
   isOwnProfile: boolean;
   isFollowing: boolean;
@@ -74,6 +76,7 @@ export function ProfileClient({
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
+  const [tab, setTab] = useState<"posts" | "replies">("posts");
   const [pending, startTransition] = useTransition();
 
   const spec = formatSpec(
@@ -309,15 +312,45 @@ export function ProfileClient({
         </div>
 
         {!blockedByViewer && (
-          <div style={{ borderTop: `1px solid ${LINE}` }}>
-            {posts.length === 0 ? (
-              <p className="px-4 py-8 text-center" style={{ color: MUTED }}>
-                {isOwnProfile ? "Você ainda não publicou nada." : "Nenhuma publicação ainda."}
-              </p>
-            ) : (
-              posts.map((p) => <PostCard key={p.id} post={p} />)
-            )}
-          </div>
+          <>
+            <div className="flex border-b" style={{ borderColor: LINE }}>
+              {(["posts", "replies"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTab(t)}
+                  className="flex-1 py-3 font-bold"
+                  style={{
+                    fontSize: 14,
+                    border: "none",
+                    borderBottom: tab === t ? `3px solid ${BLUE}` : "3px solid transparent",
+                    background: "transparent",
+                    color: tab === t ? INK : MUTED,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t === "posts" ? "Publicações" : "Respostas"}
+                </button>
+              ))}
+            </div>
+            <div>
+              {(tab === "posts" ? posts : replies).length === 0 ? (
+                <p className="px-4 py-8 text-center" style={{ color: MUTED }}>
+                  {tab === "posts"
+                    ? isOwnProfile
+                      ? "Você ainda não publicou nada."
+                      : "Nenhuma publicação ainda."
+                    : isOwnProfile
+                      ? "Você ainda não respondeu nada."
+                      : "Nenhuma resposta ainda."}
+                </p>
+              ) : (
+                (tab === "posts" ? posts : replies).map((p) => (
+                  <PostCard key={p.id} post={p} />
+                ))
+              )}
+            </div>
+          </>
         )}
       </main>
     </FeedShell>

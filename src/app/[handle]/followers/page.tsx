@@ -8,26 +8,13 @@ import {
 } from "@/lib/feed";
 import { getBlockStatus, getFollowersList } from "@/lib/relationships";
 
-const RESERVED = new Set([
-  "feed",
-  "login",
-  "signup",
-  "api",
-  "post",
-  "explore",
-  "notifications",
-  "messages",
-  "cases",
-  "settings",
-  "followers",
-  "following",
-]);
+import { isReservedHandle } from "@/lib/reserved-handles";
 
 type Props = { params: { handle: string } };
 
 export default async function FollowersPage({ params }: Props) {
   const handle = params.handle.toLowerCase();
-  if (RESERVED.has(handle)) notFound();
+  if (isReservedHandle(handle)) notFound();
 
   const session = await auth();
   if (!session?.user?.id) redirect("/login");

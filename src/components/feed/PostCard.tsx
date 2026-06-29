@@ -93,7 +93,7 @@ export function PostCard({
   return (
     <article className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE }}>
       <Link href={`/${post.handle}`}>
-        <Avatar name={post.name} />
+        <Avatar name={post.name} imageUrl={post.avatarUrl} />
       </Link>
       <div className="flex-1 min-w-0">
         {post.isPinned && (

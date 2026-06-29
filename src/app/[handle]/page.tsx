@@ -4,6 +4,7 @@ import { ProfileClient } from "@/components/profile/ProfileClient";
 import {
   getFeedPosts,
   getProfileByHandle,
+  getProfileReplies,
   getSessionUser,
   getUnreadNotificationCount,
   isFollowing,
@@ -11,26 +12,13 @@ import {
 import { getBlockStatus, isMuted } from "@/lib/relationships";
 import { recordProfileView, getProfileAnalytics } from "@/lib/analytics";
 
-const RESERVED = new Set([
-  "feed",
-  "login",
-  "signup",
-  "api",
-  "post",
-  "explore",
-  "notifications",
-  "messages",
-  "cases",
-  "settings",
-  "listas",
-  "agendados",
-]);
+import { isReservedHandle } from "@/lib/reserved-handles";
 
 type Props = { params: { handle: string } };
 
 export default async function ProfilePage({ params }: Props) {
   const handle = params.handle.toLowerCase();
-  if (RESERVED.has(handle)) notFound();
+  if (isReservedHandle(handle)) notFound();
 
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -43,9 +31,10 @@ export default async function ProfilePage({ params }: Props) {
 
   const isOwnProfile = profile.id === user.profileId;
 
-  const [posts, notificationCount, following, blockStatus, muted, analytics] =
+  const [posts, replies, notificationCount, following, blockStatus, muted, analytics] =
     await Promise.all([
       getFeedPosts(user.profileId, "forYou", profile.id),
+      getProfileReplies(profile.id, user.profileId),
       getUnreadNotificationCount(user.profileId),
       isFollowing(user.profileId, profile.id),
       getBlockStatus(user.profileId, profile.id),
@@ -87,6 +76,7 @@ export default async function ProfilePage({ params }: Props) {
         bannerUrl: profile.bannerUrl,
       }}
       posts={posts}
+      replies={replies}
       user={user}
       isOwnProfile={profile.id === user.profileId}
       isFollowing={following}

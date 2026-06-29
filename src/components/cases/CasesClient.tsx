@@ -9,8 +9,10 @@ import { createClinicalCase } from "@/lib/actions/cases";
 import { CASE_TAG_OPTIONS } from "@/lib/cases";
 import type { FeedPost, SessionUser } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
 
@@ -125,8 +127,8 @@ export function CasesClient({
 }) {
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "#fff" }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
+        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
           <div className="flex items-center gap-2">
             <Sparkles size={22} style={{ color: ORANGE }} />
             <h1 style={{ fontWeight: 800, fontSize: 20, color: INK }}>Casos clínicos</h1>

@@ -17,8 +17,8 @@ import type { SessionUser } from "@/lib/types";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
 
 type MediaItem = { url: string; type: "image" | "video" | "gif" };
 
@@ -95,7 +95,7 @@ export function PostComposer({ user }: { user: SessionUser }) {
   };
 
   return (
-    <div className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE }}>
+    <div className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE, background: "var(--eight-card-bg)" }}>
       <Avatar name={user.displayName} />
       <div className="flex-1">
         <textarea

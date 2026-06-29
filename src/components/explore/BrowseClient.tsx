@@ -6,8 +6,9 @@ import { ConnectionRow } from "@/components/connections/ConnectionRow";
 import { formatCount } from "@/lib/feed";
 import type { ConnectionProfile, SessionUser } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
 const BLUE = "#176a88";
 
 export function BrowseClient({
@@ -29,8 +30,8 @@ export function BrowseClient({
 }) {
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "#fff" }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
+        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
           <Link href={backHref} style={{ fontSize: 13, color: BLUE, textDecoration: "none" }}>
             ← Explorar
           </Link>

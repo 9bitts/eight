@@ -58,6 +58,7 @@ type RawPost = {
     location: string | null;
     verified: boolean;
     pinnedPostId: string | null;
+    avatarUrl: string | null;
   };
   poll: {
     id: string;
@@ -112,6 +113,7 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
     authorId: post.authorId,
     name: post.author.displayName,
     handle: post.author.handle,
+    avatarUrl: post.author.avatarUrl,
     spec: formatSpec(
       post.author.specialty,
       post.author.registrationType,
@@ -563,6 +565,23 @@ export async function getScheduledPosts(viewerProfileId: string) {
       scheduledAt: { gt: now },
     },
     orderBy: { scheduledAt: "asc" },
+    include: postInclude,
+  });
+  return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+}
+
+export async function getProfileReplies(
+  profileId: string,
+  viewerProfileId: string
+): Promise<FeedPost[]> {
+  const posts = await prisma.post.findMany({
+    where: {
+      authorId: profileId,
+      parentId: { not: null },
+      ...publishedWhere(),
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
     include: postInclude,
   });
   return posts.map((p) => mapPost(p as RawPost, viewerProfileId));

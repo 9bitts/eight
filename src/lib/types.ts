@@ -25,6 +25,7 @@ export type FeedPost = {
   authorId: string;
   name: string;
   handle: string;
+  avatarUrl: string | null;
   spec: string;
   loc: string;
   time: string;

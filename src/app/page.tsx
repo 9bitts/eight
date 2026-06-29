@@ -36,8 +36,8 @@ export default function Home() {
           </p>
 
           <p className="legal">
-            Ao continuar, você concorda com os <a href="#">Termos</a> e a{" "}
-            <a href="#">Política de Privacidade</a> da eight. Seu registro profissional
+            Ao continuar, você concorda com os <Link href="/termos">Termos</Link> e a{" "}
+            <Link href="/privacidade">Política de Privacidade</Link> da eight. Seu registro profissional
             será verificado antes da liberação do selo.
           </p>
         </div>
@@ -61,12 +61,13 @@ export default function Home() {
       </div>
 
       <footer className="foot">
-        <a href="#">Sobre</a>
-        <a href="#">Como funciona</a>
-        <a href="#">Verificação</a>
-        <a href="#">Termos</a>
-        <a href="#">Privacidade</a>
-        <a href="#">Contato</a>
+        <Link href="/sobre">Sobre</Link>
+        <Link href="/como-funciona">Como funciona</Link>
+        <Link href="/verificacao">Verificação</Link>
+        <Link href="/regras">Regras</Link>
+        <Link href="/termos">Termos</Link>
+        <Link href="/privacidade">Privacidade</Link>
+        <Link href="/contato">Contato</Link>
         <span>© 2026 eight · Doctor8 · doctor8.com.br</span>
       </footer>
     </>

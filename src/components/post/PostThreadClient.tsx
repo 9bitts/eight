@@ -11,8 +11,9 @@ import { createPost } from "@/lib/actions";
 import type { FeedPost, SessionUser } from "@/lib/types";
 
 const BLUE = "#176a88";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
 
 export function PostThreadClient({
   posts,
@@ -45,7 +46,7 @@ export function PostThreadClient({
 
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
         <div
           className="sticky top-0 z-10 px-4 py-3 flex items-center gap-4"
           style={{ background: "rgba(255,255,255,.92)", borderBottom: `1px solid ${LINE}` }}

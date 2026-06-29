@@ -465,7 +465,9 @@ function SignupPageInner() {
       </div>
 
       <p className="signup-legal">
-        Ao criar conta, você concorda com os Termos e a Política de Privacidade da eight.
+        Ao criar conta, você concorda com os{" "}
+        <Link href="/termos">Termos</Link> e a{" "}
+        <Link href="/privacidade">Política de Privacidade</Link> da eight.
         Registro profissional sujeito a verificação.
       </p>
     </div>
