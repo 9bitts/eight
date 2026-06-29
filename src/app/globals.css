@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --ink:#0a242e;
+  --ink-2:#0f3543;
+  --blue:#2a90b0;
+  --blue-soft:#4aa9c6;
+  --orange:#e05930;
+  --orange-soft:#f3a78f;
+  --txt:#eaf3f6;
+  --muted:#8fb0bb;
+  --line:rgba(255,255,255,.12);
+  --font-display:"Bricolage Grotesque",system-ui,sans-serif;
+  --font-body:"Instrument Sans",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{padding:0;margin:0}
+body{ -webkit-font-smoothing:antialiased; font-family:var(--font-body); }
+
+/* ===================== LANDING / LOGIN ===================== */
+.screen{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;background:var(--ink);color:var(--txt)}
+.left{display:flex;flex-direction:column;justify-content:center;padding:48px 6vw;max-width:620px}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:46px}
+.brand b{font-weight:800;font-size:24px;letter-spacing:-0.03em}
+.badge-pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--blue-soft);background:rgba(42,144,176,.14);border:1px solid rgba(42,144,176,.3);padding:6px 13px;border-radius:999px;margin-bottom:24px;width:fit-content}
+.h1{font-weight:800;font-size:clamp(40px,5.5vw,68px);line-height:1.02;letter-spacing:-0.03em;margin-bottom:18px}
+.h1 em{font-style:normal;color:var(--orange)}
+.lede{font-size:17px;color:var(--muted);max-width:430px;margin-bottom:36px;line-height:1.5}
+.auth{display:flex;flex-direction:column;gap:12px;max-width:380px}
+.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;height:50px;border-radius:999px;font-weight:600;font-size:15.5px;cursor:pointer;border:0;transition:transform .14s, opacity .14s}
+.auth-btn:hover{transform:translateY(-1px)}
+.btn-white{background:#fff;color:#0a242e}
+.btn-white:hover{opacity:.92}
+.btn-line{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn-line:hover{background:rgba(255,255,255,.05)}
+.divider{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:13px;margin:6px 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.field{height:50px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);padding:0 16px;font-size:15px;outline:none;transition:border .15s}
+.field::placeholder{color:var(--muted)}
+.field:focus{border-color:var(--blue)}
+.btn-orange{background:var(--orange);color:#fff;box-shadow:0 10px 26px -10px rgba(224,89,48,.7)}
+.btn-orange:hover{transform:translateY(-1px)}
+.signin{margin-top:22px;font-size:15px;color:var(--muted)}
+.signin a{color:var(--blue-soft);font-weight:600}
+.legal{margin-top:30px;font-size:12px;color:var(--muted);max-width:380px;line-height:1.5}
+.legal a{color:var(--muted);text-decoration:underline}
+.right{position:relative;overflow:hidden;border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 60% 40%, var(--ink-2), var(--ink) 70%)}
+.glow{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(110px);opacity:.4}
+.glow-b{background:var(--blue);top:-60px;right:-40px}
+.glow-o{background:var(--orange);bottom:-120px;left:-60px;opacity:.28}
+.mark{position:relative;z-index:2;width:78%;max-width:560px}
+.ring{fill:none;stroke-width:6}
+.pulse{fill:none;stroke:var(--orange);stroke-width:6;stroke-linecap:round;stroke-dasharray:90 900;animation:trace 5s linear infinite}
+@keyframes trace{to{stroke-dashoffset:-1000}}
+.mark-caption{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);z-index:3;text-align:center;width:80%}
+.mark-caption .big{font-weight:700;font-size:22px;color:var(--txt)}
+.mark-caption .small{font-size:14px;color:var(--muted);margin-top:4px}
+.foot{position:fixed;bottom:0;left:0;right:0;display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:14px;font-size:12.5px;color:var(--muted);background:linear-gradient(to top, var(--ink), transparent);z-index:20}
+.foot a{color:var(--muted);text-decoration:none}
+.foot a:hover{color:var(--txt)}
+
+@media(max-width:880px){
+  .screen{grid-template-columns:1fr}
+  .right{display:none}
+  .left{max-width:none;padding:40px 24px 90px;min-height:100vh;justify-content:center}
+  .brand{margin-bottom:30px}
+  .foot{position:static;margin-top:20px}
+}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
