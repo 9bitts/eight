@@ -21,6 +21,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { EightLogo } from "@/components/EightLogo";
 import type { SessionUser } from "@/lib/types";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 
@@ -33,10 +34,7 @@ const LINE = "var(--eight-line)";
 function LogoMark() {
   return (
     <div className="flex items-center gap-2 px-3 py-2">
-      <svg width="30" height="30" viewBox="0 0 40 40">
-        <circle cx="20" cy="12.5" r="8.5" fill="none" stroke={BLUE} strokeWidth="3.6" />
-        <circle cx="20" cy="27.5" r="8.5" fill="none" stroke={ORANGE} strokeWidth="3.6" />
-      </svg>
+      <EightLogo variant="icon" size={30} />
       <span style={{ fontWeight: 800, fontSize: 21, color: INK, letterSpacing: "-0.03em" }}>
         eight
       </span>

@@ -79,12 +79,19 @@ body{ -webkit-font-smoothing:antialiased; font-family:var(--font-body); }
 .glow-b{background:var(--blue);top:-60px;right:-40px}
 .glow-o{background:var(--orange);bottom:-120px;left:-60px;opacity:.28}
 .mark{position:relative;z-index:2;width:78%;max-width:560px}
-.ring{fill:none;stroke-width:6}
-.pulse{fill:none;stroke:var(--orange);stroke-width:6;stroke-linecap:round;stroke-dasharray:90 900;animation:trace 5s linear infinite}
-@keyframes trace{to{stroke-dashoffset:-1000}}
+.ecg-line{
+  stroke-dasharray:320;
+  stroke-dashoffset:320;
+  animation:ecg-draw 2.8s ease-in-out infinite;
+}
+@keyframes ecg-draw{
+  0%{stroke-dashoffset:320}
+  45%{stroke-dashoffset:0}
+  55%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:-320}
+}
 .mark-caption{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);z-index:3;text-align:center;width:80%}
-.mark-caption .big{font-weight:700;font-size:22px;color:var(--txt)}
-.mark-caption .small{font-size:14px;color:var(--muted);margin-top:4px}
+.mark-caption .small{font-size:14px;color:var(--muted)}
 .foot{position:fixed;bottom:0;left:0;right:0;display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:14px;font-size:12.5px;color:var(--muted);background:linear-gradient(to top, var(--ink), transparent);z-index:20}
 .foot a{color:var(--muted);text-decoration:none}
 .foot a:hover{color:var(--txt)}
@@ -96,7 +103,7 @@ body{ -webkit-font-smoothing:antialiased; font-family:var(--font-body); }
   .brand{margin-bottom:30px}
   .foot{position:static;margin-top:20px}
 }
-@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+@media(prefers-reduced-motion:reduce){.ecg-line{animation:none;stroke-dashoffset:0}}
 
 /* ===================== CADASTRO (estilo X) ===================== */
 .signup-wrap{min-height:100vh;background:var(--ink);color:var(--txt);display:flex;flex-direction:column;align-items:center;padding:32px 20px 48px}
