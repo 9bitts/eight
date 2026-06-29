@@ -16,6 +16,8 @@ function ErrorContent() {
       "Este e-mail já está vinculado a outro método de login. Use o mesmo provedor ou e-mail/senha.",
     AccessDenied: "Acesso negado.",
     Configuration: "Erro de configuração do servidor. Contate o suporte.",
+    SuspendedAccount:
+      "Sua conta foi suspensa por violação das regras da plataforma. Entre em contato com suporte@doctor8.com.br.",
     unknown: "Não foi possível entrar. Tente novamente.",
   };
 

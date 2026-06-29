@@ -191,10 +191,11 @@ export async function getSessionUser(userId: string): Promise<SessionUser | null
       handle: true,
       verified: true,
       verificationStatus: true,
+      suspended: true,
       user: { select: { isAdmin: true, email: true } },
     },
   });
-  if (!profile) return null;
+  if (!profile || profile.suspended) return null;
 
   const isAdmin = profile.user.isAdmin ||
     (process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim().toLowerCase()) ?? []).includes(
@@ -486,8 +487,8 @@ export async function getClinicalCasePosts(
   return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
 }
 
-export async function getProfileByHandle(handle: string) {
-  return prisma.profile.findUnique({
+export async function getProfileByHandle(handle: string, viewerProfileId?: string) {
+  const profile = await prisma.profile.findUnique({
     where: { handle: handle.toLowerCase() },
     include: {
       _count: {
@@ -499,6 +500,9 @@ export async function getProfileByHandle(handle: string) {
       },
     },
   });
+  if (!profile) return null;
+  if (profile.suspended && profile.id !== viewerProfileId) return null;
+  return profile;
 }
 
 export async function isFollowing(followerId: string, followingId: string) {

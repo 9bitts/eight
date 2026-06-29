@@ -65,9 +65,9 @@ function PendingCard({ profile }: { profile: PendingProfile }) {
           <div style={{ fontWeight: 800, fontSize: 17, color: INK }}>{profile.displayName}</div>
           <div style={{ color: MUTED, fontSize: 14 }}>@{profile.handle}</div>
           <div style={{ color: ORANGE, fontSize: 13, fontWeight: 600, marginTop: 4 }}>{profile.specialty}</div>
-          <div style={{ fontSize: 13, color: "#516b75", marginTop: 2 }}>{reg}</div>
+            <div style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>{reg}</div>
           {profile.location && (
-            <div style={{ fontSize: 13, color: "#7a8f97" }}>{profile.location}</div>
+            <div style={{ fontSize: 13, color: MUTED }}>{profile.location}</div>
           )}
           <div style={{ fontSize: 12, color: "#9fb0b6", marginTop: 6 }}>
             {profile.user.email}
@@ -92,7 +92,7 @@ function PendingCard({ profile }: { profile: PendingProfile }) {
             type="button"
             onClick={() => setRejecting(!rejecting)}
             className="flex items-center gap-1 rounded-full px-4 py-2 font-bold"
-            style={{ border: `1px solid ${LINE}`, background: "#fff", cursor: "pointer", fontSize: 13, color: ORANGE }}
+            style={{ border: `1px solid ${LINE}`, background: CARD, cursor: "pointer", fontSize: 13, color: ORANGE }}
           >
             <X size={16} /> Recusar
           </button>
@@ -162,7 +162,7 @@ export function AdminVerificationsClient({
 
       <main className="mx-auto px-6 py-6" style={{ maxWidth: 720 }}>
         {pending.length === 0 ? (
-          <div className="text-center py-16" style={{ color: "#7a8f97" }}>
+          <div className="text-center py-16" style={{ color: MUTED }}>
             <BadgeCheck size={48} style={{ color: BLUE, margin: "0 auto 12px" }} />
             <p>Nenhuma verificação pendente no momento.</p>
           </div>
@@ -186,7 +186,7 @@ export function AdminVerificationsClient({
                   <XCircle size={18} style={{ color: ORANGE }} />
                 )}
                 <span style={{ fontWeight: 600, color: INK }}>{p.displayName}</span>
-                <span style={{ color: "#7a8f97" }}>@{p.handle}</span>
+                <span style={{ color: MUTED }}>@{p.handle}</span>
               </div>
             ))}
           </div>

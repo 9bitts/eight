@@ -61,6 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           include: { profile: true },
         });
         if (!user?.passwordHash || !user.profile) return null;
+        if (user.profile.suspended) return null;
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
@@ -105,10 +106,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             handle: true,
             verified: true,
             verificationStatus: true,
+            suspended: true,
             user: { select: { isAdmin: true, email: true } },
           },
         });
         if (profile) {
+          if (profile.suspended) {
+            token.suspended = true;
+            delete token.profileId;
+            delete token.handle;
+            delete token.verified;
+            delete token.verificationStatus;
+            delete token.isAdmin;
+          } else {
+            delete token.suspended;
           const adminEmails =
             process.env.ADMIN_EMAILS?.split(",")
               .map((e) => e.trim().toLowerCase())
@@ -120,6 +131,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.isAdmin =
             profile.user.isAdmin ||
             adminEmails.includes(profile.user.email.toLowerCase());
+          }
         } else {
           delete token.profileId;
           delete token.handle;

@@ -32,6 +32,7 @@ export const authConfig = {
           | undefined;
         session.user.isAdmin = token.isAdmin as boolean | undefined;
         session.user.profileId = token.profileId as string | undefined;
+        session.user.suspended = token.suspended as boolean | undefined;
       }
       return session;
     },

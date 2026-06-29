@@ -8,8 +8,9 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { toggleFollow } from "@/lib/actions";
 import type { ConnectionProfile } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const MUTED = "var(--eight-muted)";
 const BLUE = "#176a88";
 
 export function ConnectionRow({
@@ -48,13 +49,13 @@ export function ConnectionRow({
           {showFollowsYou && profile.followsYou && (
             <span
               className="px-2 py-0.5 rounded"
-              style={{ fontSize: 11, background: "#eef3f5", color: "#7a8f97" }}
+              style={{ fontSize: 11, background: "var(--eight-surface-subtle)", color: MUTED }}
             >
               segue você
             </span>
           )}
         </div>
-        <div style={{ color: "#7a8f97", fontSize: 14 }}>@{profile.handle}</div>
+        <div style={{ color: MUTED, fontSize: 14 }}>@{profile.handle}</div>
         {profile.spec && (
           <div style={{ color: BLUE, fontSize: 13, marginTop: 2 }}>{profile.spec}</div>
         )}

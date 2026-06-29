@@ -17,8 +17,10 @@ import type { VerificationStatus } from "@prisma/client";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const MUTED = "var(--eight-muted)";
+const CARD = "var(--eight-card-bg)";
 
 const REG_TYPES = [
   { value: "CRM", label: "CRM (médico)" },
@@ -54,9 +56,9 @@ type ProfileVerification = {
 
 function StatusBanner({ status, reason }: { status: VerificationStatus; reason: string | null }) {
   const styles = {
-    PENDING: { bg: "#fff8e6", border: "#f0d78a", color: "#8a6d00", icon: Clock },
-    VERIFIED: { bg: "#e8f4f8", border: "#a8d4e6", color: BLUE, icon: BadgeCheck },
-    REJECTED: { bg: "#fdeee8", border: "#f0b8a8", color: ORANGE, icon: XCircle },
+    PENDING: { bg: "rgba(240,215,138,.15)", border: "rgba(240,215,138,.4)", color: "#c9a000", icon: Clock },
+    VERIFIED: { bg: "var(--eight-nav-active)", border: "rgba(23,106,136,.35)", color: BLUE, icon: BadgeCheck },
+    REJECTED: { bg: "rgba(224,89,48,.1)", border: "rgba(224,89,48,.3)", color: ORANGE, icon: XCircle },
   }[status];
 
   const Icon = styles.icon;

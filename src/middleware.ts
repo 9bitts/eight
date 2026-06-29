@@ -9,6 +9,13 @@ const PROTECTED = ["/feed", "/explore", "/notifications", "/messages", "/cases",
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
+  const isSuspended = !!req.auth?.user?.suspended;
+
+  if (isSuspended && pathname !== "/login/erro") {
+    const login = new URL("/login/erro", req.nextUrl.origin);
+    login.searchParams.set("error", "SuspendedAccount");
+    return NextResponse.redirect(login);
+  }
 
   const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
   const isAuthPage =

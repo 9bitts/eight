@@ -10,6 +10,7 @@ declare module "next-auth" {
       verificationStatus?: VerificationStatus;
       isAdmin?: boolean;
       profileId?: string;
+      suspended?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -30,5 +31,6 @@ declare module "next-auth/jwt" {
     verificationStatus?: VerificationStatus;
     isAdmin?: boolean;
     profileId?: string;
+    suspended?: boolean;
   }
 }

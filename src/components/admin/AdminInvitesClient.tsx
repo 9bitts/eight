@@ -117,13 +117,13 @@ export function AdminInvitesClient({
 
         <h2 style={{ fontWeight: 700, fontSize: 16, marginBottom: 12, color: INK }}>Convites recentes</h2>
         {invites.length === 0 ? (
-          <p style={{ color: "#7a8f97" }}>Nenhum convite ainda.</p>
+          <p style={{ color: MUTED }}>Nenhum convite ainda.</p>
         ) : (
-          <div className="rounded-xl border overflow-hidden" style={{ borderColor: LINE, background: "#fff" }}>
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: LINE, background: CARD }}>
             {invites.map((inv) => (
               <div key={inv.id} className="px-4 py-3 border-b" style={{ borderColor: LINE, fontSize: 14 }}>
                 <div style={{ fontWeight: 600, color: INK }}>{inv.email}</div>
-                <div style={{ color: "#7a8f97", fontSize: 12, marginTop: 2 }}>
+                <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>
                   {inv.usedAt ? (
                     <span style={{ color: "#1a9c5b" }}>Utilizado</span>
                   ) : (

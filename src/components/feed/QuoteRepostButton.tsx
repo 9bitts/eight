@@ -4,13 +4,23 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Quote } from "lucide-react";
 import { createQuotePost } from "@/lib/actions";
+import { MentionSuggestions } from "@/components/feed/MentionSuggestions";
+import { useMentionInput } from "@/components/feed/useMentionInput";
 
 export function QuoteRepostButton({ postId }: { postId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const {
+    text,
+    setText,
+    textareaRef,
+    mentionQuery,
+    mentionOptions,
+    onTextChange,
+    selectMention,
+  } = useMentionInput();
 
   const onSubmit = async () => {
     setPending(true);
@@ -25,6 +35,12 @@ export function QuoteRepostButton({ postId }: { postId: string }) {
     } finally {
       setPending(false);
     }
+  };
+
+  const close = () => {
+    setOpen(false);
+    setText("");
+    setError("");
   };
 
   return (
@@ -45,7 +61,7 @@ export function QuoteRepostButton({ postId }: { postId: string }) {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,.45)" }}
-          onClick={() => setOpen(false)}
+          onClick={close}
         >
           <div
             className="w-full max-w-md rounded-2xl p-5"
@@ -55,20 +71,28 @@ export function QuoteRepostButton({ postId }: { postId: string }) {
             <h3 style={{ fontWeight: 800, fontSize: 16, color: "var(--eight-ink)", marginBottom: 12 }}>
               Citar publicação
             </h3>
-            <textarea
-              className="field w-full"
-              rows={4}
-              placeholder="Adicione seu comentário…"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              maxLength={500}
-              autoFocus
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                className="field w-full"
+                rows={4}
+                placeholder="Adicione seu comentário… use @ para mencionar"
+                value={text}
+                onChange={(e) => onTextChange(e.target.value, e.target.selectionStart)}
+                onClick={(e) => onTextChange(text, e.currentTarget.selectionStart)}
+                onKeyUp={(e) => onTextChange(text, e.currentTarget.selectionStart)}
+                maxLength={500}
+                autoFocus
+              />
+              {mentionQuery !== null && mentionOptions.length > 0 && (
+                <MentionSuggestions options={mentionOptions} onSelect={selectMention} />
+              )}
+            </div>
             {error && <p className="mt-2 text-sm" style={{ color: "#e05930" }}>{error}</p>}
             <div className="flex gap-2 mt-4">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={close}
                 className="flex-1 rounded-full py-2 font-bold"
                 style={{
                   border: "1px solid var(--eight-line)",

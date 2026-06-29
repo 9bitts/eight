@@ -32,7 +32,7 @@ export default async function ProfilePage({ params }: Props) {
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");
 
-  const profile = await getProfileByHandle(handle);
+  const profile = await getProfileByHandle(handle, user.profileId);
   if (!profile) notFound();
 
   const isOwnProfile = profile.id === user.profileId;

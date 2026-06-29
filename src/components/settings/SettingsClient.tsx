@@ -54,7 +54,7 @@ function RelationRow({
           </Link>
           {profile.verified && <VerifiedBadge size={15} />}
         </div>
-        <div style={{ color: "#7a8f97", fontSize: 14 }}>@{profile.handle}</div>
+        <div style={{ color: MUTED, fontSize: 14 }}>@{profile.handle}</div>
       </div>
       <button
         type="button"
@@ -247,14 +247,14 @@ export function SettingsClient({
                   onClick={onDisable2FA}
                   disabled={pending || totpCode.length < 6}
                   className="mt-2 rounded-full px-4 py-2 font-bold"
-                  style={{ border: `1px solid ${LINE}`, background: "#fff", color: ORANGE, cursor: "pointer" }}
+                  style={{ border: `1px solid ${LINE}`, background: CARD, color: ORANGE, cursor: "pointer" }}
                 >
                   Desativar 2FA
                 </button>
               </div>
             ) : twoFaSetup ? (
               <div className="mt-2">
-                <p style={{ fontSize: 13, color: "#516b75", marginBottom: 8 }}>{t("settings.twoFaSetup")}</p>
+                <p style={{ fontSize: 13, color: MUTED, marginBottom: 8 }}>{t("settings.twoFaSetup")}</p>
                 <code className="block p-2 rounded text-xs break-all" style={{ background: "var(--eight-surface-subtle)" }}>
                   {twoFaSetup.secret}
                 </code>
@@ -286,7 +286,7 @@ export function SettingsClient({
               </button>
             )}
             {!hasPassword && (
-              <p style={{ fontSize: 12, color: "#7a8f97", marginTop: 8 }}>
+              <p style={{ fontSize: 12, color: MUTED, marginTop: 8 }}>
                 2FA por app requer login com e-mail e senha.
               </p>
             )}
@@ -300,7 +300,7 @@ export function SettingsClient({
           <div className="px-4 space-y-3">
             <div>
               <p style={{ fontSize: 14, fontWeight: 600, color: INK }}>{t("settings.export")}</p>
-              <p style={{ fontSize: 13, color: "#7a8f97" }}>{t("settings.exportDesc")}</p>
+              <p style={{ fontSize: 13, color: MUTED }}>{t("settings.exportDesc")}</p>
               <a
                 href="/api/account/export"
                 className="inline-block mt-2 rounded-full px-4 py-2 font-bold"
@@ -311,7 +311,7 @@ export function SettingsClient({
             </div>
             <div className="pt-2 border-t" style={{ borderColor: LINE }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: ORANGE }}>{t("settings.delete")}</p>
-              <p style={{ fontSize: 13, color: "#7a8f97" }}>{t("settings.deleteDesc")}</p>
+              <p style={{ fontSize: 13, color: MUTED }}>{t("settings.deleteDesc")}</p>
               {hasPassword && (
                 <input
                   type="password"
