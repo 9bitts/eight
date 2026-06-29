@@ -11,8 +11,10 @@ import { formatSpec, formatCount } from "@/lib/format";
 import type { BrowseItem } from "@/lib/discovery";
 import type { FeedPost, SessionUser, Trend } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
 
@@ -41,7 +43,7 @@ function ProfileResultRow({ p }: { p: ProfileResult }) {
           <span style={{ fontWeight: 700, color: INK }}>{p.displayName}</span>
           {p.verified && <VerifiedBadge size={15} />}
         </div>
-        <div style={{ color: "#7a8f97", fontSize: 14 }}>@{p.handle}</div>
+        <div style={{ color: MUTED, fontSize: 14 }}>@{p.handle}</div>
         <div style={{ color: BLUE, fontSize: 13, marginTop: 2 }}>{spec}</div>
         {p.location && <div style={{ color: "#9fb0b6", fontSize: 12 }}>{p.location}</div>}
       </div>
@@ -184,8 +186,8 @@ export function ExploreClient({
 
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "#fff" }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
+        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
           <h1 style={{ fontWeight: 800, fontSize: 20, marginBottom: 12 }}>Explorar</h1>
           <div className="flex gap-2">
             <div

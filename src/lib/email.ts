@@ -40,3 +40,42 @@ export async function sendEmail(opts: {
 export function isEmailConfigured() {
   return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
+
+function siteUrl() {
+  return (
+    process.env.AUTH_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "https://doctor8.com.br"
+  ).replace(/\/$/, "");
+}
+
+export async function sendVerificationApprovedEmail(to: string, displayName: string) {
+  return sendEmail({
+    to,
+    subject: "Selo verificado aprovado — eight",
+    html: `
+      <p>Olá, <strong>${displayName}</strong>,</p>
+      <p>Seu registro profissional foi <strong>aprovado</strong>. O selo verificado já aparece no seu perfil na eight.</p>
+      <p><a href="${siteUrl()}/feed">Acessar a eight</a></p>
+      <p style="color:#7a8f97;font-size:13px">Doctor8 · eight</p>
+    `,
+  });
+}
+
+export async function sendVerificationRejectedEmail(
+  to: string,
+  displayName: string,
+  reason: string
+) {
+  return sendEmail({
+    to,
+    subject: "Verificação — atualização — eight",
+    html: `
+      <p>Olá, <strong>${displayName}</strong>,</p>
+      <p>Sua solicitação de verificação profissional não foi aprovada neste momento.</p>
+      <p><strong>Motivo:</strong> ${reason}</p>
+      <p>Você pode enviar novamente em <a href="${siteUrl()}/verificacao">Verificação profissional</a>.</p>
+      <p style="color:#7a8f97;font-size:13px">Doctor8 · eight</p>
+    `,
+  });
+}

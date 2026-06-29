@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
+import {
+  sendVerificationApprovedEmail,
+  sendVerificationRejectedEmail,
+} from "@/lib/email";
 
 export async function approveVerification(profileId: string) {
   const adminUserId = await requireAdmin();
@@ -14,7 +18,12 @@ export async function approveVerification(profileId: string) {
 
   const profile = await prisma.profile.findUnique({
     where: { id: profileId },
-    select: { id: true, displayName: true, verificationStatus: true },
+    select: {
+      id: true,
+      displayName: true,
+      verificationStatus: true,
+      user: { select: { email: true } },
+    },
   });
   if (!profile) throw new Error("Perfil não encontrado");
   if (profile.verificationStatus === "VERIFIED") {
@@ -43,6 +52,11 @@ export async function approveVerification(profileId: string) {
   revalidatePath("/admin/verificacoes");
   revalidatePath("/verificacao");
   revalidatePath("/feed");
+
+  if (profile.user.email) {
+    await sendVerificationApprovedEmail(profile.user.email, profile.displayName);
+  }
+
   return { ok: true, name: profile.displayName };
 }
 
@@ -59,7 +73,10 @@ export async function rejectVerification(profileId: string, reason: string) {
     throw new Error("Informe o motivo da recusa (mínimo 10 caracteres).");
   }
 
-  const profile = await prisma.profile.findUnique({ where: { id: profileId } });
+  const profile = await prisma.profile.findUnique({
+    where: { id: profileId },
+    include: { user: { select: { email: true } } },
+  });
   if (!profile) throw new Error("Perfil não encontrado");
 
   await prisma.profile.update({
@@ -83,6 +100,11 @@ export async function rejectVerification(profileId: string, reason: string) {
 
   revalidatePath("/admin/verificacoes");
   revalidatePath("/verificacao");
+
+  if (profile.user.email) {
+    await sendVerificationRejectedEmail(profile.user.email, profile.displayName, text);
+  }
+
   return { ok: true };
 }
 

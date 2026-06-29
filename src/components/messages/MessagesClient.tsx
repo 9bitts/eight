@@ -9,8 +9,10 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { formatMessageTime, type ConversationPreview } from "@/lib/messages";
 import type { SessionUser } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 const BLUE = "#176a88";
 
 function ConversationRow({ c }: { c: ConversationPreview }) {
@@ -21,7 +23,7 @@ function ConversationRow({ c }: { c: ConversationPreview }) {
       style={{
         borderColor: LINE,
         textDecoration: "none",
-        background: c.unread ? "#f0f7fa" : "#fff",
+        background: c.unread ? "var(--eight-nav-active)" : CARD,
       }}
     >
       <Avatar name={c.otherName} size={48} />
@@ -35,11 +37,11 @@ function ConversationRow({ c }: { c: ConversationPreview }) {
             </span>
           )}
         </div>
-        <div style={{ fontSize: 13, color: "#7a8f97" }}>@{c.otherHandle}</div>
+        <div style={{ fontSize: 13, color: MUTED }}>@{c.otherHandle}</div>
         {c.lastMessage && (
           <p
             className="truncate mt-1"
-            style={{ fontSize: 14, color: c.unread ? INK : "#7a8f97", fontWeight: c.unread ? 600 : 400 }}
+            style={{ fontSize: 14, color: c.unread ? INK : MUTED, fontWeight: c.unread ? 600 : 400 }}
           >
             {c.lastMessage}
           </p>
@@ -62,8 +64,8 @@ export function MessagesClient({
 }) {
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "#fff" }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
+        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
           <h1 style={{ fontWeight: 800, fontSize: 20, color: INK }}>Mensagens</h1>
           {!canMessage && (
             <p style={{ fontSize: 13, color: "#7a8f97", marginTop: 6, lineHeight: 1.45 }}>

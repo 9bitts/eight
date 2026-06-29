@@ -8,8 +8,10 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { timeAgo } from "@/lib/format";
 import type { SessionUser } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 const BLUE = "#176a88";
 
 type Notif = {
@@ -77,7 +79,7 @@ function NotifRow({ n }: { n: Notif }) {
       style={{
         borderColor: LINE,
         textDecoration: "none",
-        background: n.read ? "#fff" : "#f0f7fa",
+        background: n.read ? CARD : "var(--eight-nav-active)",
       }}
     >
       <NotifIcon type={n.type} />
@@ -91,7 +93,7 @@ function NotifRow({ n }: { n: Notif }) {
             </span>
           )}
         </p>
-        <p style={{ fontSize: 13, color: "#7a8f97", marginTop: 2 }}>{timeAgo(new Date(n.createdAt))}</p>
+        <p style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>{timeAgo(new Date(n.createdAt))}</p>
       </div>
     </Link>
   );
@@ -108,12 +110,12 @@ export function NotificationsClient({
 }) {
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
-      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "#fff" }}>
+      <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
+        <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
           <h1 style={{ fontWeight: 800, fontSize: 20 }}>Notificações</h1>
         </div>
         {notifications.length === 0 ? (
-          <p className="px-4 py-12 text-center" style={{ color: "#7a8f97" }}>
+          <p className="px-4 py-12 text-center" style={{ color: MUTED }}>
             Nenhuma notificação por enquanto.
           </p>
         ) : (

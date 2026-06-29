@@ -8,8 +8,10 @@ import { sendDirectMessage } from "@/lib/actions/messages";
 import { formatMessageTime, type ChatMessage } from "@/lib/messages";
 import type { SessionUser } from "@/lib/types";
 
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
 
@@ -62,14 +64,14 @@ export function ConversationClient({
     <FeedShell user={user} notificationCount={notificationCount}>
       <main
         className="flex-1 min-w-0 flex flex-col"
-        style={{ maxWidth: 620, background: "#fff", borderRight: `1px solid ${LINE}`, height: "100vh" }}
+        style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}`, height: "100vh" }}
       >
-        <div className="sticky top-0 z-10 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${LINE}`, background: "#fff" }}>
+        <div className="sticky top-0 z-10 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
           <Link href="/messages" style={{ fontSize: 13, color: BLUE, textDecoration: "none" }}>
             ← Mensagens
           </Link>
           <h1 style={{ fontWeight: 800, fontSize: 18, color: INK, marginTop: 4 }}>{otherName}</h1>
-          <Link href={`/${otherHandle}`} style={{ fontSize: 13, color: "#7a8f97", textDecoration: "none" }}>
+          <Link href={`/${otherHandle}`} style={{ fontSize: 13, color: MUTED, textDecoration: "none" }}>
             @{otherHandle}
           </Link>
         </div>
@@ -111,7 +113,7 @@ export function ConversationClient({
           <div ref={bottomRef} />
         </div>
 
-        <div className="shrink-0 px-4 py-3 border-t" style={{ borderColor: LINE, background: "#fff" }}>
+        <div className="shrink-0 px-4 py-3 border-t" style={{ borderColor: LINE, background: CARD }}>
           {error && <p className="signup-error mb-2">{error}</p>}
           <div className="flex gap-2">
             <textarea

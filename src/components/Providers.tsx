@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import type { Locale } from "@/lib/i18n";
 import type { Theme } from "@/lib/theme";
 
@@ -18,7 +19,10 @@ export default function Providers({
   return (
     <SessionProvider>
       <ThemeProvider initialTheme={initialTheme}>
-        <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
+        <LocaleProvider initialLocale={initialLocale}>
+          <ServiceWorkerRegister />
+          {children}
+        </LocaleProvider>
       </ThemeProvider>
     </SessionProvider>
   );
