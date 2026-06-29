@@ -102,7 +102,7 @@ function DiscoveryHome({
           <h2 style={{ fontWeight: 800, fontSize: 16, color: INK }}>Em alta na saúde</h2>
         </div>
         {trends.length === 0 ? (
-          <p className="px-4 text-sm" style={{ color: "#7a8f97" }}>
+          <p className="px-4 text-sm" style={{ color: MUTED }}>
             Use hashtags nas publicações para criar tendências.
           </p>
         ) : (
@@ -115,7 +115,7 @@ function DiscoveryHome({
                 style={{ textDecoration: "none" }}
               >
                 <span style={{ fontWeight: 700, color: INK }}>#{t.tag}</span>
-                <span style={{ fontSize: 13, color: "#7a8f97" }}>
+                <span style={{ fontSize: 13, color: MUTED }}>
                   {t.count > 0 ? `${formatCount(t.count)} posts` : "Em alta"}
                 </span>
               </Link>
@@ -192,9 +192,9 @@ export function ExploreClient({
           <div className="flex gap-2">
             <div
               className="flex items-center gap-2 flex-1 px-4 py-2 rounded-full"
-              style={{ background: "#eef3f5" }}
+              style={{ background: "var(--eight-surface-subtle)" }}
             >
-              <Search size={18} style={{ color: "#7a8f97" }} />
+              <Search size={18} style={{ color: MUTED }} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -220,7 +220,7 @@ export function ExploreClient({
               {pending ? "…" : "Buscar"}
             </button>
           </div>
-          <label className="flex items-center gap-2 mt-3 cursor-pointer" style={{ fontSize: 14, color: "#516b75" }}>
+          <label className="flex items-center gap-2 mt-3 cursor-pointer" style={{ fontSize: 14, color: MUTED }}>
             <input
               type="checkbox"
               checked={verifiedOnly}
@@ -246,7 +246,7 @@ export function ExploreClient({
         )}
 
         {searched && profiles.length === 0 && posts.length === 0 && (
-          <p className="px-4 py-12 text-center" style={{ color: "#7a8f97" }}>
+          <p className="px-4 py-12 text-center" style={{ color: MUTED }}>
             Nenhum resultado para &quot;{query}&quot;.
           </p>
         )}

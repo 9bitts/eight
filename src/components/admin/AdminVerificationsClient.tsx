@@ -10,8 +10,10 @@ import { timeAgo } from "@/lib/format";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const MUTED = "var(--eight-muted)";
+const CARD = "var(--eight-card-bg)";
 
 export type PendingProfile = {
   id: string;
@@ -57,11 +59,11 @@ function PendingCard({ profile }: { profile: PendingProfile }) {
   };
 
   return (
-    <div className="rounded-xl border p-4 mb-4" style={{ borderColor: LINE, background: "#fff" }}>
+    <div className="rounded-xl border p-4 mb-4" style={{ borderColor: LINE, background: CARD }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <div style={{ fontWeight: 800, fontSize: 17, color: INK }}>{profile.displayName}</div>
-          <div style={{ color: "#7a8f97", fontSize: 14 }}>@{profile.handle}</div>
+          <div style={{ color: MUTED, fontSize: 14 }}>@{profile.handle}</div>
           <div style={{ color: ORANGE, fontSize: 13, fontWeight: 600, marginTop: 4 }}>{profile.specialty}</div>
           <div style={{ fontSize: 13, color: "#516b75", marginTop: 2 }}>{reg}</div>
           {profile.location && (
@@ -142,17 +144,17 @@ export function AdminVerificationsClient({
   recent: PendingProfile[];
 }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f9fa", fontFamily: "var(--font-body), system-ui, sans-serif" }}>
-      <header className="sticky top-0 z-10 px-6 py-4 border-b" style={{ background: "#fff", borderColor: LINE }}>
+    <div style={{ minHeight: "100vh", background: "var(--eight-shell-bg)", fontFamily: "var(--font-body), system-ui, sans-serif" }}>
+      <header className="sticky top-0 z-10 px-6 py-4 border-b" style={{ background: "var(--eight-header-bg)", borderColor: LINE }}>
         <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 720 }}>
           <div>
             <Link href="/feed" style={{ fontSize: 13, color: BLUE }}>← Voltar ao feed</Link>
             <h1 style={{ fontWeight: 800, fontSize: 22, color: INK, marginTop: 4 }}>
               Verificações · Doctor8
             </h1>
-            <p style={{ fontSize: 14, color: "#7a8f97" }}>Painel de aprovação do selo profissional</p>
+            <p style={{ fontSize: 14, color: MUTED }}>Painel de aprovação do selo profissional</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "#eaf1f4", color: BLUE, fontWeight: 700, fontSize: 13 }}>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "var(--eight-nav-active)", color: BLUE, fontWeight: 700, fontSize: 13 }}>
             <Clock size={16} /> {pending.length} pendente{pending.length !== 1 ? "s" : ""}
           </div>
         </div>

@@ -150,7 +150,9 @@ export function FeedShell({
   rightRail?: React.ReactNode;
 }) {
   const { t } = useLocale();
+  const pathname = usePathname();
   const [messageCount, setMessageCount] = useState(0);
+  const showComposeFab = pathname === "/feed" || pathname === "/cases";
 
   useEffect(() => {
     const load = () => {
@@ -267,6 +269,31 @@ export function FeedShell({
         <MobileNavLink href="/messages" icon={Mail} badge={messageCount} />
         <MobileNavLink href={`/${user.handle}`} icon={User} />
       </nav>
+
+      {showComposeFab && (
+        <button
+          type="button"
+          onClick={() => document.getElementById("composer")?.focus()}
+          className="sm:hidden fixed z-40 rounded-full flex items-center justify-center shadow-lg"
+          style={{
+            right: 16,
+            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+            width: 56,
+            height: 56,
+            background: ORANGE,
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 28,
+            fontWeight: 300,
+            lineHeight: 1,
+            boxShadow: "0 8px 24px -6px rgba(224,89,48,.65)",
+          }}
+          aria-label={t("nav.publish")}
+        >
+          +
+        </button>
+      )}
     </div>
   );
 }

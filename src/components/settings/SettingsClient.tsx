@@ -191,7 +191,7 @@ export function SettingsClient({
                 style={{
                   fontSize: 13,
                   border: `1px solid ${locale === l.code ? BLUE : LINE}`,
-                  background: locale === l.code ? "#e8f4f8" : "#fff",
+                  background: locale === l.code ? "var(--eight-nav-active)" : CARD,
                   color: locale === l.code ? BLUE : INK,
                   cursor: "pointer",
                 }}
@@ -216,7 +216,7 @@ export function SettingsClient({
                 style={{
                   fontSize: 13,
                   border: `1px solid ${theme === mode ? BLUE : LINE}`,
-                  background: theme === mode ? "#e8f4f8" : CARD,
+                  background: theme === mode ? "var(--eight-nav-active)" : CARD,
                   color: theme === mode ? BLUE : INK,
                   cursor: "pointer",
                 }}
@@ -255,7 +255,7 @@ export function SettingsClient({
             ) : twoFaSetup ? (
               <div className="mt-2">
                 <p style={{ fontSize: 13, color: "#516b75", marginBottom: 8 }}>{t("settings.twoFaSetup")}</p>
-                <code className="block p-2 rounded text-xs break-all" style={{ background: "#eef3f5" }}>
+                <code className="block p-2 rounded text-xs break-all" style={{ background: "var(--eight-surface-subtle)" }}>
                   {twoFaSetup.secret}
                 </code>
                 <input
@@ -304,7 +304,7 @@ export function SettingsClient({
               <a
                 href="/api/account/export"
                 className="inline-block mt-2 rounded-full px-4 py-2 font-bold"
-                style={{ background: "#eef3f5", color: BLUE, textDecoration: "none", fontSize: 13 }}
+                style={{ background: "var(--eight-surface-subtle)", color: BLUE, textDecoration: "none", fontSize: 13 }}
               >
                 Download JSON
               </a>
@@ -360,8 +360,14 @@ export function SettingsClient({
           )}
         </section>
 
-        <div className="px-4 py-6">
-          <Link href="/verificacao" style={{ color: BLUE, fontWeight: 600, fontSize: 14 }}>
+        <div className="px-4 py-6 flex flex-col gap-2">
+          <Link href="/analytics" style={{ color: BLUE, fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
+            Analytics do perfil →
+          </Link>
+          <Link href="/agendados" style={{ color: BLUE, fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
+            Posts agendados →
+          </Link>
+          <Link href="/verificacao" style={{ color: BLUE, fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
             {t("settings.verification")} →
           </Link>
         </div>

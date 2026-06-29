@@ -78,6 +78,15 @@ export function ProfileClient({
   const [following, setFollowing] = useState(isFollowing);
   const [tab, setTab] = useState<"posts" | "replies">("posts");
   const [pending, startTransition] = useTransition();
+  const [copied, setCopied] = useState(false);
+
+  const copyProfileLink = () => {
+    const url = `${window.location.origin}/${profile.handle}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const spec = formatSpec(
     profile.specialty,
@@ -247,19 +256,35 @@ export function ProfileClient({
                 />
               )}
               {isOwnProfile && (
-                <Link
-                  href="/settings"
-                  className="rounded-full px-5 py-2 font-bold"
-                  style={{
-                    fontSize: 14,
-                    border: `1px solid ${LINE}`,
-                    color: INK,
-                    textDecoration: "none",
-                    background: CARD,
-                  }}
-                >
-                  Editar perfil
-                </Link>
+                <>
+                  <button
+                    type="button"
+                    onClick={copyProfileLink}
+                    className="rounded-full px-4 py-2 font-bold"
+                    style={{
+                      fontSize: 14,
+                      border: `1px solid ${LINE}`,
+                      color: BLUE,
+                      background: CARD,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {copied ? "Link copiado!" : "Copiar link"}
+                  </button>
+                  <Link
+                    href="/settings"
+                    className="rounded-full px-5 py-2 font-bold"
+                    style={{
+                      fontSize: 14,
+                      border: `1px solid ${LINE}`,
+                      color: INK,
+                      textDecoration: "none",
+                      background: CARD,
+                    }}
+                  >
+                    Editar perfil
+                  </Link>
+                </>
               )}
             </div>
           </div>

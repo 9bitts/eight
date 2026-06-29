@@ -130,7 +130,7 @@ function RightRail({
       </div>
 
       {suggestions.length > 0 && (
-        <div className="rounded-2xl" style={{ background: "#f4f7f8" }}>
+        <div className="rounded-2xl" style={{ background: "var(--eight-surface-muted)" }}>
           <h3 className="px-4 pt-3 pb-1" style={{ fontWeight: 800, fontSize: 16 }}>
             {t("feed.whoToFollow")}
           </h3>
@@ -197,7 +197,7 @@ export function FeedClient({
         <PostComposer user={user} />
 
         {initialPosts.length === 0 ? (
-          <p className="px-4 py-8 text-center" style={{ color: "#7a8f97" }}>
+          <p className="px-4 py-8 text-center" style={{ color: MUTED }}>
             {tab === "following"
               ? "Siga colegas para ver as publicações deles aqui."
               : "Nenhuma publicação ainda."}

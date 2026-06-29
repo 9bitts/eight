@@ -8,6 +8,7 @@ import type { ConnectionProfile, SessionUser } from "@/lib/types";
 const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
 const CARD = "var(--eight-card-bg)";
+const MUTED = "var(--eight-muted)";
 
 type Tab = "followers" | "following";
 
@@ -37,7 +38,7 @@ export function ConnectionsClient({
               ← @{profileHandle}
             </Link>
             <h1 style={{ fontWeight: 800, fontSize: 20, color: INK, marginTop: 4 }}>{title}</h1>
-            <p style={{ fontSize: 13, color: "#7a8f97" }}>{profileName}</p>
+            <p style={{ fontSize: 13, color: MUTED }}>{profileName}</p>
           </div>
           <div className="flex">
             <Link
@@ -45,7 +46,7 @@ export function ConnectionsClient({
               className="flex-1 py-3 text-center font-bold"
               style={{
                 textDecoration: "none",
-                color: tab === "followers" ? INK : "#7a8f97",
+                color: tab === "followers" ? INK : MUTED,
                 borderBottom: tab === "followers" ? "3px solid #176a88" : "3px solid transparent",
               }}
             >
@@ -56,7 +57,7 @@ export function ConnectionsClient({
               className="flex-1 py-3 text-center font-bold"
               style={{
                 textDecoration: "none",
-                color: tab === "following" ? INK : "#7a8f97",
+                color: tab === "following" ? INK : MUTED,
                 borderBottom: tab === "following" ? "3px solid #176a88" : "3px solid transparent",
               }}
             >
@@ -66,7 +67,7 @@ export function ConnectionsClient({
         </div>
 
         {connections.length === 0 ? (
-          <p className="px-4 py-12 text-center" style={{ color: "#7a8f97" }}>
+          <p className="px-4 py-12 text-center" style={{ color: MUTED }}>
             {tab === "followers" ? "Nenhum seguidor ainda." : "Não segue ninguém ainda."}
           </p>
         ) : (

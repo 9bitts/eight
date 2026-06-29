@@ -49,7 +49,7 @@ export function PostThreadClient({
       <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
         <div
           className="sticky top-0 z-10 px-4 py-3 flex items-center gap-4"
-          style={{ background: "rgba(255,255,255,.92)", borderBottom: `1px solid ${LINE}` }}
+          style={{ background: "var(--eight-header-bg)", borderBottom: `1px solid ${LINE}` }}
         >
           <Link href="/feed" style={{ color: INK }}>
             <ArrowLeft size={20} />

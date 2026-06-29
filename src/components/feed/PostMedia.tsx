@@ -139,16 +139,16 @@ export function PollCard({ poll }: { poll: PollData }) {
             />
           )}
           <div className="relative flex justify-between gap-2">
-            <span style={{ fontSize: 14, fontWeight: o.voted ? 700 : 500, color: "#0c2b36" }}>
+            <span style={{ fontSize: 14, fontWeight: o.voted ? 700 : 500, color: "var(--eight-ink)" }}>
               {o.text}
             </span>
             {(poll.userVoted || poll.ended) && (
-              <span style={{ fontSize: 13, color: "#7a8f97" }}>{o.percent}%</span>
+              <span style={{ fontSize: 13, color: "var(--eight-muted)" }}>{o.percent}%</span>
             )}
           </div>
         </button>
       ))}
-      <p style={{ fontSize: 12, color: "#7a8f97", marginTop: 8 }}>
+      <p style={{ fontSize: 12, color: "var(--eight-muted)", marginTop: 8 }}>
         {poll.totalVotes} voto{poll.totalVotes !== 1 ? "s" : ""}
         {poll.ended ? " · Encerrada" : ""}
       </p>
