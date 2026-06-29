@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatSpec, timeAgo, formatCount } from "@/lib/format";
 import { publishedWhere } from "@/lib/post-utils";
+import { getBlockedProfileIds, getMutedProfileIds } from "@/lib/relationships";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
 const postInclude = {
@@ -135,14 +136,29 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
 export async function getSessionUser(userId: string): Promise<SessionUser | null> {
   const profile = await prisma.profile.findUnique({
     where: { userId },
-    select: { id: true, displayName: true, handle: true, verified: true },
+    select: {
+      id: true,
+      displayName: true,
+      handle: true,
+      verified: true,
+      verificationStatus: true,
+      user: { select: { isAdmin: true, email: true } },
+    },
   });
   if (!profile) return null;
+
+  const isAdmin = profile.user.isAdmin ||
+    (process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim().toLowerCase()) ?? []).includes(
+      profile.user.email.toLowerCase()
+    );
+
   return {
     profileId: profile.id,
     displayName: profile.displayName,
     handle: profile.handle,
     verified: profile.verified,
+    verificationStatus: profile.verificationStatus,
+    isAdmin,
   };
 }
 
@@ -151,17 +167,29 @@ export async function getFeedPosts(
   tab: FeedTab = "forYou",
   authorId?: string
 ): Promise<FeedPost[]> {
-  let authorWhere: { authorId?: string | { in: string[] } } = {};
+  let authorWhere: { authorId?: string | { in: string[] } | { notIn: string[] } } = {};
+
+  const [blockedIds, mutedIds] = await Promise.all([
+    getBlockedProfileIds(viewerProfileId),
+    getMutedProfileIds(viewerProfileId),
+  ]);
+  const hiddenIds = Array.from(new Set([...blockedIds, ...mutedIds]));
 
   if (authorId) {
+    const blockStatus = blockedIds.includes(authorId);
+    if (blockStatus) return [];
     authorWhere = { authorId };
   } else if (tab === "following") {
     const following = await prisma.follow.findMany({
       where: { followerId: viewerProfileId },
       select: { followingId: true },
     });
-    const ids = [viewerProfileId, ...following.map((f) => f.followingId)];
+    const ids = [viewerProfileId, ...following.map((f) => f.followingId)].filter(
+      (id) => !hiddenIds.includes(id)
+    );
     authorWhere = { authorId: { in: ids } };
+  } else if (hiddenIds.length > 0) {
+    authorWhere = { authorId: { notIn: hiddenIds } };
   }
 
   const posts = await prisma.post.findMany({
@@ -242,11 +270,18 @@ export async function getReplies(
 }
 
 export async function getSuggestions(viewerProfileId: string): Promise<Suggestion[]> {
-  const following = await prisma.follow.findMany({
-    where: { followerId: viewerProfileId },
-    select: { followingId: true },
-  });
-  const excludeIds = [viewerProfileId, ...following.map((f) => f.followingId)];
+  const [following, blockedIds] = await Promise.all([
+    prisma.follow.findMany({
+      where: { followerId: viewerProfileId },
+      select: { followingId: true },
+    }),
+    getBlockedProfileIds(viewerProfileId),
+  ]);
+  const excludeIds = [
+    viewerProfileId,
+    ...following.map((f) => f.followingId),
+    ...blockedIds,
+  ];
 
   const profiles = await prisma.profile.findMany({
     where: { id: { notIn: excludeIds } },
@@ -363,11 +398,16 @@ export async function getUnreadNotificationCount(profileId: string) {
   });
 }
 
-export async function searchProfiles(query: string, limit = 10) {
+export async function searchProfiles(query: string, limit = 10, verifiedOnly = false, viewerProfileId?: string) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
+
+  const blockedIds = viewerProfileId ? await getBlockedProfileIds(viewerProfileId) : [];
+
   return prisma.profile.findMany({
     where: {
+      ...(verifiedOnly ? { verificationStatus: "VERIFIED" } : {}),
+      ...(blockedIds.length ? { id: { notIn: blockedIds } } : {}),
       OR: [
         { handle: { contains: q, mode: "insensitive" } },
         { displayName: { contains: q, mode: "insensitive" } },

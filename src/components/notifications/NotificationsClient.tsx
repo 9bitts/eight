@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Repeat2, UserPlus, MessageCircle } from "lucide-react";
+import { Heart, Repeat2, UserPlus, MessageCircle, BadgeCheck } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -30,6 +30,9 @@ function NotifIcon({ type }: { type: string }) {
   if (type === "LIKE") return <Heart {...props} fill={BLUE} />;
   if (type === "REPOST") return <Repeat2 {...props} />;
   if (type === "FOLLOW") return <UserPlus {...props} />;
+  if (type === "VERIFICATION_APPROVED" || type === "VERIFICATION_REJECTED") {
+    return <BadgeCheck {...props} />;
+  }
   return <MessageCircle {...props} />;
 }
 
@@ -44,13 +47,24 @@ function notifText(n: Notif): string {
       return `${name} começou a seguir você`;
     case "REPLY":
       return `${name} respondeu sua publicação`;
+    case "MENTION":
+      return `${name} mencionou você`;
+    case "VERIFICATION_APPROVED":
+      return "Seu registro profissional foi aprovado — selo verificado liberado!";
+    case "VERIFICATION_REJECTED":
+      return "Sua verificação precisa de ajustes — veja em Verificação";
     default:
       return `${name} interagiu com você`;
   }
 }
 
 function NotifRow({ n }: { n: Notif }) {
-  const href = n.postId ? `/post/${n.postId}` : `/${n.actor.handle}`;
+  const href =
+    n.type === "VERIFICATION_APPROVED" || n.type === "VERIFICATION_REJECTED"
+      ? "/verificacao"
+      : n.postId
+        ? `/post/${n.postId}`
+        : `/${n.actor.handle}`;
   return (
     <Link
       href={href}

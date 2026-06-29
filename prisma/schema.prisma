@@ -53,6 +53,7 @@ model User {
   emailVerified DateTime?
   image         String?
   passwordHash  String?
+  isAdmin       Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -74,8 +75,13 @@ model Profile {
   location            String?
   avatarUrl           String?
   bannerUrl           String?
-  verified            Boolean   @default(false)
-  verifiedAt          DateTime?
+  verified                Boolean            @default(false)
+  verificationStatus      VerificationStatus @default(PENDING)
+  verificationDocumentUrl String?
+  verificationSubmittedAt DateTime?
+  verificationReviewedAt  DateTime?
+  rejectionReason         String?            @db.VarChar(300)
+  verifiedAt              DateTime?
   pinnedPostId        String?   @unique
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -90,6 +96,10 @@ model Profile {
   pollVotes          PollVote[]
   followers          Follow[]       @relation("following")
   following          Follow[]       @relation("follower")
+  blocksSent         Block[]        @relation("blocksSent")
+  blocksReceived     Block[]        @relation("blocksReceived")
+  mutesSent          Mute[]         @relation("mutesSent")
+  mutesReceived      Mute[]         @relation("mutesReceived")
   notifications      Notification[] @relation("recipient")
   actorNotifications Notification[] @relation("actor")
 }
@@ -219,6 +229,32 @@ model Follow {
   @@unique([followerId, followingId])
 }
 
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker Profile @relation("blocksSent", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked Profile @relation("blocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Mute {
+  id        String   @id @default(cuid())
+  muterId   String
+  mutedId   String
+  createdAt DateTime @default(now())
+
+  muter Profile @relation("mutesSent", fields: [muterId], references: [id], onDelete: Cascade)
+  muted Profile @relation("mutesReceived", fields: [mutedId], references: [id], onDelete: Cascade)
+
+  @@unique([muterId, mutedId])
+  @@index([mutedId])
+}
+
 model Comment {
   id        String   @id @default(cuid())
   authorId  String
@@ -249,4 +285,12 @@ enum NotificationType {
   FOLLOW
   REPLY
   MENTION
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
 }

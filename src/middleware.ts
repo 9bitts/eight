@@ -4,7 +4,7 @@ import { authConfig } from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-const PROTECTED = ["/feed", "/explore", "/notifications", "/messages", "/cases", "/settings", "/post"];
+const PROTECTED = ["/feed", "/explore", "/notifications", "/messages", "/cases", "/settings", "/post", "/verificacao", "/admin"];
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
@@ -38,5 +38,7 @@ export const config = {
     "/login",
     "/signup",
     "/signup/complete",
+    "/verificacao",
+    "/admin/:path*",
   ],
 };

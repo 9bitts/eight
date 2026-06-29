@@ -1,4 +1,5 @@
 import type { DefaultSession } from "next-auth";
+import type { VerificationStatus } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -6,6 +7,8 @@ declare module "next-auth" {
       id: string;
       handle?: string;
       verified?: boolean;
+      verificationStatus?: VerificationStatus;
+      isAdmin?: boolean;
       profileId?: string;
     } & DefaultSession["user"];
   }
@@ -13,6 +16,8 @@ declare module "next-auth" {
   interface User {
     handle?: string;
     verified?: boolean;
+    verificationStatus?: VerificationStatus;
+    isAdmin?: boolean;
     profileId?: string;
   }
 }
@@ -22,6 +27,8 @@ declare module "next-auth/jwt" {
     id?: string;
     handle?: string;
     verified?: boolean;
+    verificationStatus?: VerificationStatus;
+    isAdmin?: boolean;
     profileId?: string;
   }
 }

@@ -60,6 +60,16 @@ export type Suggestion = {
   following: boolean;
 };
 
+export type ConnectionProfile = {
+  id: string;
+  displayName: string;
+  handle: string;
+  spec: string;
+  verified: boolean;
+  following: boolean;
+  followsYou: boolean;
+};
+
 export type Trend = {
   tag: string;
   count: number;
@@ -70,6 +80,8 @@ export type SessionUser = {
   displayName: string;
   handle: string;
   verified: boolean;
+  verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
+  isAdmin: boolean;
 };
 
 export type CreatePostInput = {

@@ -12,6 +12,8 @@ import {
   Settings,
   Sparkles,
   LogOut,
+  BadgeCheck,
+  Shield,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
@@ -123,6 +125,12 @@ export function FeedShell({
               <NavLink href="/messages" icon={Mail} label="Mensagens" />
               <NavLink href="/cases" icon={Sparkles} label="Casos clínicos" />
               <NavLink href={`/${user.handle}`} icon={User} label="Perfil" />
+              {user.verificationStatus !== "VERIFIED" && (
+                <NavLink href="/verificacao" icon={BadgeCheck} label="Verificação" />
+              )}
+              {user.isAdmin && (
+                <NavLink href="/admin/verificacoes" icon={Shield} label="Admin" />
+              )}
               <NavLink href="/settings" icon={Settings} label="Configurações" />
             </nav>
             <button

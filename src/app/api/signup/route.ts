@@ -89,6 +89,8 @@ export async function POST(req: Request) {
             registrationCountry: registrationCountry || null,
             location: location || null,
             verified: false,
+            verificationStatus: "PENDING",
+            verificationSubmittedAt: new Date(),
           },
         },
       },

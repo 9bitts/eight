@@ -253,6 +253,16 @@ export async function toggleFollow(targetProfileId: string) {
   const profileId = await requireProfile();
   if (profileId === targetProfileId) throw new Error("Ação inválida");
 
+  const block = await prisma.block.findFirst({
+    where: {
+      OR: [
+        { blockerId: profileId, blockedId: targetProfileId },
+        { blockerId: targetProfileId, blockedId: profileId },
+      ],
+    },
+  });
+  if (block) throw new Error("Não é possível seguir este perfil.");
+
   const existing = await prisma.follow.findUnique({
     where: { followerId_followingId: { followerId: profileId, followingId: targetProfileId } },
   });

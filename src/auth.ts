@@ -62,6 +62,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
+        const adminEmails =
+          process.env.ADMIN_EMAILS?.split(",")
+            .map((e) => e.trim().toLowerCase())
+            .filter(Boolean) ?? [];
+        const isAdmin =
+          user.isAdmin || adminEmails.includes(user.email.toLowerCase());
+
         return {
           id: user.id,
           email: user.email,
@@ -69,6 +76,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image,
           handle: user.profile.handle,
           verified: user.profile.verified,
+          verificationStatus: user.profile.verificationStatus,
+          isAdmin,
           profileId: user.profile.id,
         };
       },
@@ -82,16 +91,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id) {
         const profile = await prisma.profile.findUnique({
           where: { userId: token.id as string },
-          select: { id: true, handle: true, verified: true },
+          select: {
+            id: true,
+            handle: true,
+            verified: true,
+            verificationStatus: true,
+            user: { select: { isAdmin: true, email: true } },
+          },
         });
         if (profile) {
+          const adminEmails =
+            process.env.ADMIN_EMAILS?.split(",")
+              .map((e) => e.trim().toLowerCase())
+              .filter(Boolean) ?? [];
           token.profileId = profile.id;
           token.handle = profile.handle;
           token.verified = profile.verified;
+          token.verificationStatus = profile.verificationStatus;
+          token.isAdmin =
+            profile.user.isAdmin ||
+            adminEmails.includes(profile.user.email.toLowerCase());
         } else {
           delete token.profileId;
           delete token.handle;
           delete token.verified;
+          delete token.verificationStatus;
+          delete token.isAdmin;
         }
       }
 

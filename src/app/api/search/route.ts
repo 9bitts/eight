@@ -10,9 +10,10 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q") ?? "";
+  const verifiedOnly = searchParams.get("verified") === "1";
 
   const [profiles, posts] = await Promise.all([
-    searchProfiles(q),
+    searchProfiles(q, 10, verifiedOnly, session.user.profileId),
     searchPosts(q, session.user.profileId),
   ]);
 

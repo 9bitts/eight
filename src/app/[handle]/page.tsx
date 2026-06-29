@@ -8,6 +8,7 @@ import {
   getUnreadNotificationCount,
   isFollowing,
 } from "@/lib/feed";
+import { getBlockStatus, isMuted } from "@/lib/relationships";
 
 const RESERVED = new Set([
   "feed",
@@ -37,10 +38,12 @@ export default async function ProfilePage({ params }: Props) {
   const profile = await getProfileByHandle(handle);
   if (!profile) notFound();
 
-  const [posts, notificationCount, following] = await Promise.all([
+  const [posts, notificationCount, following, blockStatus, muted] = await Promise.all([
     getFeedPosts(user.profileId, "forYou", profile.id),
     getUnreadNotificationCount(user.profileId),
     isFollowing(user.profileId, profile.id),
+    getBlockStatus(user.profileId, profile.id),
+    isMuted(user.profileId, profile.id),
   ]);
 
   return (
@@ -63,6 +66,9 @@ export default async function ProfilePage({ params }: Props) {
       user={user}
       isOwnProfile={profile.id === user.profileId}
       isFollowing={following}
+      blockedByViewer={blockStatus.blockedByViewer}
+      blockedByTarget={blockStatus.blockedByTarget}
+      isMuted={muted}
       notificationCount={notificationCount}
     />
   );

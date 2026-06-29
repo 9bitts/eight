@@ -7,6 +7,7 @@ import { Search, BadgeCheck, TrendingUp } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { PostCard } from "@/components/feed/PostCard";
 import { PostComposer } from "@/components/feed/PostComposer";
+import { VerificationBanner } from "@/components/verification/VerificationBanner";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { toggleFollow } from "@/lib/actions";
@@ -182,6 +183,7 @@ export function FeedClient({
           <FeedTabs tab={tab} />
         </div>
 
+        <VerificationBanner user={user} />
         <PostComposer user={user} />
 
         {initialPosts.length === 0 ? (

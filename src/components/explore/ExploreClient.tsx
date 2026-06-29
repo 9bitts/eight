@@ -58,13 +58,16 @@ export function ExploreClient({
   const [profiles, setProfiles] = useState<ProfileResult[]>([]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [searched, setSearched] = useState(false);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const search = () => {
     const q = query.trim();
     if (!q) return;
     startTransition(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const params = new URLSearchParams({ q });
+      if (verifiedOnly) params.set("verified", "1");
+      const res = await fetch(`/api/search?${params}`);
       const data = await res.json();
       setProfiles(data.profiles ?? []);
       setPosts(data.posts ?? []);
@@ -108,6 +111,15 @@ export function ExploreClient({
               {pending ? "…" : "Buscar"}
             </button>
           </div>
+          <label className="flex items-center gap-2 mt-3 cursor-pointer" style={{ fontSize: 14, color: "#516b75" }}>
+            <input
+              type="checkbox"
+              checked={verifiedOnly}
+              onChange={(e) => setVerifiedOnly(e.target.checked)}
+              style={{ accentColor: BLUE }}
+            />
+            Somente profissionais verificados
+          </label>
         </div>
 
         {!searched && (
