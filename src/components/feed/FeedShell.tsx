@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import {
   Home,
   Search,
@@ -95,6 +96,48 @@ function NavLink({
   );
 }
 
+function MobileNavLink({
+  href,
+  icon: Icon,
+  badge,
+}: {
+  href: string;
+  icon: LucideIcon;
+  badge?: number;
+}) {
+  const pathname = usePathname();
+  const active =
+    href === "/feed" ? pathname === "/feed" : pathname === href || pathname.startsWith(href + "/");
+
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-center justify-center flex-1 py-2 relative"
+      style={{ color: active ? INK : "var(--eight-nav-text)", textDecoration: "none" }}
+    >
+      <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+      {badge != null && badge > 0 && (
+        <span
+          className="absolute top-1"
+          style={{
+            right: "calc(50% - 22px)",
+            background: ORANGE,
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 700,
+            borderRadius: 99,
+            padding: "1px 5px",
+            minWidth: 16,
+            textAlign: "center",
+          }}
+        >
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export function FeedShell({
   user,
   notificationCount,
@@ -107,6 +150,20 @@ export function FeedShell({
   rightRail?: React.ReactNode;
 }) {
   const { t } = useLocale();
+  const [messageCount, setMessageCount] = useState(0);
+
+  useEffect(() => {
+    const load = () => {
+      fetch("/api/messages/unread-count")
+        .then((r) => r.json())
+        .then((d) => setMessageCount(typeof d.count === "number" ? d.count : 0))
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const shortName =
     user.displayName.length > 16
       ? user.displayName.split(" ")[0]
@@ -127,7 +184,7 @@ export function FeedShell({
               <NavLink href="/feed" icon={Home} label={t("nav.home")} />
               <NavLink href="/explore" icon={Search} label={t("nav.explore")} />
               <NavLink href="/notifications" icon={Bell} label={t("nav.notifications")} badge={notificationCount} />
-              <NavLink href="/messages" icon={Mail} label={t("nav.messages")} />
+              <NavLink href="/messages" icon={Mail} label={t("nav.messages")} badge={messageCount} />
               <NavLink href="/cases" icon={Sparkles} label={t("nav.cases")} />
               <NavLink href="/listas" icon={List} label={t("nav.lists")} />
               <NavLink href="/salvos" icon={Bookmark} label={t("nav.saved")} />
@@ -187,7 +244,7 @@ export function FeedShell({
           </div>
         </aside>
 
-        {children}
+        <div className="flex-1 min-w-0 pb-16 sm:pb-0">{children}</div>
 
         {rightRail && (
           <aside className="hidden lg:block px-5 py-4 sticky top-0 h-screen overflow-y-auto" style={{ width: 340 }}>
@@ -195,6 +252,21 @@ export function FeedShell({
           </aside>
         )}
       </div>
+
+      <nav
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex border-t"
+        style={{
+          borderColor: LINE,
+          background: BG,
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
+      >
+        <MobileNavLink href="/feed" icon={Home} />
+        <MobileNavLink href="/explore" icon={Search} />
+        <MobileNavLink href="/notifications" icon={Bell} badge={notificationCount} />
+        <MobileNavLink href="/messages" icon={Mail} badge={messageCount} />
+        <MobileNavLink href={`/${user.handle}`} icon={User} />
+      </nav>
     </div>
   );
 }

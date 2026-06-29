@@ -1,8 +1,11 @@
 "use client";
 
+import { useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { PostCard } from "@/components/feed/PostCard";
+import { cancelScheduledPost } from "@/lib/actions";
 import type { FeedPost, SessionUser } from "@/lib/types";
 import { Clock } from "lucide-react";
 
@@ -10,6 +13,7 @@ const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
 const MUTED = "var(--eight-muted)";
 const CARD = "var(--eight-card-bg)";
+const ORANGE = "#e05930";
 
 export function ScheduledClient({
   user,
@@ -20,6 +24,17 @@ export function ScheduledClient({
   notificationCount: number;
   posts: FeedPost[];
 }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  const onCancel = (postId: string) => {
+    if (!confirm("Cancelar esta publicação agendada?")) return;
+    startTransition(async () => {
+      await cancelScheduledPost(postId);
+      router.refresh();
+    });
+  };
+
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
       <main
@@ -43,7 +58,28 @@ export function ScheduledClient({
             </Link>
           </div>
         ) : (
-          posts.map((p) => <PostCard key={p.id} post={p} />)
+          posts.map((p) => (
+            <div key={p.id}>
+              <PostCard post={p} />
+              <div className="px-4 pb-3 flex justify-end" style={{ borderBottom: `1px solid ${LINE}` }}>
+                <button
+                  type="button"
+                  onClick={() => onCancel(p.id)}
+                  disabled={pending}
+                  className="rounded-full px-4 py-1.5 font-bold"
+                  style={{
+                    fontSize: 13,
+                    border: `1px solid ${LINE}`,
+                    background: CARD,
+                    color: ORANGE,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar agendamento
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </main>
     </FeedShell>

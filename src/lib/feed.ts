@@ -614,4 +614,35 @@ export async function getSavedPosts(viewerProfileId: string): Promise<FeedPost[]
     .map((b) => ({ ...mapPost(b.post as RawPost, viewerProfileId), saved: true }));
 }
 
+export async function getPostsForList(
+  listId: string,
+  ownerId: string,
+  viewerProfileId: string
+): Promise<FeedPost[]> {
+  const list = await prisma.profileList.findFirst({
+    where: { id: listId, ownerId },
+    include: { members: { select: { profileId: true } } },
+  });
+  if (!list || list.members.length === 0) return [];
+
+  const memberIds = list.members.map((m) => m.profileId);
+  const posts = await prisma.post.findMany({
+    where: {
+      parentId: null,
+      threadId: null,
+      authorId: { in: memberIds },
+      isClinicalCase: false,
+      ...publishedWhere(),
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: postInclude,
+  });
+
+  return enrichSaved(
+    posts.map((p) => mapPost(p as RawPost, viewerProfileId)),
+    viewerProfileId
+  );
+}
+
 export { formatCount };

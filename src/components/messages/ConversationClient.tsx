@@ -45,6 +45,11 @@ export function ConversationClient({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    const id = setInterval(() => router.refresh(), 5000);
+    return () => clearInterval(id);
+  }, [router]);
+
   const send = () => {
     const body = text.trim();
     if (!body || pending) return;
@@ -78,7 +83,7 @@ export function ConversationClient({
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {messages.length === 0 && (
-            <p className="text-center py-8" style={{ color: "#7a8f97", fontSize: 14 }}>
+            <p className="text-center py-8" style={{ color: MUTED, fontSize: 14 }}>
               Inicie a conversa com {otherName}.
             </p>
           )}
@@ -90,7 +95,7 @@ export function ConversationClient({
               <div
                 className="max-w-[85%] px-4 py-2.5 rounded-2xl"
                 style={{
-                  background: m.isMine ? BLUE : "#eef3f5",
+                  background: m.isMine ? BLUE : "var(--eight-bubble-incoming)",
                   color: m.isMine ? "#fff" : INK,
                   borderBottomRightRadius: m.isMine ? 4 : undefined,
                   borderBottomLeftRadius: m.isMine ? undefined : 4,

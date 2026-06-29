@@ -23,6 +23,9 @@
   --eight-nav-text:#516b75;
   --eight-header-bg:rgba(255,255,255,.92);
   --eight-body-text:#1b3a45;
+  --eight-surface-subtle:#eef3f5;
+  --eight-surface-muted:#f7f9fa;
+  --eight-bubble-incoming:#eef3f5;
 }
 
 [data-theme="dark"]{
@@ -35,6 +38,9 @@
   --eight-nav-text:#8aa3ad;
   --eight-header-bg:rgba(15,34,41,.95);
   --eight-body-text:#c8dce3;
+  --eight-surface-subtle:#1a3540;
+  --eight-surface-muted:#152830;
+  --eight-bubble-incoming:#1a3540;
 }
 
 *{box-sizing:border-box}

@@ -14,6 +14,13 @@ async function requireProfile() {
   const session = await auth();
   const profileId = session?.user?.profileId;
   if (!profileId) throw new Error("Não autorizado");
+
+  const profile = await prisma.profile.findUnique({
+    where: { id: profileId },
+    select: { suspended: true },
+  });
+  if (profile?.suspended) throw new Error("Conta suspensa. Entre em contato com o suporte.");
+
   return profileId;
 }
 
@@ -170,6 +177,25 @@ export async function deletePost(postId: string) {
   });
 
   await prisma.post.delete({ where: { id: postId } });
+  revalidatePath("/feed");
+  revalidatePath("/agendados");
+}
+
+export async function cancelScheduledPost(postId: string) {
+  const profileId = await requireProfile();
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
+  if (!post.scheduledAt || post.scheduledAt <= new Date()) {
+    throw new Error("Esta publicação já foi enviada ou não está agendada.");
+  }
+
+  await prisma.profile.updateMany({
+    where: { pinnedPostId: postId },
+    data: { pinnedPostId: null },
+  });
+
+  await prisma.post.delete({ where: { id: postId } });
+  revalidatePath("/agendados");
   revalidatePath("/feed");
 }
 

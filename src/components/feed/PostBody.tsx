@@ -7,7 +7,7 @@ export function PostBody({ text }: { text: string }) {
   const parts = parsePostBody(text);
 
   return (
-    <p style={{ color: "#1b3a45", fontSize: 15.5, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+    <p style={{ color: "var(--eight-body-text)", fontSize: 15.5, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
       {parts.map((part, i) => {
         if (part.type === "hashtag") {
           return (

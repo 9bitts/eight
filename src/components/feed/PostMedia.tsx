@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 const BLUE = "#176a88";
-const LINE = "#e4ebee";
+const LINE = "var(--eight-line)";
+const MUTED = "var(--eight-muted)";
+const INK = "var(--eight-ink)";
 
 export function LinkPreviewCard({ preview }: { preview: LinkPreviewData }) {
   return (
@@ -22,20 +24,20 @@ export function LinkPreviewCard({ preview }: { preview: LinkPreviewData }) {
           src={preview.image}
           alt=""
           className="w-full max-h-48 object-cover"
-          style={{ background: "#eef3f5" }}
+          style={{ background: "var(--eight-surface-subtle)" }}
         />
       )}
-      <div className="p-3" style={{ background: "#f7f9fa" }}>
-        <div style={{ fontSize: 12, color: "#7a8f97" }}>
+      <div className="p-3" style={{ background: "var(--eight-surface-muted)" }}>
+        <div style={{ fontSize: 12, color: MUTED }}>
           {new URL(preview.url).hostname}
         </div>
         {preview.title && (
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#0c2b36", marginTop: 2 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: INK, marginTop: 2 }}>
             {preview.title}
           </div>
         )}
         {preview.description && (
-          <div style={{ fontSize: 13, color: "#516b75", marginTop: 4, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 13, color: MUTED, marginTop: 4, lineHeight: 1.4 }}>
             {preview.description.slice(0, 120)}
           </div>
         )}
@@ -92,7 +94,7 @@ export function PostMedia({
           src={src}
           alt=""
           className="w-full object-cover"
-          style={{ maxHeight: images.length === 1 ? 320 : 160, background: "#eef3f5" }}
+          style={{ maxHeight: images.length === 1 ? 320 : 160, background: "var(--eight-surface-subtle)" }}
         />
       ))}
     </div>
@@ -124,7 +126,7 @@ export function PollCard({ poll }: { poll: PollData }) {
             borderColor: o.voted ? BLUE : LINE,
             padding: "10px 12px",
             cursor: poll.ended || poll.userVoted ? "default" : "pointer",
-            background: "#fff",
+            background: o.voted ? "var(--eight-nav-active)" : "var(--eight-card-bg)",
           }}
         >
           {(poll.userVoted || poll.ended) && (

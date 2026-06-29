@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Flag } from "lucide-react";
-import { dismissReport } from "@/lib/actions/reports";
+import { dismissReport, adminHidePost, adminSuspendProfile } from "@/lib/actions/reports";
 
 const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
@@ -35,6 +35,24 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
 
   const onDismiss = (reportId: string) => {
     startTransition(async () => {
+      await dismissReport(reportId);
+      router.refresh();
+    });
+  };
+
+  const onHidePost = (reportId: string, postId: string) => {
+    if (!confirm("Ocultar esta publicação para todos os usuários?")) return;
+    startTransition(async () => {
+      await adminHidePost(postId);
+      await dismissReport(reportId);
+      router.refresh();
+    });
+  };
+
+  const onSuspendProfile = (reportId: string, profileId: string) => {
+    if (!confirm("Suspender este perfil? O usuário não poderá mais usar a plataforma.")) return;
+    startTransition(async () => {
+      await adminSuspendProfile(profileId);
       await dismissReport(reportId);
       router.refresh();
     });
@@ -92,6 +110,40 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
                   >
                     Marcar como revisada
                   </button>
+                  {r.targetType === "POST" && (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => onHidePost(r.id, r.targetId)}
+                      className="rounded-full px-3 py-1 font-semibold"
+                      style={{
+                        fontSize: 12,
+                        border: "1px solid #e05930",
+                        background: "var(--eight-card-bg)",
+                        color: "#e05930",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Ocultar publicação
+                    </button>
+                  )}
+                  {r.targetType === "PROFILE" && (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => onSuspendProfile(r.id, r.targetId)}
+                      className="rounded-full px-3 py-1 font-semibold"
+                      style={{
+                        fontSize: 12,
+                        border: "1px solid #e05930",
+                        background: "var(--eight-card-bg)",
+                        color: "#e05930",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Suspender perfil
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -96,3 +96,46 @@ export async function dismissReport(reportId: string) {
 
   revalidatePath("/admin/denuncias");
 }
+
+export async function adminHidePost(postId: string) {
+  const session = await auth();
+  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post) throw new Error("Publicação não encontrada.");
+
+  await prisma.profile.updateMany({
+    where: { pinnedPostId: postId },
+    data: { pinnedPostId: null },
+  });
+
+  await prisma.post.update({
+    where: { id: postId },
+    data: { hidden: true },
+  });
+
+  revalidatePath("/feed");
+  revalidatePath(`/post/${postId}`);
+  revalidatePath("/admin/denuncias");
+}
+
+export async function adminSuspendProfile(profileId: string) {
+  const session = await auth();
+  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+
+  const profile = await prisma.profile.findUnique({ where: { id: profileId } });
+  if (!profile) throw new Error("Perfil não encontrado.");
+
+  await prisma.profile.update({
+    where: { id: profileId },
+    data: {
+      suspended: true,
+      verified: false,
+      verificationStatus: "REJECTED",
+      rejectionReason: "Conta suspensa por violação das regras da plataforma.",
+    },
+  });
+
+  revalidatePath("/admin/denuncias");
+  revalidatePath(`/${profile.handle}`);
+}
