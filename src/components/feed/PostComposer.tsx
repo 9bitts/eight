@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition, useEffect } from "react";
+import { useState, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Image as ImageIcon,
@@ -13,12 +13,8 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { createPost } from "@/lib/actions";
-import {
-  MentionSuggestions,
-  getMentionQuery,
-  insertMention,
-  type MentionOption,
-} from "@/components/feed/MentionSuggestions";
+import { MentionSuggestions } from "@/components/feed/MentionSuggestions";
+import { useMentionInput } from "@/components/feed/useMentionInput";
 import type { SessionUser } from "@/lib/types";
 
 const BLUE = "#176a88";
@@ -31,10 +27,15 @@ type MediaItem = { url: string; type: "image" | "video" | "gif" };
 export function PostComposer({ user }: { user: SessionUser }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [body, setBody] = useState("");
-  const [mentionOptions, setMentionOptions] = useState<MentionOption[]>([]);
-  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const {
+    text: body,
+    setText: setBody,
+    textareaRef,
+    mentionQuery,
+    mentionOptions,
+    onTextChange: onBodyChange,
+    selectMention: onSelectMention,
+  } = useMentionInput();
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [threadParts, setThreadParts] = useState<string[]>([]);
   const [showPoll, setShowPoll] = useState(false);
@@ -45,38 +46,6 @@ export function PostComposer({ user }: { user: SessionUser }) {
   const [pending, startTransition] = useTransition();
 
   const charLeft = 500 - body.length;
-
-  useEffect(() => {
-    if (mentionQuery === null || mentionQuery.length < 1) {
-      setMentionOptions([]);
-      return;
-    }
-    const id = setTimeout(() => {
-      fetch(`/api/mentions?q=${encodeURIComponent(mentionQuery)}`)
-        .then((r) => r.json())
-        .then((data) => setMentionOptions(Array.isArray(data) ? data : []))
-        .catch(() => setMentionOptions([]));
-    }, 200);
-    return () => clearTimeout(id);
-  }, [mentionQuery]);
-
-  const onBodyChange = (value: string, cursor: number) => {
-    setBody(value);
-    setMentionQuery(getMentionQuery(value, cursor));
-  };
-
-  const onSelectMention = (handle: string) => {
-    const el = textareaRef.current;
-    const cursor = el?.selectionStart ?? body.length;
-    const { text, cursor: newCursor } = insertMention(body, cursor, handle);
-    setBody(text);
-    setMentionQuery(null);
-    setMentionOptions([]);
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(newCursor, newCursor);
-    });
-  };
 
   const uploadFile = async (file: File) => {
     setUploading(true);

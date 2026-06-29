@@ -304,6 +304,7 @@ export async function getPostById(
     include: postInclude,
   });
   if (!post) return null;
+  if (post.hidden && post.authorId !== viewerProfileId) return null;
   return mapPost(post as RawPost, viewerProfileId);
 }
 
@@ -610,7 +611,7 @@ export async function getSavedPosts(viewerProfileId: string): Promise<FeedPost[]
   });
 
   return bookmarks
-    .filter((b) => b.post.parentId === null)
+    .filter((b) => b.post.parentId === null && !b.post.hidden)
     .map((b) => ({ ...mapPost(b.post as RawPost, viewerProfileId), saved: true }));
 }
 

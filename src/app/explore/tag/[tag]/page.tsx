@@ -41,7 +41,7 @@ export default async function HashtagPage({ params }: Props) {
           </p>
         </div>
         {posts.length === 0 ? (
-          <p className="px-4 py-12 text-center" style={{ color: "#7a8f97" }}>
+          <p className="px-4 py-12 text-center" style={{ color: MUTED }}>
             Nenhuma publicação com #{tag} ainda.
           </p>
         ) : (

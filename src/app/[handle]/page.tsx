@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { ProfileClient } from "@/components/profile/ProfileClient";
 import {
@@ -13,8 +14,13 @@ import { getBlockStatus, isMuted } from "@/lib/relationships";
 import { recordProfileView, getProfileAnalytics } from "@/lib/analytics";
 
 import { isReservedHandle } from "@/lib/reserved-handles";
+import { buildProfileMetadata } from "@/lib/metadata";
 
 type Props = { params: { handle: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return buildProfileMetadata(params.handle);
+}
 
 export default async function ProfilePage({ params }: Props) {
   const handle = params.handle.toLowerCase();

@@ -6,8 +6,10 @@ import Link from "next/link";
 import { createInvitesFromList } from "@/lib/actions/invites";
 
 const BLUE = "#176a88";
-const INK = "#0c2b36";
-const LINE = "#e4ebee";
+const INK = "var(--eight-ink)";
+const LINE = "var(--eight-line)";
+const MUTED = "var(--eight-muted)";
+const CARD = "var(--eight-card-bg)";
 const ORANGE = "#e05930";
 
 type InviteRow = {
@@ -52,12 +54,12 @@ export function AdminInvitesClient({
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f9fa", fontFamily: "var(--font-body), system-ui, sans-serif" }}>
-      <header className="sticky top-0 z-10 px-6 py-4 border-b" style={{ background: "#fff", borderColor: LINE }}>
+    <div style={{ minHeight: "100vh", background: "var(--eight-shell-bg)", fontFamily: "var(--font-body), system-ui, sans-serif" }}>
+      <header className="sticky top-0 z-10 px-6 py-4 border-b" style={{ background: "var(--eight-header-bg)", borderColor: LINE }}>
         <div className="mx-auto" style={{ maxWidth: 720 }}>
           <Link href="/feed" style={{ fontSize: 13, color: BLUE }}>← Voltar ao feed</Link>
           <h1 style={{ fontWeight: 800, fontSize: 22, color: INK, marginTop: 4 }}>Convites · Doctor8</h1>
-          <p style={{ fontSize: 14, color: "#7a8f97" }}>
+          <p style={{ fontSize: 14, color: MUTED }}>
             Envie convites para profissionais entrarem na eight
           </p>
           {!emailConfigured && (
@@ -69,7 +71,7 @@ export function AdminInvitesClient({
       </header>
 
       <main className="mx-auto px-6 py-6" style={{ maxWidth: 720 }}>
-        <div className="rounded-xl border p-4 mb-6" style={{ borderColor: LINE, background: "#fff" }}>
+        <div className="rounded-xl border p-4 mb-6" style={{ borderColor: LINE, background: CARD }}>
           <label className="signup-label">E-mails (um por linha ou separados por vírgula)</label>
           <textarea
             className="w-full border rounded-lg p-3 outline-none"
@@ -100,7 +102,7 @@ export function AdminInvitesClient({
         </div>
 
         {result && result.length > 0 && (
-          <div className="rounded-xl border p-4 mb-6" style={{ borderColor: LINE, background: "#e8f4f8" }}>
+          <div className="rounded-xl border p-4 mb-6" style={{ borderColor: LINE, background: "var(--eight-nav-active)" }}>
             <h2 style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{result.length} convite(s) criado(s)</h2>
             {result.map((r) => (
               <div key={r.code} style={{ fontSize: 13, marginBottom: 6 }}>

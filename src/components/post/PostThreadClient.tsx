@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { PostCard } from "@/components/feed/PostCard";
 import { Avatar } from "@/components/Avatar";
+import { MentionSuggestions } from "@/components/feed/MentionSuggestions";
+import { useMentionInput } from "@/components/feed/useMentionInput";
 import { createPost } from "@/lib/actions";
 import type { FeedPost, SessionUser } from "@/lib/types";
 
@@ -29,8 +31,16 @@ export function PostThreadClient({
   focusPostId: string;
 }) {
   const router = useRouter();
-  const [draft, setDraft] = useState("");
   const [pending, startTransition] = useTransition();
+  const {
+    text: draft,
+    setText: setDraft,
+    textareaRef,
+    mentionQuery,
+    mentionOptions,
+    onTextChange,
+    selectMention,
+  } = useMentionInput();
 
   const root = posts[0];
   if (!root) return null;
@@ -54,29 +64,38 @@ export function PostThreadClient({
           <Link href="/feed" style={{ color: INK }}>
             <ArrowLeft size={20} />
           </Link>
-          <h1 style={{ fontWeight: 800, fontSize: 18 }}>
+          <h1 style={{ fontWeight: 800, fontSize: 18, color: INK }}>
             {posts.length > 1 ? "Fio" : "Publicação"}
           </h1>
         </div>
 
         {posts.map((p) => (
-          <div key={p.id} style={p.id === focusPostId ? { background: "#fafcfd" } : undefined}>
+          <div
+            key={p.id}
+            style={p.id === focusPostId ? { background: "var(--eight-nav-active)" } : undefined}
+          >
             <PostCard post={p} showActions={p.id === root.id} />
           </div>
         ))}
 
         <div className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE }}>
           <Avatar name={user.displayName} />
-          <div className="flex-1">
+          <div className="flex-1 relative">
             <textarea
+              ref={textareaRef}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Responder…"
+              onChange={(e) => onTextChange(e.target.value, e.target.selectionStart)}
+              onClick={(e) => onTextChange(draft, e.currentTarget.selectionStart)}
+              onKeyUp={(e) => onTextChange(draft, e.currentTarget.selectionStart)}
+              placeholder="Responder… use @ para mencionar"
               rows={2}
               maxLength={500}
               className="w-full resize-none outline-none"
               style={{ fontSize: 16, color: INK, background: "transparent" }}
             />
+            {mentionQuery !== null && mentionOptions.length > 0 && (
+              <MentionSuggestions options={mentionOptions} onSelect={selectMention} />
+            )}
             <div className="flex justify-end mt-2">
               <button
                 type="button"
@@ -98,9 +117,13 @@ export function PostThreadClient({
           </div>
         </div>
 
-        {replies.map((r) => (
-          <PostCard key={r.id} post={r} />
-        ))}
+        {replies.length === 0 ? (
+          <p className="px-4 py-8 text-center" style={{ color: "var(--eight-muted)", fontSize: 14 }}>
+            Seja o primeiro a responder.
+          </p>
+        ) : (
+          replies.map((r) => <PostCard key={r.id} post={r} />)
+        )}
       </main>
     </FeedShell>
   );

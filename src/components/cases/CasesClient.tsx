@@ -54,7 +54,7 @@ function CaseComposer({ specialty }: { specialty: string }) {
   return (
     <div className="mx-4 mt-4 mb-2 p-4 rounded-xl border" style={{ borderColor: LINE, background: "#f9fbfc" }}>
       <h2 style={{ fontWeight: 700, fontSize: 15, color: INK, marginBottom: 8 }}>Novo caso clínico</h2>
-      <p style={{ fontSize: 12.5, color: "#516b75", lineHeight: 1.45, marginBottom: 12 }}>
+      <p style={{ fontSize: 12.5, color: MUTED, lineHeight: 1.45, marginBottom: 12 }}>
         Descreva o caso sem nomes, documentos ou dados que identifiquem o paciente. Use idade, sexo e achados clínicos.
       </p>
       <input
@@ -81,8 +81,8 @@ function CaseComposer({ specialty }: { specialty: string }) {
             className="rounded-full px-3 py-1 text-sm font-semibold"
             style={{
               border: `1px solid ${tags.includes(tag) ? BLUE : LINE}`,
-              background: tags.includes(tag) ? "#e8f4f8" : "#fff",
-              color: tags.includes(tag) ? BLUE : "#516b75",
+              background: tags.includes(tag) ? "var(--eight-nav-active)" : CARD,
+              color: tags.includes(tag) ? BLUE : MUTED,
               cursor: "pointer",
             }}
           >
@@ -90,7 +90,7 @@ function CaseComposer({ specialty }: { specialty: string }) {
           </button>
         ))}
       </div>
-      <label className="flex items-start gap-2 mb-3 cursor-pointer" style={{ fontSize: 13, color: "#516b75" }}>
+      <label className="flex items-start gap-2 mb-3 cursor-pointer" style={{ fontSize: 13, color: MUTED }}>
         <input
           type="checkbox"
           checked={confirmed}
@@ -134,13 +134,13 @@ export function CasesClient({
             <Sparkles size={22} style={{ color: ORANGE }} />
             <h1 style={{ fontWeight: 800, fontSize: 20, color: INK }}>Casos clínicos</h1>
           </div>
-          <p style={{ fontSize: 13, color: "#7a8f97", marginTop: 6, lineHeight: 1.45 }}>
+          <p style={{ fontSize: 13, color: MUTED, marginTop: 6, lineHeight: 1.45 }}>
             Discussão entre profissionais verificados. Sem identificação de pacientes — moderação automática de dados sensíveis.
           </p>
         </div>
 
         {!canPost && (
-          <div className="mx-4 mt-4 p-4 rounded-xl" style={{ background: "#fff8e6", border: "1px solid #f0d78a" }}>
+          <div className="mx-4 mt-4 p-4 rounded-xl" style={{ background: "rgba(240,215,138,.15)", border: "1px solid rgba(240,215,138,.4)" }}>
             <p style={{ fontSize: 14, color: INK }}>
               Publicar casos requer o selo verificado.{" "}
               <a href="/verificacao" style={{ color: BLUE, fontWeight: 600 }}>Verificar perfil →</a>
@@ -151,7 +151,7 @@ export function CasesClient({
         {canPost && <CaseComposer specialty={userSpecialty} />}
 
         {posts.length === 0 ? (
-          <p className="px-4 py-12 text-center" style={{ color: "#7a8f97" }}>
+          <p className="px-4 py-12 text-center" style={{ color: MUTED }}>
             Nenhum caso publicado ainda. Seja o primeiro a abrir uma discussão.
           </p>
         ) : (

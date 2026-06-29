@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { PostThreadClient } from "@/components/post/PostThreadClient";
 import {
@@ -8,8 +9,13 @@ import {
   getSessionUser,
   getUnreadNotificationCount,
 } from "@/lib/feed";
+import { buildPostMetadata } from "@/lib/metadata";
 
 type Props = { params: { id: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return buildPostMetadata(params.id);
+}
 
 export default async function PostPage({ params }: Props) {
   const session = await auth();
