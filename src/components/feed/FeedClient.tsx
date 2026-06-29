@@ -58,7 +58,7 @@ function SuggestionRow({ s, onToggle }: { s: Suggestion; onToggle: (id: string) 
           <span style={{ fontWeight: 700, fontSize: 14 }} className="truncate">{s.name}</span>
           {s.verified && <VerifiedBadge size={14} />}
         </div>
-        <div style={{ fontSize: 13, color: "#7a8f97" }}>{s.spec}</div>
+        <div style={{ fontSize: 13, color: MUTED }}>{s.spec}</div>
       </div>
       <button
         type="button"
@@ -93,23 +93,23 @@ function RightRail({
       <Link
         href="/explore"
         className="flex items-center gap-2 px-4 py-2 rounded-full mb-4"
-        style={{ background: "#eef3f5", color: "#7a8f97", textDecoration: "none" }}
+        style={{ background: "var(--eight-surface-subtle)", color: MUTED, textDecoration: "none" }}
       >
         <Search size={18} />
         <span style={{ fontSize: 14 }}>{t("feed.searchPlaceholder")}</span>
       </Link>
 
-      <div className="rounded-2xl p-4 mb-4" style={{ background: "#eaf1f4" }}>
+      <div className="rounded-2xl p-4 mb-4" style={{ background: "var(--eight-nav-active)" }}>
         <div className="flex items-center gap-2 mb-1">
           <BadgeCheck size={20} style={{ color: BLUE }} fill={BLUE} stroke="#fff" />
-          <span style={{ fontWeight: 700, fontSize: 15 }}>{t("feed.verifiedSeal")}</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: INK }}>{t("feed.verifiedSeal")}</span>
         </div>
-        <p style={{ fontSize: 13.5, color: "#516b75", lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13.5, color: MUTED, lineHeight: 1.5 }}>
           {t("feed.verifiedSealDesc")}
         </p>
       </div>
 
-      <div className="rounded-2xl mb-4" style={{ background: "#f4f7f8" }}>
+      <div className="rounded-2xl mb-4" style={{ background: "var(--eight-surface-muted)" }}>
         <div className="flex items-center gap-2 px-4 pt-3 pb-1">
           <TrendingUp size={18} style={{ color: "#e05930" }} />
           <h3 style={{ fontWeight: 800, fontSize: 16 }}>{t("feed.trends")}</h3>
@@ -122,7 +122,7 @@ function RightRail({
             style={{ textDecoration: "none" }}
           >
             <div style={{ fontWeight: 700, fontSize: 14.5, color: INK }}>#{t.tag}</div>
-            <div style={{ fontSize: 12.5, color: "#7a8f97" }}>
+            <div style={{ fontSize: 12.5, color: MUTED }}>
               {t.count > 0 ? `${formatCount(t.count)} publicações` : "Em alta"}
             </div>
           </Link>
@@ -134,7 +134,7 @@ function RightRail({
           <h3 className="px-4 pt-3 pb-1" style={{ fontWeight: 800, fontSize: 16 }}>
             {t("feed.whoToFollow")}
           </h3>
-          <p className="px-4 pb-1" style={{ fontSize: 12, color: "#7a8f97" }}>
+          <p className="px-4 pb-1" style={{ fontSize: 12, color: MUTED }}>
             {t("feed.whoToFollowHint")}
           </p>
           {suggestions.map((s) => (

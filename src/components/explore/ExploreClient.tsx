@@ -45,7 +45,7 @@ function ProfileResultRow({ p }: { p: ProfileResult }) {
         </div>
         <div style={{ color: MUTED, fontSize: 14 }}>@{p.handle}</div>
         <div style={{ color: BLUE, fontSize: 13, marginTop: 2 }}>{spec}</div>
-        {p.location && <div style={{ color: "#9fb0b6", fontSize: 12 }}>{p.location}</div>}
+        {p.location && <div style={{ color: MUTED, fontSize: 12 }}>{p.location}</div>}
       </div>
     </Link>
   );
@@ -66,7 +66,7 @@ function ChipGrid({
           href={`${hrefPrefix}/${item.slug}`}
           className="rounded-full px-3 py-1.5 font-semibold transition-colors"
           style={{
-            background: "#eef3f5",
+            background: "var(--eight-surface-subtle)",
             color: INK,
             fontSize: 13,
             textDecoration: "none",
@@ -75,7 +75,7 @@ function ChipGrid({
         >
           {item.label}
           {item.count > 0 && (
-            <span style={{ color: "#7a8f97", fontWeight: 500, marginLeft: 4 }}>
+            <span style={{ color: MUTED, fontWeight: 500, marginLeft: 4 }}>
               {formatCount(item.count)}
             </span>
           )}

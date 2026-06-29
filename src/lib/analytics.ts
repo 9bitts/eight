@@ -1,4 +1,14 @@
 import { prisma } from "@/lib/prisma";
+import { formatSpec } from "@/lib/format";
+
+export type ProfileViewer = {
+  id: string;
+  displayName: string;
+  handle: string;
+  spec: string;
+  verified: boolean;
+  viewedAt: Date;
+};
 
 export async function recordProfileView(profileId: string, viewerId: string) {
   if (profileId === viewerId) return;
@@ -43,4 +53,48 @@ export async function getProfileAnalytics(profileId: string) {
   ]);
 
   return { views7d, views30d, scheduledCount, postCount };
+}
+
+export async function getProfileViewers(profileId: string): Promise<ProfileViewer[]> {
+  const rows = await prisma.profileView.findMany({
+    where: { profileId },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: {
+      viewer: {
+        select: {
+          id: true,
+          displayName: true,
+          handle: true,
+          specialty: true,
+          registrationType: true,
+          registrationNumber: true,
+          verified: true,
+        },
+      },
+    },
+  });
+
+  const seen = new Set<string>();
+  const viewers: ProfileViewer[] = [];
+
+  for (const row of rows) {
+    if (seen.has(row.viewerId)) continue;
+    seen.add(row.viewerId);
+    viewers.push({
+      id: row.viewer.id,
+      displayName: row.viewer.displayName,
+      handle: row.viewer.handle,
+      spec: formatSpec(
+        row.viewer.specialty,
+        row.viewer.registrationType,
+        row.viewer.registrationNumber
+      ),
+      verified: row.viewer.verified,
+      viewedAt: row.createdAt,
+    });
+    if (viewers.length >= 50) break;
+  }
+
+  return viewers;
 }

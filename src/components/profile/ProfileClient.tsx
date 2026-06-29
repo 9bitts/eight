@@ -140,34 +140,43 @@ export function ProfileClient({
         </div>
 
         {isOwnProfile && analytics && (
-          <div
-            className="mx-4 mt-3 px-4 py-3 rounded-xl border grid grid-cols-2 gap-3"
-            style={{ borderColor: LINE, background: "var(--eight-nav-active)" }}
-          >
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>{analytics.views7d}</div>
-              <div style={{ fontSize: 12, color: MUTED }}>visualizações (7 dias)</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>{analytics.views30d}</div>
-              <div style={{ fontSize: 12, color: MUTED }}>visualizações (30 dias)</div>
-            </div>
+          <>
+            <Link
+              href="/analytics"
+              className="mx-4 mt-3 px-4 py-3 rounded-xl border grid grid-cols-2 gap-3 block"
+              style={{ borderColor: LINE, background: "var(--eight-nav-active)", textDecoration: "none" }}
+            >
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>{analytics.views7d}</div>
+                <div style={{ fontSize: 12, color: MUTED }}>visualizações (7 dias)</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>{analytics.views30d}</div>
+                <div style={{ fontSize: 12, color: MUTED }}>visualizações (30 dias)</div>
+              </div>
+              <div
+                className="col-span-2 text-center py-1"
+                style={{ fontSize: 13, color: BLUE, fontWeight: 600 }}
+              >
+                Ver analytics e visitantes →
+              </div>
+            </Link>
             {analytics.scheduledCount > 0 && (
               <Link
                 href="/agendados"
-                className="col-span-2 text-center py-2 rounded-lg font-semibold"
+                className="mx-4 mt-2 block text-center py-2 rounded-lg font-semibold"
                 style={{ fontSize: 13, background: CARD, color: BLUE, textDecoration: "none", border: `1px solid ${LINE}` }}
               >
                 {analytics.scheduledCount} post{analytics.scheduledCount > 1 ? "s" : ""} agendado{analytics.scheduledCount > 1 ? "s" : ""} →
               </Link>
             )}
-          </div>
+          </>
         )}
 
         {isOwnProfile && <VerificationBanner user={user} />}
 
         {blockedByViewer && (
-          <div className="mx-4 mt-3 px-4 py-3 rounded-xl border" style={{ background: "#fdeee8", borderColor: "#f0b8a8" }}>
+          <div className="mx-4 mt-3 px-4 py-3 rounded-xl border" style={{ background: "rgba(224,89,48,.1)", borderColor: "rgba(224,89,48,.3)" }}>
             <p style={{ fontSize: 14, color: INK, fontWeight: 600 }}>Você bloqueou este perfil</p>
             <button
               type="button"

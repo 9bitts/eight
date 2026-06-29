@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Image as ImageIcon,
@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { createPost } from "@/lib/actions";
+import {
+  MentionSuggestions,
+  getMentionQuery,
+  insertMention,
+  type MentionOption,
+} from "@/components/feed/MentionSuggestions";
 import type { SessionUser } from "@/lib/types";
 
 const BLUE = "#176a88";
@@ -25,7 +31,10 @@ type MediaItem = { url: string; type: "image" | "video" | "gif" };
 export function PostComposer({ user }: { user: SessionUser }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState("");
+  const [mentionOptions, setMentionOptions] = useState<MentionOption[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [threadParts, setThreadParts] = useState<string[]>([]);
   const [showPoll, setShowPoll] = useState(false);
@@ -36,6 +45,38 @@ export function PostComposer({ user }: { user: SessionUser }) {
   const [pending, startTransition] = useTransition();
 
   const charLeft = 500 - body.length;
+
+  useEffect(() => {
+    if (mentionQuery === null || mentionQuery.length < 1) {
+      setMentionOptions([]);
+      return;
+    }
+    const id = setTimeout(() => {
+      fetch(`/api/mentions?q=${encodeURIComponent(mentionQuery)}`)
+        .then((r) => r.json())
+        .then((data) => setMentionOptions(Array.isArray(data) ? data : []))
+        .catch(() => setMentionOptions([]));
+    }, 200);
+    return () => clearTimeout(id);
+  }, [mentionQuery]);
+
+  const onBodyChange = (value: string, cursor: number) => {
+    setBody(value);
+    setMentionQuery(getMentionQuery(value, cursor));
+  };
+
+  const onSelectMention = (handle: string) => {
+    const el = textareaRef.current;
+    const cursor = el?.selectionStart ?? body.length;
+    const { text, cursor: newCursor } = insertMention(body, cursor, handle);
+    setBody(text);
+    setMentionQuery(null);
+    setMentionOptions([]);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(newCursor, newCursor);
+    });
+  };
 
   const uploadFile = async (file: File) => {
     setUploading(true);
@@ -97,17 +138,23 @@ export function PostComposer({ user }: { user: SessionUser }) {
   return (
     <div className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE, background: "var(--eight-card-bg)" }}>
       <Avatar name={user.displayName} />
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <textarea
+          ref={textareaRef}
           id="composer"
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => onBodyChange(e.target.value, e.target.selectionStart)}
+          onClick={(e) => onBodyChange(body, e.currentTarget.selectionStart)}
+          onKeyUp={(e) => onBodyChange(body, e.currentTarget.selectionStart)}
           placeholder="O que você está acompanhando na sua prática? Use #hashtags e @menções"
           rows={3}
           maxLength={500}
           className="w-full resize-none outline-none"
           style={{ fontSize: 17, color: INK, background: "transparent", lineHeight: 1.4 }}
         />
+        {mentionQuery !== null && mentionOptions.length > 0 && (
+          <MentionSuggestions options={mentionOptions} onSelect={onSelectMention} />
+        )}
 
         {media.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">

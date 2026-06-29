@@ -12,6 +12,7 @@ export const RESERVED_HANDLES = new Set([
   "listas",
   "agendados",
   "salvos",
+  "analytics",
   "sobre",
   "termos",
   "privacidade",
