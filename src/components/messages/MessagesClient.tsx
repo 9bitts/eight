@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Users } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { CreateGroupDialog } from "@/components/messages/CreateGroupDialog";
 import { formatMessageTime, type ConversationPreview } from "@/lib/messages";
 import type { MessageRequestPreview } from "@/lib/message-requests";
 import {
@@ -33,18 +35,32 @@ function ConversationRow({ c }: { c: ConversationPreview }) {
         background: c.unread ? "var(--eight-nav-active)" : CARD,
       }}
     >
-      <Avatar name={c.otherName} size={48} />
+      {c.isGroup ? (
+        <div
+          className="flex items-center justify-center rounded-full shrink-0"
+          style={{ width: 48, height: 48, background: "var(--eight-nav-active)", color: BLUE }}
+        >
+          <Users size={22} />
+        </div>
+      ) : (
+        <Avatar name={c.otherName} size={48} />
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
           <span style={{ fontWeight: 700, color: INK }}>{c.otherName}</span>
-          {c.otherVerified && <VerifiedBadge size={14} />}
+          {!c.isGroup && c.otherVerified && <VerifiedBadge size={14} />}
+          {c.isGroup && (
+            <span style={{ fontSize: 12, color: MUTED }}>{c.participantCount} membros</span>
+          )}
           {c.lastMessageAt && (
             <span className="ml-auto shrink-0" style={{ fontSize: 12, color: MUTED }}>
               {formatMessageTime(new Date(c.lastMessageAt))}
             </span>
           )}
         </div>
-        <div style={{ fontSize: 13, color: MUTED }}>@{c.otherHandle}</div>
+        {!c.isGroup && c.otherHandle && (
+          <div style={{ fontSize: 13, color: MUTED }}>@{c.otherHandle}</div>
+        )}
         {c.lastMessage && (
           <p
             className="truncate mt-1"
@@ -114,15 +130,18 @@ export function MessagesClient({
   conversations,
   requests,
   canMessage,
+  groupCandidates,
 }: {
   user: SessionUser;
   notificationCount: number;
   conversations: ConversationPreview[];
   requests: MessageRequestPreview[];
   canMessage: boolean;
+  groupCandidates: { id: string; name: string; handle: string }[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => router.refresh(), 8000);
@@ -145,9 +164,28 @@ export function MessagesClient({
 
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
+      {showCreateGroup && (
+        <CreateGroupDialog
+          candidates={groupCandidates}
+          onClose={() => setShowCreateGroup(false)}
+        />
+      )}
       <main className="flex-1 min-w-0" style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}` }}>
         <div className="sticky top-0 z-10 px-4 py-3" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
-          <h1 style={{ fontWeight: 800, fontSize: 20, color: INK }}>Mensagens</h1>
+          <div className="flex items-center justify-between gap-2">
+            <h1 style={{ fontWeight: 800, fontSize: 20, color: INK }}>Mensagens</h1>
+            {canMessage && (
+              <button
+                type="button"
+                onClick={() => setShowCreateGroup(true)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 font-bold"
+                style={{ fontSize: 13, background: BLUE, color: "#fff", border: "none", cursor: "pointer" }}
+              >
+                <Users size={16} />
+                Grupo
+              </button>
+            )}
+          </div>
           {!canMessage && (
             <p style={{ fontSize: 13, color: MUTED, marginTop: 6, lineHeight: 1.45 }}>
               Mensagens diretas ficam disponíveis após a verificação do seu selo profissional.

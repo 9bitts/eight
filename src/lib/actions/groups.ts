@@ -92,6 +92,87 @@ export async function addGroupMembers(conversationId: string, memberIds: string[
     data: { updatedAt: new Date() },
   });
 
+  const actor = await prisma.profile.findUnique({
+    where: { id: profileId },
+    select: { displayName: true },
+  });
+  const groupLabel = conversation.name ?? "grupo";
+
+  const { createNotificationIfAllowed } = await import("@/lib/notifications-server");
+  for (const memberId of toAdd) {
+    await createNotificationIfAllowed(memberId, profileId, "MESSAGE", undefined, {
+      conversationId,
+      groupName: groupLabel,
+      bodyOverride: `${actor?.displayName ?? "Alguém"} te adicionou ao grupo ${groupLabel}`,
+    });
+  }
+
+  revalidatePath("/messages");
+  revalidatePath(`/messages/${conversationId}`);
+}
+
+export async function renameGroup(conversationId: string, name: string) {
+  const profileId = await requireProfile();
+  await assertGroupParticipant(conversationId, profileId);
+
+  const title = name.trim();
+  if (!title || title.length > GROUP_NAME_MAX_LENGTH) {
+    throw new Error(`Nome inválido (máx. ${GROUP_NAME_MAX_LENGTH} caracteres).`);
+  }
+
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { name: title, updatedAt: new Date() },
+  });
+
+  revalidatePath("/messages");
+  revalidatePath(`/messages/${conversationId}`);
+}
+
+export async function removeGroupMember(conversationId: string, memberId: string) {
+  const profileId = await requireProfile();
+  await assertGroupParticipant(conversationId, profileId);
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { createdById: true, name: true },
+  });
+  if (!conversation) throw new Error("Grupo não encontrado");
+
+  if (conversation.createdById !== profileId) {
+    throw new Error("Apenas quem criou o grupo pode remover membros.");
+  }
+  if (memberId === profileId) {
+    throw new Error("Use a opção de sair do grupo para remover a si mesmo.");
+  }
+
+  const isMember = await prisma.conversationParticipant.findUnique({
+    where: { conversationId_profileId: { conversationId, profileId: memberId } },
+  });
+  if (!isMember) throw new Error("Este membro não está no grupo.");
+
+  const count = await prisma.conversationParticipant.count({ where: { conversationId } });
+  if (count - 1 < GROUP_MIN_MEMBERS) {
+    throw new Error(`O grupo precisa de pelo menos ${GROUP_MIN_MEMBERS} membros.`);
+  }
+
+  await prisma.conversationParticipant.delete({
+    where: { conversationId_profileId: { conversationId, profileId: memberId } },
+  });
+
+  const actor = await prisma.profile.findUnique({
+    where: { id: profileId },
+    select: { displayName: true },
+  });
+  const groupLabel = conversation.name ?? "grupo";
+
+  const { createNotificationIfAllowed } = await import("@/lib/notifications-server");
+  await createNotificationIfAllowed(memberId, profileId, "MESSAGE", undefined, {
+    conversationId,
+    groupName: groupLabel,
+    bodyOverride: `${actor?.displayName ?? "Alguém"} removeu você do grupo ${groupLabel}`,
+  });
+
   revalidatePath("/messages");
   revalidatePath(`/messages/${conversationId}`);
 }
@@ -143,4 +224,16 @@ export async function getGroupMemberCandidates(profileId: string) {
       name: p.displayName,
       handle: p.handle,
     }));
+}
+
+export async function getGroupAddCandidates(conversationId: string, profileId: string) {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: { participants: { select: { profileId: true } } },
+  });
+  if (!conversation?.isGroup) return [];
+
+  const memberIds = new Set(conversation.participants.map((p) => p.profileId));
+  const candidates = await getGroupMemberCandidates(profileId);
+  return candidates.filter((c) => !memberIds.has(c.id));
 }

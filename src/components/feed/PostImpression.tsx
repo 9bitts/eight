@@ -4,7 +4,13 @@ import { useEffect, useRef } from "react";
 
 const recorded = new Set<string>();
 
-export function PostImpression({ postId }: { postId: string }) {
+export function PostImpression({
+  postId,
+  onRecorded,
+}: {
+  postId: string;
+  onRecorded?: () => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,9 +28,11 @@ export function PostImpression({ postId }: { postId: string }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ postIds: [postId] }),
-        }).catch(() => {
-          recorded.delete(postId);
-        });
+        })
+          .then(() => onRecorded?.())
+          .catch(() => {
+            recorded.delete(postId);
+          });
 
         observer.disconnect();
       },
@@ -33,7 +41,7 @@ export function PostImpression({ postId }: { postId: string }) {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [postId]);
+  }, [postId, onRecorded]);
 
   return <div ref={ref} className="absolute inset-0 pointer-events-none" aria-hidden />;
 }

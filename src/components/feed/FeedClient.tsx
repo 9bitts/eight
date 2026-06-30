@@ -203,7 +203,7 @@ export function FeedClient({
               : "Nenhuma publicação ainda."}
           </p>
         ) : (
-          initialPosts.map((p) => <PostCard key={p.id} post={p} />)
+          initialPosts.map((p) => <PostCard key={p.id} post={p} trackImpression />)
         )}
       </main>
     </FeedShell>

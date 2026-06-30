@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   Heart,
   MessageCircle,
@@ -21,6 +22,8 @@ import { PostMenu } from "@/components/feed/PostMenu";
 import { SharePostButton } from "@/components/feed/SharePostButton";
 import { QuoteRepostButton } from "@/components/feed/QuoteRepostButton";
 import { QuotedPostCard } from "@/components/feed/QuotedPostCard";
+import { PostImpression } from "@/components/feed/PostImpression";
+import { EditHistoryDialog } from "@/components/feed/EditHistoryDialog";
 import { toggleLike, toggleRepost } from "@/lib/actions";
 import { toggleBookmark } from "@/lib/actions/bookmarks";
 import { POST_EDIT_WINDOW_MS } from "@/lib/constants";
@@ -86,11 +89,15 @@ function ActionBtn({
 export function PostCard({
   post,
   showActions = true,
+  trackImpression = false,
 }: {
   post: FeedPost;
   showActions?: boolean;
+  trackImpression?: boolean;
 }) {
   const router = useRouter();
+  const [showEditHistory, setShowEditHistory] = useState(false);
+  const [viewCount, setViewCount] = useState(post.views);
 
   const onLike = async () => {
     await toggleLike(post.id);
@@ -113,7 +120,20 @@ export function PostCard({
     Date.now() - new Date(post.createdAt).getTime() < POST_EDIT_WINDOW_MS;
 
   return (
-    <article className="px-4 py-4 border-b" style={{ borderColor: LINE }}>
+    <article className="px-4 py-4 border-b relative" style={{ borderColor: LINE }}>
+      {trackImpression && (
+        <PostImpression
+          postId={post.id}
+          onRecorded={() => setViewCount((v) => v + 1)}
+        />
+      )}
+      {showEditHistory && (
+        <EditHistoryDialog
+          postId={post.id}
+          currentBody={post.body}
+          onClose={() => setShowEditHistory(false)}
+        />
+      )}
       {post.repostedBy && (
         <div
           className="flex items-center gap-1.5 mb-1"
@@ -160,7 +180,25 @@ export function PostCard({
             <Link href={postUrl} style={{ color: MUTED, textDecoration: "none" }}>
               {post.time}
             </Link>
-            {post.edited && <span> · editado</span>}
+            {post.edited && (
+              <>
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => setShowEditHistory(true)}
+                  style={{
+                    color: MUTED,
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    fontSize: "inherit",
+                  }}
+                >
+                  editado{post.editCount > 0 ? ` (${post.editCount})` : ""}
+                </button>
+              </>
+            )}
           </span>
           <PostMenu
             postId={post.id}
@@ -253,16 +291,14 @@ export function PostCard({
               <Bookmark size={18} strokeWidth={2} fill={post.saved ? BLUE : "none"} />
             </button>
             <SharePostButton postId={post.id} />
-            {post.views > 0 && (
-              <span
-                className="flex items-center gap-1"
-                style={{ color: MUTED, fontSize: 13.5 }}
-                title="Visualizações"
-              >
-                <Eye size={18} strokeWidth={2} />
-                {formatCount(post.views)}
-              </span>
-            )}
+            <span
+              className="flex items-center gap-1"
+              style={{ color: MUTED, fontSize: 13.5 }}
+              title="Visualizações"
+            >
+              <Eye size={18} strokeWidth={2} />
+              {formatCount(viewCount)}
+            </span>
           </div>
         )}
         </div>

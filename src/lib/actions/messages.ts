@@ -42,12 +42,26 @@ export async function sendDirectMessage(
   });
   if (!participant) throw new Error("Conversa não encontrada");
 
-  const other = participant.conversation.participants.find(
-    (p) => p.profileId !== profileId
-  );
-  if (!other) throw new Error("Conversa inválida");
+  const { conversation } = participant;
+  const others = conversation.participants.filter((p) => p.profileId !== profileId);
+  if (others.length === 0) throw new Error("Conversa inválida");
 
-  await assertCanMessage(profileId, other.profileId);
+  const groupName = conversation.isGroup ? conversation.name ?? "grupo" : undefined;
+  const notifyOptions = conversation.isGroup
+    ? { conversationId, groupName }
+    : { conversationId };
+
+  if (conversation.isGroup) {
+    const sender = await prisma.profile.findUnique({
+      where: { id: profileId },
+      select: { verified: true },
+    });
+    if (!sender?.verified) {
+      throw new Error("Mensagens diretas são exclusivas para profissionais verificados.");
+    }
+  } else {
+    await assertCanMessage(profileId, others[0].profileId);
+  }
 
   const message = await prisma.directMessage.create({
     data: {
@@ -68,7 +82,9 @@ export async function sendDirectMessage(
     data: { lastReadAt: new Date() },
   });
 
-  await createNotificationIfAllowed(other.profileId, profileId, "MESSAGE");
+  for (const other of others) {
+    await createNotificationIfAllowed(other.profileId, profileId, "MESSAGE", undefined, notifyOptions);
+  }
 
   revalidatePath("/messages");
   revalidatePath(`/messages/${conversationId}`);

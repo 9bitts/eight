@@ -31,6 +31,7 @@ export type ConversationDetail = {
   name: string | null;
   title: string;
   otherHandle: string | null;
+  isCreator: boolean;
   participants: { id: string; name: string; handle: string }[];
   messages: ChatMessage[];
 };
@@ -208,6 +209,7 @@ export async function getConversationMessages(
     name: conv.name,
     title: isGroup ? groupTitle : other?.displayName ?? "Conversa",
     otherHandle: isGroup ? null : other?.handle ?? null,
+    isCreator: conv.createdById === profileId,
     participants: conv.participants.map((p) => ({
       id: p.profile.id,
       name: p.profile.displayName,

@@ -3,10 +3,13 @@
 import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { Image as ImageIcon, X, Loader2, Users, LogOut, UserPlus, Settings } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
+import { AddMembersDialog } from "@/components/messages/AddMembersDialog";
+import { GroupManageDialog } from "@/components/messages/GroupManageDialog";
 import { sendDirectMessage } from "@/lib/actions/messages";
-import { formatMessageTime, type ChatMessage } from "@/lib/messages";
+import { leaveGroup } from "@/lib/actions/groups";
+import { formatMessageTime, type ChatMessage, type ConversationDetail } from "@/lib/messages";
 import { useRealtimeBadges } from "@/components/useRealtime";
 import { DM_MAX_LENGTH } from "@/lib/constants";
 import type { SessionUser } from "@/lib/types";
@@ -22,30 +25,32 @@ export function ConversationClient({
   user,
   notificationCount,
   conversationId,
-  otherName,
-  otherHandle,
-  initialMessages,
+  conversation,
+  addCandidates = [],
 }: {
   user: SessionUser;
   notificationCount: number;
   conversationId: string;
-  otherName: string;
-  otherHandle: string;
-  initialMessages: ChatMessage[];
+  conversation: ConversationDetail;
+  addCandidates?: { id: string; name: string; handle: string }[];
 }) {
   const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(conversation.messages);
   const [text, setText] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [showAddMembers, setShowAddMembers] = useState(false);
+  const [showManageGroup, setShowManageGroup] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const { isGroup, title, name, otherHandle, participants, isCreator } = conversation;
+
   useEffect(() => {
-    setMessages(initialMessages);
-  }, [initialMessages]);
+    setMessages(conversation.messages);
+  }, [conversation.messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -94,26 +99,98 @@ export function ConversationClient({
     });
   };
 
+  const onLeaveGroup = () => {
+    if (!confirm("Sair deste grupo?")) return;
+    startTransition(async () => {
+      await leaveGroup(conversationId);
+      router.push("/messages");
+    });
+  };
+
   return (
     <FeedShell user={user} notificationCount={notificationCount}>
+      {showAddMembers && (
+        <AddMembersDialog
+          conversationId={conversationId}
+          candidates={addCandidates}
+          onClose={() => setShowAddMembers(false)}
+        />
+      )}
+      {showManageGroup && isGroup && (
+        <GroupManageDialog
+          conversationId={conversationId}
+          groupName={name ?? title}
+          members={participants}
+          isCreator={isCreator}
+          currentUserId={user.profileId}
+          onClose={() => setShowManageGroup(false)}
+        />
+      )}
       <main
         className="flex-1 min-w-0 flex flex-col"
         style={{ maxWidth: 620, background: CARD, borderRight: `1px solid ${LINE}`, height: "100vh" }}
       >
         <div className="sticky top-0 z-10 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${LINE}`, background: "var(--eight-header-bg)" }}>
-          <Link href="/messages" style={{ fontSize: 13, color: BLUE, textDecoration: "none" }}>
-            ← Mensagens
-          </Link>
-          <h1 style={{ fontWeight: 800, fontSize: 18, color: INK, marginTop: 4 }}>{otherName}</h1>
-          <Link href={`/${otherHandle}`} style={{ fontSize: 13, color: MUTED, textDecoration: "none" }}>
-            @{otherHandle}
-          </Link>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <Link href="/messages" style={{ fontSize: 13, color: BLUE, textDecoration: "none" }}>
+                ← Mensagens
+              </Link>
+              <h1 style={{ fontWeight: 800, fontSize: 18, color: INK, marginTop: 4 }}>{title}</h1>
+              {isGroup ? (
+                <p style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>
+                  <Users size={12} style={{ display: "inline", marginRight: 4 }} />
+                  {participants.length} membros
+                </p>
+              ) : otherHandle ? (
+                <Link href={`/${otherHandle}`} style={{ fontSize: 13, color: MUTED, textDecoration: "none" }}>
+                  @{otherHandle}
+                </Link>
+              ) : null}
+            </div>
+            {isGroup && (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setShowManageGroup(true)}
+                  disabled={pending}
+                  title="Gerenciar grupo"
+                  style={{ color: MUTED, background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                >
+                  <Settings size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddMembers(true)}
+                  disabled={pending}
+                  title="Adicionar membros"
+                  style={{ color: BLUE, background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                >
+                  <UserPlus size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onLeaveGroup}
+                  disabled={pending}
+                  title="Sair do grupo"
+                  style={{ color: ORANGE, background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
+            )}
+          </div>
+          {isGroup && (
+            <p className="mt-2 truncate" style={{ fontSize: 12, color: MUTED }}>
+              {participants.map((p) => `@${p.handle}`).join(", ")}
+            </p>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {messages.length === 0 && (
             <p className="text-center py-8" style={{ color: MUTED, fontSize: 14 }}>
-              Inicie a conversa com {otherName}.
+              {isGroup ? "Envie a primeira mensagem no grupo." : `Inicie a conversa com ${title}.`}
             </p>
           )}
           {messages.map((m) => (
@@ -130,6 +207,11 @@ export function ConversationClient({
                   borderBottomLeftRadius: m.isMine ? undefined : 4,
                 }}
               >
+                {isGroup && !m.isMine && m.senderName && (
+                  <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 4, opacity: 0.85 }}>
+                    {m.senderName}
+                  </p>
+                )}
                 {m.imageUrl && (
                   <a href={m.imageUrl} target="_blank" rel="noopener noreferrer">
                     <img

@@ -4,6 +4,7 @@ import { MessagesClient } from "@/components/messages/MessagesClient";
 import { getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
 import { getConversationPreviews } from "@/lib/messages";
 import { getPendingMessageRequests } from "@/lib/message-requests";
+import { getGroupMemberCandidates } from "@/lib/actions/groups";
 
 export default async function MessagesPage() {
   const session = await auth();
@@ -12,10 +13,11 @@ export default async function MessagesPage() {
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");
 
-  const [conversations, requests, notificationCount] = await Promise.all([
+  const [conversations, requests, notificationCount, groupCandidates] = await Promise.all([
     getConversationPreviews(user.profileId),
     getPendingMessageRequests(user.profileId),
     getUnreadNotificationCount(user.profileId),
+    user.verified ? getGroupMemberCandidates(user.profileId) : Promise.resolve([]),
   ]);
 
   return (
@@ -25,6 +27,7 @@ export default async function MessagesPage() {
       conversations={conversations}
       requests={requests}
       canMessage={user.verified}
+      groupCandidates={groupCandidates}
     />
   );
 }

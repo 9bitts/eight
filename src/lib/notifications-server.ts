@@ -4,6 +4,12 @@ import { sendPushToProfile } from "@/lib/push";
 
 type NotifyType = "LIKE" | "REPOST" | "FOLLOW" | "REPLY" | "MENTION" | "MESSAGE";
 
+type NotifyOptions = {
+  conversationId?: string;
+  groupName?: string;
+  bodyOverride?: string;
+};
+
 const PREF_FIELD: Record<
   NotifyType,
   "notifyLike" | "notifyRepost" | "notifyFollow" | "notifyReply" | "notifyMention" | "notifyMessage"
@@ -24,7 +30,15 @@ function siteUrl() {
   ).replace(/\/$/, "");
 }
 
-function notificationText(type: NotifyType, actorName: string): string {
+function notificationText(
+  type: NotifyType,
+  actorName: string,
+  options?: NotifyOptions
+): string {
+  if (options?.bodyOverride) return options.bodyOverride;
+  if (type === "MESSAGE" && options?.groupName) {
+    return `${actorName} enviou uma mensagem no grupo ${options.groupName}`;
+  }
   switch (type) {
     case "LIKE":
       return `${actorName} curtiu sua publicação`;
@@ -46,9 +60,13 @@ function notificationText(type: NotifyType, actorName: string): string {
 function notificationUrl(
   type: NotifyType,
   actorHandle: string,
-  postId?: string
+  postId?: string,
+  options?: NotifyOptions
 ): string {
   const base = siteUrl();
+  if (type === "MESSAGE" && options?.conversationId) {
+    return `${base}/messages/${options.conversationId}`;
+  }
   if (type === "MESSAGE") return `${base}/messages`;
   if (postId) return `${base}/post/${postId}`;
   return `${base}/${actorHandle}`;
@@ -58,7 +76,8 @@ async function deliverExternalNotifications(
   recipientId: string,
   actorId: string,
   type: NotifyType,
-  postId?: string
+  postId?: string,
+  options?: NotifyOptions
 ) {
   const [recipient, actor] = await Promise.all([
     prisma.profile.findUnique({
@@ -75,8 +94,8 @@ async function deliverExternalNotifications(
   ]);
   if (!actor) return;
 
-  const body = notificationText(type, actor.displayName);
-  const url = notificationUrl(type, actor.handle, postId);
+  const body = notificationText(type, actor.displayName, options);
+  const url = notificationUrl(type, actor.handle, postId, options);
 
   await sendPushToProfile(recipientId, { title: "eight", body, url });
 
@@ -89,7 +108,8 @@ export async function createNotificationIfAllowed(
   recipientId: string,
   actorId: string,
   type: NotifyType,
-  postId?: string
+  postId?: string,
+  options?: NotifyOptions
 ) {
   if (recipientId === actorId) return;
 
@@ -113,7 +133,7 @@ export async function createNotificationIfAllowed(
     data: { recipientId, actorId, type, postId: postId ?? null },
   });
 
-  void deliverExternalNotifications(recipientId, actorId, type, postId).catch((e) => {
+  void deliverExternalNotifications(recipientId, actorId, type, postId, options).catch((e) => {
     console.warn("[notifications] external delivery failed:", e);
   });
 }
