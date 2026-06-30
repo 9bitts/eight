@@ -4,7 +4,8 @@ import { publishedWhere } from "@/lib/post-filters";
 import { publishDueScheduledPosts } from "@/lib/scheduled-posts";
 import { getBlockedProfileIds, getMutedProfileIds } from "@/lib/relationships";
 import { filterPostsByMutedWords, getMutedWords } from "@/lib/muted-words";
-import { canViewListPosts } from "@/lib/lists";
+import { canViewListPosts, getFollowedListMemberIds } from "@/lib/lists";
+import { scoreForYouItem } from "@/lib/feed-scoring";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
 const postInclude = {
@@ -244,29 +245,6 @@ function mapRepostRow(
   };
 }
 
-function scoreForYouItem(
-  post: RawPost,
-  sortAt: Date,
-  followingSet: Set<string>,
-  specialty: string,
-  country: string,
-  now: number,
-  fromNetworkRepost = false
-) {
-  let score = 0;
-  const hours = (now - sortAt.getTime()) / 3_600_000;
-
-  score += Math.max(0, 72 - hours) * 1.4;
-  if (hours < 8) score += 10;
-  if (post.author.verified) score += 14;
-  if (followingSet.has(post.authorId)) score += 32;
-  if (specialty && post.author.specialty?.toLowerCase() === specialty) score += 20;
-  if (country && post.author.registrationCountry === country) score += 8;
-  score += (post._count.likes + post._count.repostRecords * 2 + post._count.replies) * 2.5;
-  if (fromNetworkRepost) score += 18;
-
-  return score;
-}
 
 async function buildForYouFeed(
   posts: RawPost[],
@@ -281,15 +259,17 @@ async function buildForYouFeed(
     (id) => !hiddenIds.includes(id)
   );
 
-  const [viewer, repostRows] = await Promise.all([
+  const [viewer, repostRows, followedListMemberIds] = await Promise.all([
     prisma.profile.findUnique({
       where: { id: viewerProfileId },
       select: { specialty: true, registrationCountry: true },
     }),
     fetchRepostRows(reposterIds, 80),
+    getFollowedListMemberIds(viewerProfileId),
   ]);
 
   const followingSet = new Set(following.map((f) => f.followingId));
+  const followedListMemberSet = new Set(followedListMemberIds);
   const specialty = viewer?.specialty?.toLowerCase() ?? "";
   const country = viewer?.registrationCountry ?? "";
   const now = Date.now();
@@ -297,7 +277,16 @@ async function buildForYouFeed(
   type Item = { score: number; sortAt: Date; post: FeedPost };
   const items: Item[] = [
     ...posts.map((p) => ({
-      score: scoreForYouItem(p, p.createdAt, followingSet, specialty, country, now),
+      score: scoreForYouItem(
+        p,
+        p.createdAt,
+        followingSet,
+        specialty,
+        country,
+        now,
+        false,
+        followedListMemberSet.has(p.authorId)
+      ),
       sortAt: p.createdAt,
       post: mapPost(p, viewerProfileId),
     })),

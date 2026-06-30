@@ -48,6 +48,7 @@ export default async function ListDetailPage({ params }: Props) {
       list={access.list}
       posts={posts}
       isOwner={access.isOwner}
+      isFollowing={access.isFollowing}
     />
   );
 }

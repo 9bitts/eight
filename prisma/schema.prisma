@@ -145,6 +145,7 @@ model Profile {
   pushSubscriptions  PushSubscription[]
   postViewsMade      PostView[]
   mutedWords         MutedWord[]
+  listFollows        ListFollow[]
   messageRequestsSent     MessageRequest[] @relation("messageRequestsSent")
   messageRequestsReceived MessageRequest[] @relation("messageRequestsReceived")
 }
@@ -404,11 +405,25 @@ model ProfileList {
   isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  owner   Profile             @relation("ownedLists", fields: [ownerId], references: [id], onDelete: Cascade)
-  members ProfileListMember[]
+  owner     Profile             @relation("ownedLists", fields: [ownerId], references: [id], onDelete: Cascade)
+  members   ProfileListMember[]
+  followers ListFollow[]
 
   @@index([ownerId])
   @@index([isPublic])
+}
+
+model ListFollow {
+  profileId String
+  listId    String
+  createdAt DateTime @default(now())
+
+  profile Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  list    ProfileList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, listId])
+  @@index([profileId])
+  @@index([listId])
 }
 
 model ProfileListMember {

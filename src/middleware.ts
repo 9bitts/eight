@@ -17,7 +17,12 @@ export default auth((req) => {
     return NextResponse.redirect(login);
   }
 
-  const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED.some((p) => {
+    if (p === "/listas") {
+      return pathname === "/listas" || pathname === "/listas/";
+    }
+    return pathname.startsWith(p);
+  });
   const isAuthPage =
     pathname === "/login" ||
     pathname.startsWith("/login/") ||

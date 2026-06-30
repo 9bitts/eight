@@ -7,3 +7,7 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+
+# Posts agendados: crie um segundo serviço no Railway com railway.cron.toml
+# (cronSchedule = "* * * * *", startCommand = npm run cron:publish-scheduled)
+# Alternativa HTTP: GET /api/cron/publish-scheduled com Authorization: Bearer CRON_SECRET

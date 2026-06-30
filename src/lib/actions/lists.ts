@@ -101,6 +101,10 @@ export async function updateList(
     data: patch,
   });
 
+  if (data.isPublic === false) {
+    await prisma.listFollow.deleteMany({ where: { listId } });
+  }
+
   revalidatePath("/listas");
   revalidatePath(`/listas/${listId}`);
 }
@@ -140,4 +144,45 @@ export async function fetchListsForTarget(targetProfileId: string) {
     name: l.name,
     member: l.members.length > 0,
   }));
+}
+
+export async function followList(listId: string) {
+  const profileId = await requireProfile();
+  const list = await prisma.profileList.findUnique({
+    where: { id: listId },
+    select: { ownerId: true, isPublic: true },
+  });
+  if (!list || !list.isPublic) throw new Error("Lista não encontrada ou não é pública.");
+  if (list.ownerId === profileId) throw new Error("Você não pode seguir sua própria lista.");
+
+  await prisma.listFollow.upsert({
+    where: { profileId_listId: { profileId, listId } },
+    create: { profileId, listId },
+    update: {},
+  });
+
+  revalidatePath("/listas");
+  revalidatePath(`/listas/${listId}`);
+}
+
+export async function unfollowList(listId: string) {
+  const profileId = await requireProfile();
+  await prisma.listFollow.deleteMany({
+    where: { profileId, listId },
+  });
+  revalidatePath("/listas");
+  revalidatePath(`/listas/${listId}`);
+}
+
+export async function toggleListFollow(listId: string) {
+  const profileId = await requireProfile();
+  const existing = await prisma.listFollow.findUnique({
+    where: { profileId_listId: { profileId, listId } },
+  });
+  if (existing) {
+    await unfollowList(listId);
+    return { following: false };
+  }
+  await followList(listId);
+  return { following: true };
 }

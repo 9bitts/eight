@@ -8,7 +8,7 @@ import { PostCard } from "@/components/feed/PostCard";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EightLogo } from "@/components/EightLogo";
-import { removeFromList, updateList } from "@/lib/actions/lists";
+import { removeFromList, updateList, toggleListFollow } from "@/lib/actions/lists";
 import type { ListDetail } from "@/lib/lists";
 import type { ConnectionProfile, FeedPost, SessionUser } from "@/lib/types";
 import { ArrowLeft, Globe, Link2, Lock } from "lucide-react";
@@ -51,18 +51,24 @@ function ListMain({
   tab,
   setTab,
   isOwner,
+  isFollowing,
+  canFollow,
   pending,
   onRemove,
   onTogglePublic,
+  onToggleFollow,
 }: {
   list: ListDetail;
   posts: FeedPost[];
   tab: Tab;
   setTab: (t: Tab) => void;
   isOwner: boolean;
+  isFollowing: boolean;
+  canFollow: boolean;
   pending: boolean;
   onRemove: (profileId: string) => void;
   onTogglePublic: () => void;
+  onToggleFollow: () => void;
 }) {
   return (
     <main
@@ -129,6 +135,26 @@ function ListMain({
               Tornar lista pública
             </label>
             {list.isPublic && <ShareListButton listId={list.id} />}
+          </div>
+        )}
+
+        {canFollow && (
+          <div className="px-4 py-2 border-b" style={{ borderColor: LINE }}>
+            <button
+              type="button"
+              onClick={onToggleFollow}
+              disabled={pending}
+              className="rounded-full px-4 py-2 font-bold"
+              style={{
+                fontSize: 14,
+                border: isFollowing ? `1px solid ${LINE}` : "none",
+                background: isFollowing ? CARD : INK,
+                color: isFollowing ? INK : "#fff",
+                cursor: "pointer",
+              }}
+            >
+              {isFollowing ? "Deixar de seguir lista" : "Seguir lista"}
+            </button>
           </div>
         )}
 
@@ -250,19 +276,23 @@ export function ListDetailClient({
   list,
   posts,
   isOwner,
+  isFollowing: initialFollowing,
 }: {
   user: SessionUser | null;
   notificationCount?: number;
   list: ListDetail;
   posts: FeedPost[];
   isOwner: boolean;
+  isFollowing: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("posts");
   const [isPublic, setIsPublic] = useState(list.isPublic);
+  const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [pending, startTransition] = useTransition();
 
   const listWithPublic = { ...list, isPublic };
+  const canFollow = !!user && !isOwner && list.isPublic;
 
   const onRemove = (profileId: string) => {
     startTransition(async () => {
@@ -284,6 +314,18 @@ export function ListDetailClient({
     });
   };
 
+  const onToggleFollow = () => {
+    startTransition(async () => {
+      try {
+        const result = await toggleListFollow(list.id);
+        setIsFollowing(result.following);
+        router.refresh();
+      } catch {
+        /* keep state */
+      }
+    });
+  };
+
   const main = (
     <ListMain
       list={listWithPublic}
@@ -291,9 +333,12 @@ export function ListDetailClient({
       tab={tab}
       setTab={setTab}
       isOwner={isOwner}
+      isFollowing={isFollowing}
+      canFollow={canFollow}
       pending={pending}
       onRemove={onRemove}
       onTogglePublic={onTogglePublic}
+      onToggleFollow={onToggleFollow}
     />
   );
 

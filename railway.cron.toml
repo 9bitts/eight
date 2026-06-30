@@ -1,0 +1,12 @@
+# Serviço de cron separado no Railway (mesmo repositório).
+# Crie um novo serviço apontando para este arquivo como railway.toml do serviço.
+#
+# Dashboard → New Service → mesmo repo → Settings → Config-as-code: railway.cron.toml
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npm run cron:publish-scheduled"
+cronSchedule = "* * * * *"
+restartPolicyType = "NEVER"
