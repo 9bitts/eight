@@ -130,7 +130,14 @@ export async function createNotificationIfAllowed(
   if (!profile[field]) return;
 
   await prisma.notification.create({
-    data: { recipientId, actorId, type, postId: postId ?? null },
+    data: {
+      recipientId,
+      actorId,
+      type,
+      postId: postId ?? null,
+      conversationId: options?.conversationId ?? null,
+      groupName: options?.groupName ?? null,
+    },
   });
 
   void deliverExternalNotifications(recipientId, actorId, type, postId, options).catch((e) => {

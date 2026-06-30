@@ -90,7 +90,7 @@ async function createSinglePost(
   }
 
   if (data.parentId && post.parent) {
-    await notify(post.parent.authorId, profileId, "REPLY", data.parentId);
+    await notify(post.parent.authorId, profileId, "REPLY", post.id);
   }
 
   return post;

@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Pin, Pencil, Trash2 } from "lucide-react";
+import { Pin, Pencil, Trash2, VolumeX, Ban } from "lucide-react";
 import { deletePost, editPost, pinPost } from "@/lib/actions";
+import { toggleBlock, toggleMute } from "@/lib/actions/relationships";
 import { POST_MAX_LENGTH } from "@/lib/constants";
 import { ReportDialog } from "@/components/moderation/ReportDialog";
 
@@ -13,12 +14,14 @@ const INK = "var(--eight-ink)";
 
 export function PostMenu({
   postId,
+  authorProfileId,
   isOwner,
   isPinned,
   body,
   canEdit = true,
 }: {
   postId: string;
+  authorProfileId: string;
   isOwner: boolean;
   isPinned: boolean;
   body: string;
@@ -40,6 +43,18 @@ export function PostMenu({
   }, []);
 
   if (!isOwner) {
+    const onMute = async () => {
+      await toggleMute(authorProfileId);
+      setOpen(false);
+      router.refresh();
+    };
+    const onBlock = async () => {
+      if (!confirm("Bloquear este profil? Vocês deixarão de se seguir.")) return;
+      await toggleBlock(authorProfileId);
+      setOpen(false);
+      router.refresh();
+    };
+
     return (
       <>
         <div className="relative ml-auto" ref={ref}>
@@ -47,6 +62,7 @@ export function PostMenu({
             type="button"
             onClick={() => setOpen(!open)}
             style={{ color: "var(--eight-muted)", background: "none", border: "none", cursor: "pointer", padding: 4 }}
+            aria-label="Opções da publicação"
           >
             ···
           </button>
@@ -55,6 +71,8 @@ export function PostMenu({
               className="absolute right-0 top-8 z-20 rounded-xl shadow-lg border py-1 min-w-[160px]"
               style={{ background: CARD, borderColor: LINE }}
             >
+              <MenuBtn icon={VolumeX} label="Silenciar autor" onClick={onMute} />
+              <MenuBtn icon={Ban} label="Bloquear autor" onClick={onBlock} danger />
               <button
                 type="button"
                 onClick={() => { setReporting(true); setOpen(false); }}

@@ -3,6 +3,7 @@ import { formatSpec, timeAgo, formatCount } from "@/lib/format";
 import { publishedWhere } from "@/lib/post-filters";
 import { publishDueScheduledPosts } from "@/lib/scheduled-posts";
 import { getBlockedProfileIds, getMutedProfileIds } from "@/lib/relationships";
+import { filterPostsByMutedWords, getMutedWords } from "@/lib/muted-words";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
 const postInclude = {
@@ -201,6 +202,125 @@ async function enrichSaved(posts: FeedPost[], profileId?: string) {
   return posts.map((p) => ({ ...p, saved: set.has(p.id) }));
 }
 
+function repostPostFilter() {
+  return {
+    parentId: null,
+    threadId: null,
+    isClinicalCase: false,
+    hidden: false,
+    OR: [{ scheduledAt: null }, { scheduledAt: { lte: new Date() } }],
+  };
+}
+
+async function fetchRepostRows(reposterIds: string[], take: number) {
+  if (reposterIds.length === 0) return [];
+  return prisma.repost.findMany({
+    where: {
+      profileId: { in: reposterIds },
+      post: repostPostFilter(),
+    },
+    orderBy: { createdAt: "desc" },
+    take,
+    include: {
+      profile: { select: { displayName: true, handle: true, avatarUrl: true } },
+      post: { include: postInclude },
+    },
+  });
+}
+
+function mapRepostRow(
+  r: Awaited<ReturnType<typeof fetchRepostRows>>[number],
+  viewerProfileId: string
+): FeedPost {
+  return {
+    ...mapPost(r.post as RawPost, viewerProfileId),
+    repostedBy: {
+      name: r.profile.displayName,
+      handle: r.profile.handle,
+      avatarUrl: r.profile.avatarUrl,
+      time: timeAgo(r.createdAt),
+    },
+  };
+}
+
+function scoreForYouItem(
+  post: RawPost,
+  sortAt: Date,
+  followingSet: Set<string>,
+  specialty: string,
+  country: string,
+  now: number,
+  fromNetworkRepost = false
+) {
+  let score = 0;
+  const hours = (now - sortAt.getTime()) / 3_600_000;
+
+  score += Math.max(0, 72 - hours) * 1.4;
+  if (hours < 8) score += 10;
+  if (post.author.verified) score += 14;
+  if (followingSet.has(post.authorId)) score += 32;
+  if (specialty && post.author.specialty?.toLowerCase() === specialty) score += 20;
+  if (country && post.author.registrationCountry === country) score += 8;
+  score += (post._count.likes + post._count.repostRecords * 2 + post._count.replies) * 2.5;
+  if (fromNetworkRepost) score += 18;
+
+  return score;
+}
+
+async function buildForYouFeed(
+  posts: RawPost[],
+  viewerProfileId: string,
+  hiddenIds: string[]
+): Promise<FeedPost[]> {
+  const following = await prisma.follow.findMany({
+    where: { followerId: viewerProfileId },
+    select: { followingId: true },
+  });
+  const reposterIds = [viewerProfileId, ...following.map((f) => f.followingId)].filter(
+    (id) => !hiddenIds.includes(id)
+  );
+
+  const [viewer, repostRows] = await Promise.all([
+    prisma.profile.findUnique({
+      where: { id: viewerProfileId },
+      select: { specialty: true, registrationCountry: true },
+    }),
+    fetchRepostRows(reposterIds, 80),
+  ]);
+
+  const followingSet = new Set(following.map((f) => f.followingId));
+  const specialty = viewer?.specialty?.toLowerCase() ?? "";
+  const country = viewer?.registrationCountry ?? "";
+  const now = Date.now();
+
+  type Item = { score: number; sortAt: Date; post: FeedPost };
+  const items: Item[] = [
+    ...posts.map((p) => ({
+      score: scoreForYouItem(p, p.createdAt, followingSet, specialty, country, now),
+      sortAt: p.createdAt,
+      post: mapPost(p, viewerProfileId),
+    })),
+    ...repostRows.map((r) => ({
+      score: scoreForYouItem(
+        r.post as RawPost,
+        r.createdAt,
+        followingSet,
+        specialty,
+        country,
+        now,
+        true
+      ),
+      sortAt: r.createdAt,
+      post: mapRepostRow(r, viewerProfileId),
+    })),
+  ];
+
+  items.sort(
+    (a, b) => b.score - a.score || b.sortAt.getTime() - a.sortAt.getTime()
+  );
+  return items.slice(0, 50).map((i) => i.post);
+}
+
 export async function getSessionUser(userId: string): Promise<SessionUser | null> {
   const profile = await prisma.profile.findUnique({
     where: { userId },
@@ -273,24 +393,7 @@ export async function getFeedPosts(
         take: 50,
         include: postInclude,
       }),
-      prisma.repost.findMany({
-        where: {
-          profileId: { in: ids },
-          post: {
-            parentId: null,
-            threadId: null,
-            isClinicalCase: false,
-            hidden: false,
-            OR: [{ scheduledAt: null }, { scheduledAt: { lte: new Date() } }],
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-        include: {
-          profile: { select: { displayName: true, handle: true, avatarUrl: true } },
-          post: { include: postInclude },
-        },
-      }),
+      fetchRepostRows(ids, 50),
     ]);
 
     type TimelineItem = { sortAt: Date; post: FeedPost };
@@ -301,21 +404,13 @@ export async function getFeedPosts(
       })),
       ...repostRows.map((r) => ({
         sortAt: r.createdAt,
-        post: {
-          ...mapPost(r.post as RawPost, viewerProfileId),
-          repostedBy: {
-            name: r.profile.displayName,
-            handle: r.profile.handle,
-            avatarUrl: r.profile.avatarUrl,
-            time: timeAgo(r.createdAt),
-          },
-        },
+        post: mapRepostRow(r, viewerProfileId),
       })),
     ];
 
     items.sort((a, b) => b.sortAt.getTime() - a.sortAt.getTime());
     const mapped = items.slice(0, 50).map((i) => i.post);
-    return enrichSaved(mapped, viewerProfileId);
+    return applyMutedWordFilter(await enrichSaved(mapped, viewerProfileId), viewerProfileId);
   } else if (hiddenIds.length > 0) {
     authorWhere = { authorId: { notIn: hiddenIds } };
   }
@@ -335,10 +430,13 @@ export async function getFeedPosts(
 
   const ordered =
     tab === "forYou" && !authorId
-      ? await rankForYouPosts(posts as RawPost[], viewerProfileId)
+      ? posts
       : (posts as RawPost[]);
 
-  const mapped = ordered.slice(0, 50).map((p) => mapPost(p, viewerProfileId));
+  const mapped =
+    tab === "forYou" && !authorId
+      ? await buildForYouFeed(ordered as RawPost[], viewerProfileId, hiddenIds)
+      : ordered.slice(0, 50).map((p) => mapPost(p as RawPost, viewerProfileId));
 
   if (authorId) {
     const profile = await prisma.profile.findUnique({
@@ -354,52 +452,13 @@ export async function getFeedPosts(
     }
   }
 
-  return enrichSaved(mapped, viewerProfileId);
+  return applyMutedWordFilter(await enrichSaved(mapped, viewerProfileId), viewerProfileId);
 }
 
-async function rankForYouPosts<T extends RawPost>(
-  posts: T[],
-  viewerProfileId: string
-): Promise<T[]> {
-  const [following, viewer] = await Promise.all([
-    prisma.follow.findMany({
-      where: { followerId: viewerProfileId },
-      select: { followingId: true },
-    }),
-    prisma.profile.findUnique({
-      where: { id: viewerProfileId },
-      select: { specialty: true, registrationCountry: true },
-    }),
-  ]);
-
-  const followingSet = new Set(following.map((f) => f.followingId));
-  const specialty = viewer?.specialty?.toLowerCase() ?? "";
-  const country = viewer?.registrationCountry ?? "";
-  const now = Date.now();
-
-  const scored = posts.map((post) => {
-    let score = 0;
-    const hours = (now - post.createdAt.getTime()) / 3_600_000;
-
-    score += Math.max(0, 72 - hours) * 1.4;
-    if (hours < 8) score += 10;
-    if (post.author.verified) score += 14;
-    if (followingSet.has(post.authorId)) score += 32;
-    if (specialty && post.author.specialty?.toLowerCase() === specialty) score += 20;
-    if (country && post.author.registrationCountry === country) score += 8;
-    score +=
-      (post._count.likes + post._count.repostRecords * 2 + post._count.replies) * 2.5;
-
-    return { post, score };
-  });
-
-  scored.sort(
-    (a, b) =>
-      b.score - a.score ||
-      b.post.createdAt.getTime() - a.post.createdAt.getTime()
-  );
-
-  return scored.map((s) => s.post);
+async function applyMutedWordFilter(posts: FeedPost[], viewerProfileId?: string) {
+  if (!viewerProfileId) return posts;
+  const words = await getMutedWords(viewerProfileId);
+  return filterPostsByMutedWords(posts, words);
 }
 
 export async function getThreadPosts(
@@ -684,19 +743,22 @@ export async function searchPosts(
   if (!q) return [];
 
   const blockedIds = viewerProfileId ? await getBlockedProfileIds(viewerProfileId) : [];
+  const mutedIds = viewerProfileId ? await getMutedProfileIds(viewerProfileId) : [];
+  const hiddenIds = Array.from(new Set([...blockedIds, ...mutedIds]));
 
   const posts = await prisma.post.findMany({
     where: {
       parentId: null,
       body: { contains: q, mode: "insensitive" },
-      ...(blockedIds.length ? { authorId: { notIn: blockedIds } } : {}),
+      ...(hiddenIds.length ? { authorId: { notIn: hiddenIds } } : {}),
       ...publishedWhere(),
     },
     take: limit,
     orderBy: { createdAt: "desc" },
     include: postInclude,
   });
-  return posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+  const mapped = posts.map((p) => mapPost(p as RawPost, viewerProfileId));
+  return applyMutedWordFilter(mapped, viewerProfileId);
 }
 
 export async function getProfileLikedPosts(

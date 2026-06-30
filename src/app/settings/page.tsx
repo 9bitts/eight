@@ -6,6 +6,7 @@ import { getBlockedUsers, getMutedUsers } from "@/lib/relationships";
 import { getProfileForEdit } from "@/lib/actions/profile";
 import { getNotificationPrefs, countPushSubscriptions } from "@/lib/notifications";
 import { getVapidPublicKey } from "@/lib/push";
+import { getMutedWordsForSettings } from "@/lib/actions/muted-words";
 import { prisma } from "@/lib/prisma";
 
 export default async function SettingsPage() {
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
     select: { totpEnabled: true, passwordHash: true, locale: true },
   });
 
-  const [blocked, muted, notificationCount, profileData, notificationPrefs, pushCount] =
+  const [blocked, muted, notificationCount, profileData, notificationPrefs, pushCount, mutedWords] =
     await Promise.all([
     getBlockedUsers(user.profileId),
     getMutedUsers(user.profileId),
@@ -28,6 +29,7 @@ export default async function SettingsPage() {
     getProfileForEdit(user.profileId),
     getNotificationPrefs(user.profileId),
     countPushSubscriptions(user.profileId),
+    getMutedWordsForSettings(user.profileId),
   ]);
 
   if (!profileData) redirect("/signup/complete");
@@ -44,6 +46,7 @@ export default async function SettingsPage() {
       notificationPrefs={notificationPrefs}
       vapidPublicKey={getVapidPublicKey()}
       pushSubscribed={pushCount > 0}
+      mutedWords={mutedWords}
     />
   );
 }

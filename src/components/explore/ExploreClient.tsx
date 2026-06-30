@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, TrendingUp, Stethoscope, Globe } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
@@ -161,21 +161,41 @@ export function ExploreClient({
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [searched, setSearched] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [tab, setTab] = useState<"all" | "people" | "posts">("all");
   const [pending, startTransition] = useTransition();
 
-  const search = () => {
-    const q = query.trim();
-    if (!q) return;
-    startTransition(async () => {
-      const params = new URLSearchParams({ q });
-      if (verifiedOnly) params.set("verified", "1");
-      const res = await fetch(`/api/search?${params}`);
-      const data = await res.json();
-      setProfiles(data.profiles ?? []);
-      setPosts(data.posts ?? []);
-      setSearched(true);
-    });
-  };
+  const runSearch = useCallback(
+    (q: string, verified: boolean) => {
+      const trimmed = q.trim();
+      if (!trimmed) return;
+      startTransition(async () => {
+        const params = new URLSearchParams({ q: trimmed });
+        if (verified) params.set("verified", "1");
+        const res = await fetch(`/api/search?${params}`);
+        const data = await res.json();
+        setProfiles(data.profiles ?? []);
+        setPosts(data.posts ?? []);
+        setSearched(true);
+      });
+    },
+    []
+  );
+
+  const search = () => runSearch(query, verifiedOnly);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      if (!trimmed && searched) {
+        setSearched(false);
+        setProfiles([]);
+        setPosts([]);
+      }
+      return;
+    }
+    const id = setTimeout(() => runSearch(query, verifiedOnly), 350);
+    return () => clearTimeout(id);
+  }, [query, verifiedOnly, runSearch, searched]);
 
   const clearSearch = () => {
     setQuery("");
@@ -230,14 +250,35 @@ export function ExploreClient({
             Somente profissionais verificados
           </label>
           {searched && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="mt-2 text-sm font-semibold"
-              style={{ color: BLUE, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-            >
-              ← Voltar à descoberta
-            </button>
+            <>
+              <div className="flex gap-1 mt-3">
+                {(["all", "people", "posts"] as const).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTab(id)}
+                    className="rounded-full px-3 py-1 font-semibold"
+                    style={{
+                      fontSize: 13,
+                      border: "none",
+                      cursor: "pointer",
+                      background: tab === id ? BLUE : "var(--eight-surface-subtle)",
+                      color: tab === id ? "#fff" : INK,
+                    }}
+                  >
+                    {id === "all" ? "Tudo" : id === "people" ? "Pessoas" : "Posts"}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="mt-2 text-sm font-semibold"
+                style={{ color: BLUE, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                ← Voltar à descoberta
+              </button>
+            </>
           )}
         </div>
 
@@ -251,7 +292,7 @@ export function ExploreClient({
           </p>
         )}
 
-        {profiles.length > 0 && (
+        {searched && (tab === "all" || tab === "people") && profiles.length > 0 && (
           <div>
             <h2 className="px-4 py-2" style={{ fontWeight: 700, fontSize: 15, color: INK }}>
               Profissionais
@@ -262,13 +303,13 @@ export function ExploreClient({
           </div>
         )}
 
-        {posts.length > 0 && (
+        {searched && (tab === "all" || tab === "posts") && posts.length > 0 && (
           <div>
             <h2 className="px-4 py-2" style={{ fontWeight: 700, fontSize: 15, color: INK }}>
               Publicações
             </h2>
             {posts.map((p) => (
-              <PostCard key={p.id} post={p} />
+              <PostCard key={p.id} post={p} trackImpression />
             ))}
           </div>
         )}

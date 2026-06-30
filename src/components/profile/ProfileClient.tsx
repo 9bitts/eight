@@ -418,7 +418,7 @@ export function ProfileClient({
                 </p>
               ) : (
                 (tab === "posts" ? posts : tab === "replies" ? replies : likes).map((p) => (
-                  <PostCard key={p.id} post={p} />
+                  <PostCard key={p.id} post={p} trackImpression={!isOwnProfile} />
                 ))
               )}
             </div>

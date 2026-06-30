@@ -23,6 +23,8 @@ type Notif = {
   read: boolean;
   createdAt: Date;
   postId: string | null;
+  conversationId: string | null;
+  groupName: string | null;
   actor: {
     displayName: string;
     handle: string;
@@ -60,7 +62,9 @@ function notifText(n: Notif): string {
     case "VERIFICATION_REJECTED":
       return "Sua verificação precisa de ajustes — veja em Verificação";
     case "MESSAGE":
-      return `${name} enviou uma mensagem`;
+      return n.groupName
+        ? `${name} enviou uma mensagem no grupo ${n.groupName}`
+        : `${name} enviou uma mensagem`;
     default:
       return `${name} interagiu com você`;
   }
@@ -76,11 +80,13 @@ function NotifRow({
   const href =
     n.type === "VERIFICATION_APPROVED" || n.type === "VERIFICATION_REJECTED"
       ? "/verificacao"
-      : n.type === "MESSAGE"
-        ? "/messages"
-        : n.postId
-        ? `/post/${n.postId}`
-        : `/${n.actor.handle}`;
+      : n.type === "MESSAGE" && n.conversationId
+        ? `/messages/${n.conversationId}`
+        : n.type === "MESSAGE"
+          ? "/messages"
+          : n.postId
+            ? `/post/${n.postId}`
+            : `/${n.actor.handle}`;
 
   return (
     <Link

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Heart,
   MessageCircle,
@@ -24,6 +24,7 @@ import { QuoteRepostButton } from "@/components/feed/QuoteRepostButton";
 import { QuotedPostCard } from "@/components/feed/QuotedPostCard";
 import { PostImpression } from "@/components/feed/PostImpression";
 import { EditHistoryDialog } from "@/components/feed/EditHistoryDialog";
+import { UndoToast } from "@/components/feed/UndoToast";
 import { toggleLike, toggleRepost } from "@/lib/actions";
 import { toggleBookmark } from "@/lib/actions/bookmarks";
 import { POST_EDIT_WINDOW_MS } from "@/lib/constants";
@@ -45,6 +46,7 @@ function ActionBtn({
   fill,
   href,
   countHref,
+  label,
 }: {
   icon: LucideIcon;
   count: number;
@@ -54,6 +56,7 @@ function ActionBtn({
   fill?: boolean;
   href?: string;
   countHref?: string;
+  label: string;
 }) {
   const inner = (
     <>
@@ -74,13 +77,25 @@ function ActionBtn({
 
   if (href) {
     return (
-      <Link href={href} className="flex items-center gap-1.5 transition-colors" style={style}>
+      <Link
+        href={href}
+        className="flex items-center gap-1.5 transition-colors"
+        style={style}
+        aria-label={count > 0 ? `${label}, ${count}` : label}
+      >
         {inner}
       </Link>
     );
   }
   return (
-    <button type="button" onClick={onClick} className="flex items-center gap-1.5 transition-colors" style={style}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1.5 transition-colors"
+      style={style}
+      aria-label={count > 0 ? `${label}, ${count}` : label}
+      aria-pressed={active}
+    >
       {inner}
     </button>
   );
@@ -98,14 +113,39 @@ export function PostCard({
   const router = useRouter();
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [viewCount, setViewCount] = useState(post.views);
+  const [reposted, setReposted] = useState(post.reposted);
+  const [repostCount, setRepostCount] = useState(post.reposts);
+  const [repostUndo, setRepostUndo] = useState(false);
+
+  useEffect(() => {
+    setReposted(post.reposted);
+    setRepostCount(post.reposts);
+  }, [post.reposted, post.reposts]);
+
+  const onRepost = async () => {
+    const wasReposted = reposted;
+    if (!wasReposted) {
+      setReposted(true);
+      setRepostCount((c) => c + 1);
+      setRepostUndo(true);
+      await toggleRepost(post.id);
+    } else {
+      setReposted(false);
+      setRepostCount((c) => Math.max(0, c - 1));
+      await toggleRepost(post.id);
+      router.refresh();
+    }
+  };
+
+  const undoRepost = async () => {
+    setRepostUndo(false);
+    setReposted(false);
+    setRepostCount((c) => Math.max(0, c - 1));
+    await toggleRepost(post.id);
+  };
 
   const onLike = async () => {
     await toggleLike(post.id);
-    router.refresh();
-  };
-
-  const onRepost = async () => {
-    await toggleRepost(post.id);
     router.refresh();
   };
 
@@ -132,6 +172,13 @@ export function PostCard({
           postId={post.id}
           currentBody={post.body}
           onClose={() => setShowEditHistory(false)}
+        />
+      )}
+      {repostUndo && (
+        <UndoToast
+          message="Repostado"
+          onUndo={undoRepost}
+          onDismiss={() => setRepostUndo(false)}
         />
       )}
       {post.repostedBy && (
@@ -202,6 +249,7 @@ export function PostCard({
           </span>
           <PostMenu
             postId={post.id}
+            authorProfileId={post.authorId}
             isOwner={post.isOwner}
             isPinned={post.isPinned}
             body={post.body}
@@ -262,14 +310,15 @@ export function PostCard({
 
         {showActions && (
           <div className="flex items-center justify-between mt-3" style={{ maxWidth: 440 }}>
-            <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} />
+            <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} label="Responder" />
             <ActionBtn
               icon={Repeat2}
-              count={post.reposts}
+              count={repostCount}
               color="#1a9c5b"
-              active={post.reposted}
+              active={reposted}
               onClick={onRepost}
-              countHref={post.reposts > 0 ? `/post/${post.id}/reposts` : undefined}
+              countHref={repostCount > 0 ? `/post/${post.id}/reposts` : undefined}
+              label={reposted ? "Desfazer repost" : "Repostar"}
             />
             <QuoteRepostButton postId={post.id} />
             <ActionBtn
@@ -280,6 +329,7 @@ export function PostCard({
               fill
               onClick={onLike}
               countHref={post.likes > 0 ? `/post/${post.id}/curtidas` : undefined}
+              label={post.liked ? "Descurtir" : "Curtir"}
             />
             <button
               type="button"

@@ -145,6 +145,7 @@ model Profile {
   bookmarks          Bookmark[]
   pushSubscriptions  PushSubscription[]
   postViewsMade      PostView[]
+  mutedWords         MutedWord[]
   messageRequestsSent     MessageRequest[] @relation("messageRequestsSent")
   messageRequestsReceived MessageRequest[] @relation("messageRequestsReceived")
 }
@@ -363,16 +364,32 @@ model Comment {
 }
 
 model Notification {
-  id          String           @id @default(cuid())
-  recipientId String
-  actorId     String
-  type        NotificationType
-  postId      String?
-  read        Boolean          @default(false)
-  createdAt   DateTime         @default(now())
+  id             String           @id @default(cuid())
+  recipientId    String
+  actorId        String
+  type           NotificationType
+  postId         String?
+  conversationId String?
+  groupName      String?          @db.VarChar(80)
+  read           Boolean          @default(false)
+  createdAt      DateTime         @default(now())
 
   recipient Profile @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
   actor     Profile @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt])
+}
+
+model MutedWord {
+  id        String   @id @default(cuid())
+  profileId String
+  word      String   @db.VarChar(50)
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, word])
+  @@index([profileId])
 }
 
 enum NotificationType {
