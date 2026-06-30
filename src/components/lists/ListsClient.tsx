@@ -7,7 +7,7 @@ import { FeedShell } from "@/components/feed/FeedShell";
 import { createList, deleteList } from "@/lib/actions/lists";
 import type { ProfileListSummary } from "@/lib/lists";
 import type { SessionUser } from "@/lib/types";
-import { List, Plus, Trash2 } from "lucide-react";
+import { List, Plus, Trash2, Globe } from "lucide-react";
 
 const INK = "var(--eight-ink)";
 const LINE = "var(--eight-line)";
@@ -61,7 +61,9 @@ export function ListsClient({
           style={{ background: "var(--eight-header-bg)", borderBottom: `1px solid ${LINE}` }}
         >
           <h1 style={{ fontWeight: 800, fontSize: 18, color: INK }}>Listas</h1>
-          <p style={{ color: MUTED, fontSize: 13 }}>Organize perfis em listas privadas</p>
+          <p style={{ color: MUTED, fontSize: 13 }}>
+            Organize perfis em listas — marque como pública para compartilhar o link
+          </p>
         </div>
 
         <div className="p-4 border-b" style={{ borderColor: LINE }}>
@@ -105,7 +107,12 @@ export function ListsClient({
                 <List size={20} />
               </div>
               <Link href={`/listas/${list.id}`} className="flex-1 min-w-0" style={{ textDecoration: "none" }}>
-                <div style={{ fontWeight: 700, color: INK }}>{list.name}</div>
+                <div className="flex items-center gap-1.5">
+                  <span style={{ fontWeight: 700, color: INK }}>{list.name}</span>
+                  {list.isPublic && (
+                    <Globe size={14} style={{ color: BLUE }} aria-label="Lista pública" />
+                  )}
+                </div>
                 <div style={{ fontSize: 13, color: MUTED }}>
                   {list.memberCount} {list.memberCount === 1 ? "perfil" : "perfis"}
                   {list.description ? ` · ${list.description}` : ""}

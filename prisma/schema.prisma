@@ -124,7 +124,6 @@ model Profile {
   posts              Post[]
   likes              Like[]
   reposts            Repost[]
-  comments           Comment[]
   pollVotes          PollVote[]
   followers          Follow[]       @relation("following")
   following          Follow[]       @relation("follower")
@@ -189,7 +188,6 @@ model Post {
   hashtags      PostHashtag[]
   likes         Like[]
   repostRecords Repost[]
-  comments      Comment[]
   bookmarks     Bookmark[]
   views         PostView[]
   edits         PostEdit[]
@@ -352,17 +350,6 @@ model Mute {
   @@index([mutedId])
 }
 
-model Comment {
-  id        String   @id @default(cuid())
-  authorId  String
-  postId    String
-  body      String   @db.VarChar(500)
-  createdAt DateTime @default(now())
-
-  author Profile @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  post   Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
-}
-
 model Notification {
   id             String           @id @default(cuid())
   recipientId    String
@@ -414,12 +401,14 @@ model ProfileList {
   ownerId     String
   name        String   @db.VarChar(80)
   description String?  @db.VarChar(160)
+  isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   owner   Profile             @relation("ownedLists", fields: [ownerId], references: [id], onDelete: Cascade)
   members ProfileListMember[]
 
   @@index([ownerId])
+  @@index([isPublic])
 }
 
 model ProfileListMember {

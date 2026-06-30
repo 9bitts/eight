@@ -4,6 +4,7 @@ import { publishedWhere } from "@/lib/post-filters";
 import { publishDueScheduledPosts } from "@/lib/scheduled-posts";
 import { getBlockedProfileIds, getMutedProfileIds } from "@/lib/relationships";
 import { filterPostsByMutedWords, getMutedWords } from "@/lib/muted-words";
+import { canViewListPosts } from "@/lib/lists";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
 const postInclude = {
@@ -822,14 +823,15 @@ export async function getSavedPosts(viewerProfileId: string): Promise<FeedPost[]
     .filter((b) => b.post.parentId === null && !b.post.hidden)
     .map((b) => ({ ...mapPost(b.post as RawPost, viewerProfileId), saved: true }));
 }
-
 export async function getPostsForList(
   listId: string,
-  ownerId: string,
-  viewerProfileId: string
+  viewerProfileId?: string
 ): Promise<FeedPost[]> {
-  const list = await prisma.profileList.findFirst({
-    where: { id: listId, ownerId },
+  const allowed = await canViewListPosts(listId, viewerProfileId);
+  if (!allowed) return [];
+
+  const list = await prisma.profileList.findUnique({
+    where: { id: listId },
     include: { members: { select: { profileId: true } } },
   });
   if (!list || list.members.length === 0) return [];

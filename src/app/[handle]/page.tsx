@@ -12,6 +12,7 @@ import {
   isFollowing,
 } from "@/lib/feed";
 import { getBlockStatus, isMuted } from "@/lib/relationships";
+import { getPublicListsForProfile } from "@/lib/lists";
 import { recordProfileView, getProfileAnalytics } from "@/lib/analytics";
 
 import { isReservedHandle } from "@/lib/reserved-handles";
@@ -49,6 +50,10 @@ export default async function ProfilePage({ params }: Props) {
       isMuted(user.profileId, profile.id),
       isOwnProfile ? getProfileAnalytics(profile.id) : Promise.resolve(null),
     ]);
+
+  const publicLists = blockStatus.isBlocked
+    ? []
+    : await getPublicListsForProfile(profile.id);
 
   if (!isOwnProfile && !blockStatus.isBlocked) {
     await recordProfileView(profile.id, user.profileId);
@@ -95,6 +100,7 @@ export default async function ProfilePage({ params }: Props) {
       canMessage={canMessage}
       notificationCount={notificationCount}
       analytics={analytics}
+      publicLists={publicLists}
     />
   );
 }

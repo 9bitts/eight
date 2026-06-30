@@ -64,6 +64,45 @@ export async function removeFromList(listId: string, targetProfileId: string) {
     },
   });
   revalidatePath(`/listas/${listId}`);
+  revalidatePath("/listas");
+}
+
+export async function updateList(
+  listId: string,
+  data: { name?: string; description?: string; isPublic?: boolean }
+) {
+  const profileId = await requireProfile();
+  const list = await prisma.profileList.findFirst({
+    where: { id: listId, ownerId: profileId },
+  });
+  if (!list) throw new Error("Lista não encontrada.");
+
+  const patch: { name?: string; description?: string | null; isPublic?: boolean } = {};
+
+  if (data.name !== undefined) {
+    const trimmed = data.name.trim();
+    if (!trimmed || trimmed.length < 2) throw new Error("Nome da lista muito curto.");
+    if (trimmed.length > 80) throw new Error("Nome da lista muito longo.");
+    patch.name = trimmed;
+  }
+
+  if (data.description !== undefined) {
+    patch.description = data.description.trim() || null;
+  }
+
+  if (data.isPublic !== undefined) {
+    patch.isPublic = data.isPublic;
+  }
+
+  if (Object.keys(patch).length === 0) return;
+
+  await prisma.profileList.update({
+    where: { id: listId },
+    data: patch,
+  });
+
+  revalidatePath("/listas");
+  revalidatePath(`/listas/${listId}`);
 }
 
 export async function toggleListMember(listId: string, targetProfileId: string) {

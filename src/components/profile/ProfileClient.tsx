@@ -15,6 +15,8 @@ import { sendMessageRequest } from "@/lib/actions/message-requests";
 import { toggleBlock } from "@/lib/actions/relationships";
 import { formatSpec } from "@/lib/format";
 import type { FeedPost, SessionUser } from "@/lib/types";
+import type { ProfileListSummary } from "@/lib/lists";
+import { Globe, List } from "lucide-react";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
@@ -62,6 +64,7 @@ export function ProfileClient({
   canMessage,
   notificationCount,
   analytics,
+  publicLists = [],
 }: {
   profile: ProfileData;
   posts: FeedPost[];
@@ -76,6 +79,7 @@ export function ProfileClient({
   canMessage: boolean;
   notificationCount: number;
   analytics: ProfileAnalytics | null;
+  publicLists?: ProfileListSummary[];
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
@@ -373,6 +377,30 @@ export function ProfileClient({
               </Link>
             )}
           </div>
+
+          {publicLists.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {publicLists.map((list) => (
+                <Link
+                  key={list.id}
+                  href={`/listas/${list.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    color: INK,
+                    background: "var(--eight-nav-active)",
+                    border: `1px solid ${LINE}`,
+                  }}
+                >
+                  <List size={13} style={{ color: BLUE }} />
+                  {list.name}
+                  <Globe size={12} style={{ color: BLUE }} />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {!blockedByViewer && (

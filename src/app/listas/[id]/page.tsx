@@ -1,27 +1,53 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { ListDetailClient } from "@/components/lists/ListDetailClient";
-import { getListDetail } from "@/lib/lists";
+import { getListForViewer } from "@/lib/lists";
 import { getPostsForList, getSessionUser, getUnreadNotificationCount } from "@/lib/feed";
 
 type Props = { params: { id: string } };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const access = await getListForViewer(params.id);
+  if (!access) {
+    return { title: "Lista — eight" };
+  }
+  const { list } = access;
+  if (!list.isPublic && !access.isOwner) {
+    return { title: "Lista — eight" };
+  }
+  return {
+    title: `${list.name} — eight`,
+    description: list.description ?? `Lista de ${list.owner.displayName} no eight`,
+    openGraph: {
+      title: list.name,
+      description: list.description ?? `Lista pública de @${list.owner.handle}`,
+    },
+  };
+}
+
 export default async function ListDetailPage({ params }: Props) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const viewerProfileId = session?.user?.profileId;
 
-  const user = await getSessionUser(session.user.id);
-  if (!user) redirect("/signup/complete");
+  const access = await getListForViewer(params.id, viewerProfileId);
+  if (!access) notFound();
 
-  const [list, notificationCount, posts] = await Promise.all([
-    getListDetail(params.id, user.profileId),
-    getUnreadNotificationCount(user.profileId),
-    getPostsForList(params.id, user.profileId, user.profileId),
+  const user = session?.user?.id ? await getSessionUser(session.user.id) : null;
+  if (session?.user?.id && !user) notFound();
+
+  const [notificationCount, posts] = await Promise.all([
+    user ? getUnreadNotificationCount(user.profileId) : Promise.resolve(0),
+    getPostsForList(params.id, viewerProfileId),
   ]);
 
-  if (!list) notFound();
-
   return (
-    <ListDetailClient user={user} notificationCount={notificationCount} list={list} posts={posts} />
+    <ListDetailClient
+      user={user}
+      notificationCount={notificationCount}
+      list={access.list}
+      posts={posts}
+      isOwner={access.isOwner}
+    />
   );
 }

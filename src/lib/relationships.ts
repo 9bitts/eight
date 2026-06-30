@@ -54,7 +54,7 @@ export async function isMuted(viewerProfileId: string, targetProfileId: string) 
   return !!row;
 }
 
-async function mapConnections(
+export async function mapConnections(
   profiles: {
     id: string;
     displayName: string;
