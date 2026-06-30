@@ -4,10 +4,13 @@ import { timeAgo } from "@/lib/format";
 
 export type ConversationPreview = {
   id: string;
-  otherId: string;
+  isGroup: boolean;
+  name: string | null;
+  otherId: string | null;
   otherName: string;
-  otherHandle: string;
+  otherHandle: string | null;
   otherVerified: boolean;
+  participantCount: number;
   lastMessage: string | null;
   lastMessageAt: Date | null;
   unread: boolean;
@@ -16,9 +19,20 @@ export type ConversationPreview = {
 export type ChatMessage = {
   id: string;
   body: string;
+  imageUrl: string | null;
   senderId: string;
+  senderName: string | null;
   createdAt: Date;
   isMine: boolean;
+};
+
+export type ConversationDetail = {
+  isGroup: boolean;
+  name: string | null;
+  title: string;
+  otherHandle: string | null;
+  participants: { id: string; name: string; handle: string }[];
+  messages: ChatMessage[];
 };
 
 export async function assertCanMessage(senderId: string, recipientId: string) {
@@ -53,6 +67,7 @@ export async function findOrCreateConversation(
 ) {
   const candidates = await prisma.conversation.findMany({
     where: {
+      isGroup: false,
       AND: [
         { participants: { some: { profileId: profileId1 } } },
         { participants: { some: { profileId: profileId2 } } },
@@ -106,20 +121,37 @@ export async function getConversationPreviews(
   });
 
   return participations.map((p) => {
-    const other = p.conversation.participants.find((x) => x.profileId !== profileId)!;
-    const last = p.conversation.messages[0] ?? null;
+    const conv = p.conversation;
+    const isGroup = conv.isGroup;
+    const others = conv.participants.filter((x) => x.profileId !== profileId);
+    const other = others[0]?.profile;
+    const last = conv.messages[0] ?? null;
     const unread =
       !!last &&
       last.senderId !== profileId &&
       (!p.lastReadAt || last.createdAt > p.lastReadAt);
 
+    const groupTitle =
+      conv.name ||
+      others
+        .map((x) => x.profile.displayName.split(" ")[0])
+        .slice(0, 3)
+        .join(", ") + (others.length > 3 ? "…" : "");
+
     return {
       id: p.conversationId,
-      otherId: other.profile.id,
-      otherName: other.profile.displayName,
-      otherHandle: other.profile.handle,
-      otherVerified: other.profile.verified,
-      lastMessage: last?.body ?? null,
+      isGroup,
+      name: conv.name,
+      otherId: isGroup ? null : other?.id ?? null,
+      otherName: isGroup ? groupTitle : other?.displayName ?? "Conversa",
+      otherHandle: isGroup ? null : other?.handle ?? null,
+      otherVerified: isGroup ? false : other?.verified ?? false,
+      participantCount: conv.participants.length,
+      lastMessage: last
+        ? last.imageUrl && !last.body.trim()
+          ? "📷 Foto"
+          : last.body.trim() || "📷 Foto"
+        : null,
       lastMessageAt: last?.createdAt ?? null,
       unread,
     };
@@ -129,7 +161,7 @@ export async function getConversationPreviews(
 export async function getConversationMessages(
   conversationId: string,
   profileId: string
-): Promise<{ messages: ChatMessage[]; otherName: string; otherHandle: string } | null> {
+): Promise<ConversationDetail | null> {
   const participant = await prisma.conversationParticipant.findUnique({
     where: { conversationId_profileId: { conversationId, profileId } },
     include: {
@@ -140,7 +172,13 @@ export async function getConversationMessages(
               profile: { select: { id: true, displayName: true, handle: true } },
             },
           },
-          messages: { orderBy: { createdAt: "asc" }, take: 200 },
+          messages: {
+            orderBy: { createdAt: "asc" },
+            take: 200,
+            include: {
+              sender: { select: { displayName: true } },
+            },
+          },
         },
       },
     },
@@ -148,20 +186,39 @@ export async function getConversationMessages(
 
   if (!participant) return null;
 
-  const other = participant.conversation.participants.find((p) => p.profileId !== profileId)!;
+  const conv = participant.conversation;
+  const isGroup = conv.isGroup;
+  const others = conv.participants.filter((p) => p.profileId !== profileId);
+  const other = others[0]?.profile;
 
   await prisma.conversationParticipant.update({
     where: { id: participant.id },
     data: { lastReadAt: new Date() },
   });
 
+  const groupTitle =
+    conv.name ||
+    others
+      .map((p) => p.profile.displayName.split(" ")[0])
+      .slice(0, 3)
+      .join(", ") + (others.length > 3 ? "…" : "");
+
   return {
-    otherName: other.profile.displayName,
-    otherHandle: other.profile.handle,
-    messages: participant.conversation.messages.map((m) => ({
+    isGroup,
+    name: conv.name,
+    title: isGroup ? groupTitle : other?.displayName ?? "Conversa",
+    otherHandle: isGroup ? null : other?.handle ?? null,
+    participants: conv.participants.map((p) => ({
+      id: p.profile.id,
+      name: p.profile.displayName,
+      handle: p.profile.handle,
+    })),
+    messages: conv.messages.map((m) => ({
       id: m.id,
       body: m.body,
+      imageUrl: m.imageUrl,
       senderId: m.senderId,
+      senderName: isGroup ? m.sender.displayName : null,
       createdAt: m.createdAt,
       isMine: m.senderId === profileId,
     })),

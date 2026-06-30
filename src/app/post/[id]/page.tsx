@@ -10,6 +10,7 @@ import {
   getUnreadNotificationCount,
 } from "@/lib/feed";
 import { buildPostMetadata } from "@/lib/metadata";
+import { recordPostView } from "@/lib/post-views";
 
 type Props = { params: { id: string } };
 
@@ -23,6 +24,8 @@ export default async function PostPage({ params }: Props) {
 
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");
+
+  await recordPostView(params.id, user.profileId);
 
   const post = await getPostById(params.id, user.profileId);
   if (!post) notFound();

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Pin, Pencil, Trash2 } from "lucide-react";
 import { deletePost, editPost, pinPost } from "@/lib/actions";
+import { POST_MAX_LENGTH } from "@/lib/constants";
 import { ReportDialog } from "@/components/moderation/ReportDialog";
 
 const LINE = "var(--eight-line)";
@@ -15,11 +16,13 @@ export function PostMenu({
   isOwner,
   isPinned,
   body,
+  canEdit = true,
 }: {
   postId: string;
   isOwner: boolean;
   isPinned: boolean;
   body: string;
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -95,7 +98,7 @@ export function PostMenu({
         <textarea
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          maxLength={500}
+          maxLength={POST_MAX_LENGTH}
           rows={3}
           className="w-full border rounded-lg p-2 outline-none"
           style={{ borderColor: LINE, fontSize: 15 }}
@@ -136,7 +139,7 @@ export function PostMenu({
           className="absolute right-0 top-8 z-20 rounded-xl shadow-lg border py-1 min-w-[160px]"
           style={{ background: CARD, borderColor: LINE }}
         >
-          <MenuBtn icon={Pencil} label="Editar" onClick={() => { setEditing(true); setOpen(false); }} />
+          <MenuBtn icon={Pencil} label="Editar" onClick={() => { setEditing(true); setOpen(false); }} disabled={!canEdit} />
           <MenuBtn icon={Pin} label={isPinned ? "Desafixar" : "Fixar no perfil"} onClick={onPin} />
           <MenuBtn icon={Trash2} label="Apagar" onClick={onDelete} danger />
         </div>
@@ -150,23 +153,27 @@ function MenuBtn({
   label,
   onClick,
   danger,
+  disabled,
 }: {
   icon: typeof Pin;
   label: string;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className="flex items-center gap-2 w-full px-4 py-2.5 text-left"
       style={{
         fontSize: 14,
-        color: danger ? "#e05930" : INK,
+        color: danger ? "#e05930" : disabled ? "var(--eight-muted)" : INK,
         background: "none",
         border: "none",
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       <Icon size={16} />

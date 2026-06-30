@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { createPost } from "@/lib/actions";
+import { POST_MAX_LENGTH } from "@/lib/constants";
 import { MentionSuggestions } from "@/components/feed/MentionSuggestions";
 import { useMentionInput } from "@/components/feed/useMentionInput";
 import type { SessionUser } from "@/lib/types";
@@ -45,7 +46,7 @@ export function PostComposer({ user }: { user: SessionUser }) {
   const [uploading, setUploading] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const charLeft = 500 - body.length;
+  const charLeft = POST_MAX_LENGTH - body.length;
 
   const uploadFile = async (file: File) => {
     setUploading(true);
@@ -117,7 +118,7 @@ export function PostComposer({ user }: { user: SessionUser }) {
           onKeyUp={(e) => onBodyChange(body, e.currentTarget.selectionStart)}
           placeholder="O que você está acompanhando na sua prática? Use #hashtags e @menções"
           rows={3}
-          maxLength={500}
+          maxLength={POST_MAX_LENGTH}
           className="w-full resize-none outline-none"
           style={{ fontSize: 17, color: INK, background: "transparent", lineHeight: 1.4 }}
         />
@@ -157,7 +158,7 @@ export function PostComposer({ user }: { user: SessionUser }) {
               }}
               placeholder={`Post ${i + 2} do fio…`}
               rows={2}
-              maxLength={500}
+              maxLength={POST_MAX_LENGTH}
               className="w-full resize-none outline-none mt-1"
               style={{ fontSize: 15, color: INK }}
             />

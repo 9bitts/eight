@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Home,
   Search,
@@ -23,6 +23,7 @@ import {
 import { Avatar } from "@/components/Avatar";
 import { EightLogo } from "@/components/EightLogo";
 import type { SessionUser } from "@/lib/types";
+import { useRealtimeBadges } from "@/components/useRealtime";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 
 const BLUE = "#176a88";
@@ -138,7 +139,7 @@ function MobileNavLink({
 
 export function FeedShell({
   user,
-  notificationCount,
+  notificationCount: initialNotificationCount,
   children,
   rightRail,
 }: {
@@ -150,19 +151,22 @@ export function FeedShell({
   const { t } = useLocale();
   const pathname = usePathname();
   const [messageCount, setMessageCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(initialNotificationCount);
   const showComposeFab = pathname === "/feed" || pathname === "/cases";
 
   useEffect(() => {
-    const load = () => {
-      fetch("/api/messages/unread-count")
-        .then((r) => r.json())
-        .then((d) => setMessageCount(typeof d.count === "number" ? d.count : 0))
-        .catch(() => {});
-    };
-    load();
-    const id = setInterval(load, 30_000);
-    return () => clearInterval(id);
-  }, []);
+    setNotificationCount(initialNotificationCount);
+  }, [initialNotificationCount]);
+
+  const onRealtime = useCallback(
+    (data: { notifications?: number; messages?: number }) => {
+      if (typeof data.notifications === "number") setNotificationCount(data.notifications);
+      if (typeof data.messages === "number") setMessageCount(data.messages);
+    },
+    []
+  );
+
+  useRealtimeBadges(onRealtime);
 
   const shortName =
     user.displayName.length > 16

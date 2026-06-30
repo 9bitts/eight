@@ -1,0 +1,39 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+
+const recorded = new Set<string>();
+
+export function PostImpression({ postId }: { postId: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (recorded.has(postId)) return;
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        if (recorded.has(postId)) return;
+        recorded.add(postId);
+
+        fetch("/api/posts/views", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postIds: [postId] }),
+        }).catch(() => {
+          recorded.delete(postId);
+        });
+
+        observer.disconnect();
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [postId]);
+
+  return <div ref={ref} className="absolute inset-0 pointer-events-none" aria-hidden />;
+}

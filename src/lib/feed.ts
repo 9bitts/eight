@@ -1,11 +1,25 @@
 import { prisma } from "@/lib/prisma";
 import { formatSpec, timeAgo, formatCount } from "@/lib/format";
 import { publishedWhere } from "@/lib/post-filters";
+import { publishDueScheduledPosts } from "@/lib/scheduled-posts";
 import { getBlockedProfileIds, getMutedProfileIds } from "@/lib/relationships";
 import type { FeedPost, FeedTab, SessionUser, Suggestion, Trend } from "@/lib/types";
 
 const postInclude = {
-  author: true,
+  author: {
+    select: {
+      displayName: true,
+      handle: true,
+      specialty: true,
+      registrationType: true,
+      registrationNumber: true,
+      registrationCountry: true,
+      location: true,
+      verified: true,
+      pinnedPostId: true,
+      avatarUrl: true,
+    },
+  },
   poll: {
     include: {
       options: { orderBy: { sortOrder: "asc" as const }, include: { _count: { select: { votes: true } } } },
@@ -13,7 +27,7 @@ const postInclude = {
     },
   },
   _count: {
-    select: { likes: true, repostRecords: true, replies: true },
+    select: { likes: true, repostRecords: true, replies: true, views: true, edits: true },
   },
   likes: { select: { profileId: true } },
   repostRecords: { select: { profileId: true } },
@@ -55,6 +69,7 @@ type RawPost = {
     specialty: string | null;
     registrationType: string | null;
     registrationNumber: string | null;
+    registrationCountry: string | null;
     location: string | null;
     verified: boolean;
     pinnedPostId: string | null;
@@ -66,7 +81,7 @@ type RawPost = {
     options: { id: string; text: string; _count: { votes: number } }[];
     votes: { profileId: string; optionId: string }[];
   } | null;
-  _count: { likes: number; repostRecords: number; replies: number };
+  _count: { likes: number; repostRecords: number; replies: number; views: number; edits: number };
   likes: { profileId: string }[];
   repostRecords: { profileId: string }[];
   repostOf: {
@@ -129,6 +144,7 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
     videoUrl: post.videoUrl,
     gifUrl: post.gifUrl,
     edited: !!post.editedAt,
+    editCount: post._count.edits,
     scheduled,
     scheduledAt: post.scheduledAt?.toISOString() ?? null,
     isPinned: post.author.pinnedPostId === post.id,
@@ -137,6 +153,7 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
     likes: post._count.likes,
     reposts: post._count.repostRecords,
     replies: post._count.replies,
+    views: post._count.views,
     liked: viewerProfileId
       ? post.likes.some((l) => l.profileId === viewerProfileId)
       : false,
@@ -167,6 +184,8 @@ function mapPost(post: RawPost, viewerProfileId?: string): FeedPost {
           videoUrl: post.repostOf.videoUrl,
         }
       : null,
+    repostedBy: null,
+    createdAt: post.createdAt.toISOString(),
     saved: false,
   };
 }
@@ -217,6 +236,8 @@ export async function getFeedPosts(
   tab: FeedTab = "forYou",
   authorId?: string
 ): Promise<FeedPost[]> {
+  await publishDueScheduledPosts();
+
   let authorWhere: { authorId?: string | { in: string[] } | { notIn: string[] } } = {};
 
   const [blockedIds, mutedIds] = await Promise.all([
@@ -238,6 +259,63 @@ export async function getFeedPosts(
       (id) => !hiddenIds.includes(id)
     );
     authorWhere = { authorId: { in: ids } };
+
+    const [posts, repostRows] = await Promise.all([
+      prisma.post.findMany({
+        where: {
+          parentId: null,
+          threadId: null,
+          isClinicalCase: false,
+          ...publishedWhere(),
+          authorId: { in: ids },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: postInclude,
+      }),
+      prisma.repost.findMany({
+        where: {
+          profileId: { in: ids },
+          post: {
+            parentId: null,
+            threadId: null,
+            isClinicalCase: false,
+            hidden: false,
+            OR: [{ scheduledAt: null }, { scheduledAt: { lte: new Date() } }],
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: {
+          profile: { select: { displayName: true, handle: true, avatarUrl: true } },
+          post: { include: postInclude },
+        },
+      }),
+    ]);
+
+    type TimelineItem = { sortAt: Date; post: FeedPost };
+    const items: TimelineItem[] = [
+      ...posts.map((p) => ({
+        sortAt: p.createdAt,
+        post: mapPost(p as RawPost, viewerProfileId),
+      })),
+      ...repostRows.map((r) => ({
+        sortAt: r.createdAt,
+        post: {
+          ...mapPost(r.post as RawPost, viewerProfileId),
+          repostedBy: {
+            name: r.profile.displayName,
+            handle: r.profile.handle,
+            avatarUrl: r.profile.avatarUrl,
+            time: timeAgo(r.createdAt),
+          },
+        },
+      })),
+    ];
+
+    items.sort((a, b) => b.sortAt.getTime() - a.sortAt.getTime());
+    const mapped = items.slice(0, 50).map((i) => i.post);
+    return enrichSaved(mapped, viewerProfileId);
   } else if (hiddenIds.length > 0) {
     authorWhere = { authorId: { notIn: hiddenIds } };
   }
@@ -308,8 +386,7 @@ async function rankForYouPosts<T extends RawPost>(
     if (post.author.verified) score += 14;
     if (followingSet.has(post.authorId)) score += 32;
     if (specialty && post.author.specialty?.toLowerCase() === specialty) score += 20;
-    const authorCountry = (post.author as { registrationCountry?: string | null }).registrationCountry;
-    if (country && authorCountry === country) score += 8;
+    if (country && post.author.registrationCountry === country) score += 8;
     score +=
       (post._count.likes + post._count.repostRecords * 2 + post._count.replies) * 2.5;
 

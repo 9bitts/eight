@@ -34,12 +34,14 @@ export type FeedPost = {
   likes: number;
   reposts: number;
   replies: number;
+  views: number;
   body: string;
   verified: boolean;
   images: string[];
   videoUrl: string | null;
   gifUrl: string | null;
   edited: boolean;
+  editCount: number;
   scheduled: boolean;
   scheduledAt: string | null;
   isPinned: boolean;
@@ -61,6 +63,13 @@ export type FeedPost = {
     images: string[];
     videoUrl: string | null;
   } | null;
+  repostedBy: {
+    name: string;
+    handle: string;
+    avatarUrl: string | null;
+    time: string;
+  } | null;
+  createdAt: string;
 };
 
 export type FeedTab = "forYou" | "following";

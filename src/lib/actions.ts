@@ -8,6 +8,7 @@ import { extractFirstUrl } from "@/lib/post-text";
 import { syncHashtags, notifyMentions } from "@/lib/post-server";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 import { rateLimit } from "@/lib/rate-limit";
+import { POST_EDIT_WINDOW_MS, POST_MAX_LENGTH } from "@/lib/constants";
 import type { CreatePostInput } from "@/lib/types";
 
 async function requireProfile() {
@@ -63,7 +64,7 @@ async function createSinglePost(
   if (!text && !(data.images?.length || data.videoUrl || data.gifUrl)) {
     throw new Error("Publicação vazia");
   }
-  if (text.length > 500) throw new Error("Máximo 500 caracteres");
+  if (text.length > POST_MAX_LENGTH) throw new Error(`Máximo ${POST_MAX_LENGTH} caracteres`);
 
   const linkFields = text ? await buildLinkFields(text) : {};
 
@@ -147,12 +148,27 @@ export async function createPost(input: CreatePostInput) {
 export async function editPost(postId: string, body: string) {
   const profileId = await requireProfile();
   const text = body.trim();
-  if (!text || text.length > 500) throw new Error("Texto inválido");
+  if (!text || text.length > POST_MAX_LENGTH) throw new Error("Texto inválido");
 
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
 
+  const editDeadline = post.createdAt.getTime() + POST_EDIT_WINDOW_MS;
+  if (Date.now() > editDeadline) {
+    throw new Error("O prazo para editar esta publicação expirou (30 minutos após a publicação).");
+  }
+
   const linkFields = await buildLinkFields(text);
+
+  if (post.body !== text) {
+    await prisma.postEdit.create({
+      data: {
+        postId,
+        body: post.body,
+        editedAt: post.editedAt ?? post.createdAt,
+      },
+    });
+  }
 
   await prisma.post.update({
     where: { id: postId },
@@ -220,7 +236,7 @@ export async function rescheduleScheduledPost(postId: string, scheduledAtIso: st
 export async function editScheduledPost(postId: string, body: string) {
   const profileId = await requireProfile();
   const text = body.trim();
-  if (!text || text.length > 500) throw new Error("Texto inválido");
+  if (!text || text.length > POST_MAX_LENGTH) throw new Error("Texto inválido");
 
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
@@ -330,7 +346,7 @@ export async function createQuotePost(postId: string, body: string) {
 
   const text = body.trim();
   if (!text) throw new Error("Adicione um comentário à citação.");
-  if (text.length > 500) throw new Error("Máximo 500 caracteres");
+  if (text.length > POST_MAX_LENGTH) throw new Error(`Máximo ${POST_MAX_LENGTH} caracteres`);
 
   const linkFields = await buildLinkFields(text);
 
@@ -350,8 +366,8 @@ export async function createQuotePost(postId: string, body: string) {
   });
 
   await syncHashtags(post.id, text);
-  await notifyMentions(post.id, text, profileId);
-  await notify(original.authorId, profileId, "REPOST", post.id);
+  await notifyMentions(text, profileId, post.id);
+  await notify(original.authorId, profileId, "REPOST", postId);
 
   revalidatePath("/feed");
   revalidatePath(`/post/${postId}`);

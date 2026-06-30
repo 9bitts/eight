@@ -16,6 +16,7 @@ export async function hasMutualFollow(a: string, b: string) {
 export async function canOpenDirectConversation(senderId: string, recipientId: string) {
   const existing = await prisma.conversation.findFirst({
     where: {
+      isGroup: false,
       AND: [
         { participants: { some: { profileId: senderId } } },
         { participants: { some: { profileId: recipientId } } },

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { FeedShell } from "@/components/feed/FeedShell";
 import { sendDirectMessage } from "@/lib/actions/messages";
 import { formatMessageTime, type ChatMessage } from "@/lib/messages";
+import { useRealtimeBadges } from "@/components/useRealtime";
+import { DM_MAX_LENGTH } from "@/lib/constants";
 import type { SessionUser } from "@/lib/types";
 
 const INK = "var(--eight-ink)";
@@ -32,8 +35,11 @@ export function ConversationClient({
 }) {
   const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState(initialMessages);
   const [text, setText] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -45,19 +51,42 @@ export function ConversationClient({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    const id = setInterval(() => router.refresh(), 5000);
-    return () => clearInterval(id);
-  }, [router]);
+  const onRealtime = useCallback(
+    (data: { messagesUpdated?: boolean }) => {
+      if (data.messagesUpdated) router.refresh();
+    },
+    [router]
+  );
+
+  useRealtimeBadges(onRealtime, conversationId);
+
+  const uploadImage = async (file: File) => {
+    setUploading(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Falha no upload");
+      if (json.type !== "image") throw new Error("Use apenas imagens nas mensagens.");
+      setImageUrl(json.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha no upload");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const send = () => {
     const body = text.trim();
-    if (!body || pending) return;
+    if ((!body && !imageUrl) || pending || uploading) return;
     setError("");
     startTransition(async () => {
       try {
-        await sendDirectMessage(conversationId, body);
+        await sendDirectMessage(conversationId, body, imageUrl);
         setText("");
+        setImageUrl(null);
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro ao enviar");
@@ -101,7 +130,19 @@ export function ConversationClient({
                   borderBottomLeftRadius: m.isMine ? undefined : 4,
                 }}
               >
-                <p style={{ fontSize: 15, lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{m.body}</p>
+                {m.imageUrl && (
+                  <a href={m.imageUrl} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={m.imageUrl}
+                      alt=""
+                      className="rounded-xl mb-2 max-w-full"
+                      style={{ maxHeight: 280, objectFit: "cover" }}
+                    />
+                  </a>
+                )}
+                {m.body.trim() && (
+                  <p style={{ fontSize: 15, lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{m.body}</p>
+                )}
                 <p
                   style={{
                     fontSize: 11,
@@ -120,7 +161,41 @@ export function ConversationClient({
 
         <div className="shrink-0 px-4 py-3 border-t" style={{ borderColor: LINE, background: CARD }}>
           {error && <p className="signup-error mb-2">{error}</p>}
-          <div className="flex gap-2">
+          {imageUrl && (
+            <div className="relative inline-block mb-2">
+              <img src={imageUrl} alt="" className="h-20 rounded-lg object-cover" />
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="absolute -top-1 -right-1 rounded-full bg-black/70 text-white p-0.5"
+                style={{ border: "none", cursor: "pointer" }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2 items-end">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadImage(file);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading || pending}
+              className="p-2 rounded-full shrink-0"
+              style={{ color: BLUE, background: "transparent", border: "none", cursor: "pointer" }}
+              title="Enviar imagem"
+            >
+              {uploading ? <Loader2 size={22} className="spin" /> : <ImageIcon size={22} />}
+            </button>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -134,19 +209,19 @@ export function ConversationClient({
               rows={2}
               className="flex-1 border rounded-xl p-3 outline-none resize-none"
               style={{ borderColor: LINE, fontSize: 15 }}
-              maxLength={2000}
+              maxLength={DM_MAX_LENGTH}
             />
             <button
               type="button"
               onClick={send}
-              disabled={pending || !text.trim()}
-              className="rounded-full px-5 font-bold text-white self-end"
+              disabled={pending || uploading || (!text.trim() && !imageUrl)}
+              className="rounded-full px-5 font-bold text-white self-end shrink-0"
               style={{
                 background: ORANGE,
                 border: "none",
                 cursor: "pointer",
                 height: 44,
-                opacity: text.trim() ? 1 : 0.5,
+                opacity: text.trim() || imageUrl ? 1 : 0.5,
               }}
             >
               {pending ? "…" : "Enviar"}

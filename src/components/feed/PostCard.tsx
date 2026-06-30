@@ -10,6 +10,7 @@ import {
   Pin,
   Sparkles,
   Bookmark,
+  Eye,
   LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
@@ -22,6 +23,8 @@ import { QuoteRepostButton } from "@/components/feed/QuoteRepostButton";
 import { QuotedPostCard } from "@/components/feed/QuotedPostCard";
 import { toggleLike, toggleRepost } from "@/lib/actions";
 import { toggleBookmark } from "@/lib/actions/bookmarks";
+import { POST_EDIT_WINDOW_MS } from "@/lib/constants";
+import { formatCount } from "@/lib/feed";
 import type { FeedPost } from "@/lib/types";
 
 const BLUE = "#176a88";
@@ -38,6 +41,7 @@ function ActionBtn({
   onClick,
   fill,
   href,
+  countHref,
 }: {
   icon: LucideIcon;
   count: number;
@@ -46,13 +50,21 @@ function ActionBtn({
   onClick?: () => void;
   fill?: boolean;
   href?: string;
+  countHref?: string;
 }) {
   const inner = (
     <>
       <span className="p-1.5 rounded-full">
         <Icon size={18} strokeWidth={2} fill={active && fill ? color : "none"} />
       </span>
-      {count > 0 && <span>{count}</span>}
+      {count > 0 &&
+        (countHref ? (
+          <Link href={countHref} style={{ textDecoration: "none", color: "inherit" }}>
+            {count}
+          </Link>
+        ) : (
+          <span>{count}</span>
+        ))}
     </>
   );
   const style = { color: active ? color : MUTED, fontSize: 13.5 };
@@ -96,13 +108,29 @@ export function PostCard({
   };
 
   const postUrl = post.threadId ? `/post/${post.threadId}` : `/post/${post.id}`;
+  const canEdit =
+    post.isOwner &&
+    Date.now() - new Date(post.createdAt).getTime() < POST_EDIT_WINDOW_MS;
 
   return (
-    <article className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE }}>
-      <Link href={`/${post.handle}`}>
-        <Avatar name={post.name} imageUrl={post.avatarUrl} />
-      </Link>
-      <div className="flex-1 min-w-0">
+    <article className="px-4 py-4 border-b" style={{ borderColor: LINE }}>
+      {post.repostedBy && (
+        <div
+          className="flex items-center gap-1.5 mb-1"
+          style={{ fontSize: 13, color: MUTED, fontWeight: 600, paddingLeft: 52 }}
+        >
+          <Repeat2 size={14} />
+          <Link href={`/${post.repostedBy.handle}`} style={{ color: MUTED, textDecoration: "none" }}>
+            {post.repostedBy.name} repostou
+          </Link>
+          <span>· {post.repostedBy.time}</span>
+        </div>
+      )}
+      <div className="flex gap-3">
+        <Link href={`/${post.handle}`}>
+          <Avatar name={post.name} imageUrl={post.avatarUrl} />
+        </Link>
+        <div className="flex-1 min-w-0">
         {post.isPinned && (
           <div className="flex items-center gap-1 mb-1" style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>
             <Pin size={12} /> Fixado
@@ -134,7 +162,13 @@ export function PostCard({
             </Link>
             {post.edited && <span> · editado</span>}
           </span>
-          <PostMenu postId={post.id} isOwner={post.isOwner} isPinned={post.isPinned} body={post.body} />
+          <PostMenu
+            postId={post.id}
+            isOwner={post.isOwner}
+            isPinned={post.isPinned}
+            body={post.body}
+            canEdit={canEdit}
+          />
         </div>
         <div
           className="flex items-center gap-1 mt-0.5 mb-1.5"
@@ -191,42 +225,24 @@ export function PostCard({
         {showActions && (
           <div className="flex items-center justify-between mt-3" style={{ maxWidth: 440 }}>
             <ActionBtn icon={MessageCircle} count={post.replies} color={BLUE} href={postUrl} />
-            <div className="flex items-center gap-0.5">
-              <ActionBtn
-                icon={Repeat2}
-                count={0}
-                color="#1a9c5b"
-                active={post.reposted}
-                onClick={onRepost}
-              />
-              {post.reposts > 0 ? (
-                <Link
-                  href={`/post/${post.id}/reposts`}
-                  style={{ color: MUTED, fontSize: 13.5, textDecoration: "none", minWidth: 12 }}
-                >
-                  {post.reposts}
-                </Link>
-              ) : null}
-            </div>
+            <ActionBtn
+              icon={Repeat2}
+              count={post.reposts}
+              color="#1a9c5b"
+              active={post.reposted}
+              onClick={onRepost}
+              countHref={post.reposts > 0 ? `/post/${post.id}/reposts` : undefined}
+            />
             <QuoteRepostButton postId={post.id} />
-            <div className="flex items-center gap-0.5">
-              <ActionBtn
-                icon={Heart}
-                count={0}
-                color={ORANGE}
-                active={post.liked}
-                fill
-                onClick={onLike}
-              />
-              {post.likes > 0 ? (
-                <Link
-                  href={`/post/${post.id}/curtidas`}
-                  style={{ color: MUTED, fontSize: 13.5, textDecoration: "none", minWidth: 12 }}
-                >
-                  {post.likes}
-                </Link>
-              ) : null}
-            </div>
+            <ActionBtn
+              icon={Heart}
+              count={post.likes}
+              color={ORANGE}
+              active={post.liked}
+              fill
+              onClick={onLike}
+              countHref={post.likes > 0 ? `/post/${post.id}/curtidas` : undefined}
+            />
             <button
               type="button"
               onClick={onBookmark}
@@ -237,8 +253,19 @@ export function PostCard({
               <Bookmark size={18} strokeWidth={2} fill={post.saved ? BLUE : "none"} />
             </button>
             <SharePostButton postId={post.id} />
+            {post.views > 0 && (
+              <span
+                className="flex items-center gap-1"
+                style={{ color: MUTED, fontSize: 13.5 }}
+                title="Visualizações"
+              >
+                <Eye size={18} strokeWidth={2} />
+                {formatCount(post.views)}
+              </span>
+            )}
           </div>
         )}
+        </div>
       </div>
     </article>
   );

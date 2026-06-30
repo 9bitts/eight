@@ -32,13 +32,3 @@ export async function notifyMentions(
   }
 }
 
-export async function publishDueScheduledPosts() {
-  const now = new Date();
-  await prisma.post.updateMany({
-    where: {
-      scheduledAt: { lte: now },
-      createdAt: { gt: new Date(0) },
-    },
-    data: {},
-  });
-}

@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  assertCanMessage,
-} from "@/lib/messages";
+import { assertCanMessage } from "@/lib/messages";
 import { rateLimit } from "@/lib/rate-limit";
+import { DM_MAX_LENGTH } from "@/lib/constants";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 
 async function requireProfile() {
@@ -21,11 +20,16 @@ export async function startConversation(targetProfileId: string) {
   return tryStartConversation(targetProfileId);
 }
 
-export async function sendDirectMessage(conversationId: string, body: string) {
+export async function sendDirectMessage(
+  conversationId: string,
+  body: string,
+  imageUrl?: string | null
+) {
   const profileId = await requireProfile();
   const text = body.trim();
-  if (!text) throw new Error("Mensagem vazia");
-  if (text.length > 2000) throw new Error("Máximo 2000 caracteres");
+  const image = imageUrl?.trim() || null;
+  if (!text && !image) throw new Error("Mensagem vazia");
+  if (text.length > DM_MAX_LENGTH) throw new Error(`Máximo ${DM_MAX_LENGTH} caracteres`);
 
   const limited = rateLimit(`dm:${profileId}`, 40, 60_000);
   if (!limited.ok) throw new Error(`Aguarde ${limited.retryAfterSec}s.`);
@@ -49,7 +53,8 @@ export async function sendDirectMessage(conversationId: string, body: string) {
     data: {
       conversationId,
       senderId: profileId,
-      body: text,
+      body: text || " ",
+      imageUrl: image,
     },
   });
 
