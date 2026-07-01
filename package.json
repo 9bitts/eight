@@ -11,8 +11,8 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "cron:publish-scheduled": "tsx scripts/cron-publish-scheduled.ts",
-    "railway:cron:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-railway-cron.ps1",
-    "github:cron:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-github-cron.ps1",
+    "railway:cron:setup": "tsx scripts/setup-railway-cron.ts",
+    "github:cron:setup": "tsx scripts/setup-github-cron.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
