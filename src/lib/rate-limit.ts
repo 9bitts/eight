@@ -1,17 +1,21 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
 type Bucket = { count: number; resetAt: number };
+type RateLimitResult = { ok: true } | { ok: false; retryAfterSec: number };
 
-const store = new Map<string, Bucket>();
+const memoryStore = new Map<string, Bucket>();
 
-export function rateLimit(
-  key: string,
-  limit: number,
-  windowMs: number
-): { ok: true } | { ok: false; retryAfterSec: number } {
+let redis: Redis | null = null;
+let warnedNoRedis = false;
+const limiterCache = new Map<string, Ratelimit>();
+
+function rateLimitMemory(key: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now();
-  const bucket = store.get(key);
+  const bucket = memoryStore.get(key);
 
   if (!bucket || now >= bucket.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
+    memoryStore.set(key, { count: 1, resetAt: now + windowMs });
     return { ok: true };
   }
 
@@ -20,6 +24,56 @@ export function rateLimit(
   }
 
   bucket.count += 1;
+  return { ok: true };
+}
+
+function getRedis(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    if (!warnedNoRedis) {
+      console.warn(
+        "[rate-limit] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN não configurados — usando limite em memória (inadequado para múltiplas instâncias)"
+      );
+      warnedNoRedis = true;
+    }
+    return null;
+  }
+  if (!redis) {
+    redis = new Redis({ url, token });
+  }
+  return redis;
+}
+
+function getLimiter(limit: number, windowMs: number): Ratelimit {
+  const cacheKey = `${limit}:${windowMs}`;
+  let limiter = limiterCache.get(cacheKey);
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis: getRedis()!,
+      limiter: Ratelimit.fixedWindow(limit, `${windowMs} ms`),
+      prefix: "eight:rl",
+    });
+    limiterCache.set(cacheKey, limiter);
+  }
+  return limiter;
+}
+
+export async function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult> {
+  const r = getRedis();
+  if (!r) {
+    return rateLimitMemory(key, limit, windowMs);
+  }
+
+  const { success, reset } = await getLimiter(limit, windowMs).limit(key);
+  if (!success) {
+    const retryAfterSec = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+    return { ok: false, retryAfterSec };
+  }
   return { ok: true };
 }
 

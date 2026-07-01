@@ -5,7 +5,7 @@ import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const ip = clientIp(req);
-  const limited = rateLimit(`check2fa:${ip}`, 20, 60_000);
+  const limited = await rateLimit(`check2fa:${ip}`, 20, 60_000);
   if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { email, password } = (await req.json()) as {

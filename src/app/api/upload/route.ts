@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   }
 
   const ip = clientIp(req);
-  const limited = rateLimit(`upload:${session.user.profileId}:${ip}`, 30, 60_000);
+  const limited = await rateLimit(`upload:${session.user.profileId}:${ip}`, 30, 60_000);
   if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const form = await req.formData();

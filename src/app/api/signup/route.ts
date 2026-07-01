@@ -30,7 +30,7 @@ type SignupBody = {
 export async function POST(req: Request) {
   try {
     const ip = clientIp(req);
-    const limited = rateLimit(`signup:${ip}`, 5, 60_000);
+    const limited = await rateLimit(`signup:${ip}`, 5, 60_000);
     if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
     const body = (await req.json()) as SignupBody;

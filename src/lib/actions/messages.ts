@@ -31,7 +31,7 @@ export async function sendDirectMessage(
   if (!text && !image) throw new Error("Mensagem vazia");
   if (text.length > DM_MAX_LENGTH) throw new Error(`Máximo ${DM_MAX_LENGTH} caracteres`);
 
-  const limited = rateLimit(`dm:${profileId}`, 40, 60_000);
+  const limited = await rateLimit(`dm:${profileId}`, 40, 60_000);
   if (!limited.ok) throw new Error(`Aguarde ${limited.retryAfterSec}s.`);
 
   const participant = await prisma.conversationParticipant.findUnique({

@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   }
 
   const ip = clientIp(req);
-  const limited = rateLimit(`mentions:${session.user.profileId}:${ip}`, 60, 60_000);
+  const limited = await rateLimit(`mentions:${session.user.profileId}:${ip}`, 60, 60_000);
   if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { searchParams } = new URL(req.url);

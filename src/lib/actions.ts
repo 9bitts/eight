@@ -99,7 +99,7 @@ async function createSinglePost(
 export async function createPost(input: CreatePostInput) {
   const profileId = await requireProfile();
 
-  const limited = rateLimit(`post:${profileId}`, 20, 60_000);
+  const limited = await rateLimit(`post:${profileId}`, 20, 60_000);
   if (!limited.ok) throw new Error(`Aguarde ${limited.retryAfterSec}s antes de publicar novamente.`);
 
   const scheduledAt = input.scheduledAt ? new Date(input.scheduledAt) : null;
@@ -338,7 +338,7 @@ export async function toggleRepost(postId: string) {
 
 export async function createQuotePost(postId: string, body: string) {
   const profileId = await requireProfile();
-  const limited = rateLimit(`post:${profileId}`, 20, 60_000);
+  const limited = await rateLimit(`post:${profileId}`, 20, 60_000);
   if (!limited.ok) throw new Error("Muitas publicações. Aguarde um momento.");
 
   const original = await prisma.post.findUnique({ where: { id: postId } });
