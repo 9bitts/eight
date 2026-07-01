@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "db:push": "prisma db push",
+    "db:migrate-totp-secrets": "tsx scripts/migrate-encrypt-totp-secrets.ts",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
