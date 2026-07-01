@@ -6,6 +6,7 @@ import Apple from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { verifyTotp } from "@/lib/totp";
+import { decrypt } from "@/lib/crypto";
 import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 
@@ -67,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!ok) return null;
 
         if (user.totpEnabled && user.totpSecret) {
-          if (!totp || !verifyTotp(totp, user.totpSecret)) {
+          if (!totp || !verifyTotp(totp, decrypt(user.totpSecret))) {
             return null;
           }
         }

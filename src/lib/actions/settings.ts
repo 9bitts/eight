@@ -5,6 +5,7 @@ import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteUserAccount, exportUserData } from "@/lib/lgpd";
 import { createTotpSecret, totpKeyUri, verifyTotp } from "@/lib/totp";
+import { decrypt, encrypt } from "@/lib/crypto";
 import type { Locale } from "@/lib/i18n";
 
 async function requireUserId() {
@@ -29,7 +30,7 @@ export async function setup2FA() {
   const secret = createTotpSecret();
   await prisma.user.update({
     where: { id: userId },
-    data: { totpSecret: secret },
+    data: { totpSecret: encrypt(secret) },
   });
 
   const otpauth = totpKeyUri(user.email, secret);
@@ -40,7 +41,7 @@ export async function confirm2FA(code: string) {
   const userId = await requireUserId();
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user?.totpSecret) throw new Error("Configure o 2FA primeiro.");
-  if (!verifyTotp(code, user.totpSecret)) {
+  if (!verifyTotp(code, decrypt(user.totpSecret))) {
     throw new Error("Código inválido.");
   }
   await prisma.user.update({
@@ -54,7 +55,7 @@ export async function disable2FA(code: string) {
   const userId = await requireUserId();
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user?.totpSecret || !user.totpEnabled) throw new Error("2FA não está ativo.");
-  if (!verifyTotp(code, user.totpSecret)) {
+  if (!verifyTotp(code, decrypt(user.totpSecret))) {
     throw new Error("Código inválido.");
   }
   await prisma.user.update({
