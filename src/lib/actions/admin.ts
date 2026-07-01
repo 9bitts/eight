@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import {
+  notificationDedupeKey,
+} from "@/lib/notifications-server";
+import { isUniqueViolation } from "@/lib/prisma-errors";
+import {
   sendVerificationApprovedEmail,
   sendVerificationRejectedEmail,
 } from "@/lib/email";
@@ -41,13 +45,22 @@ export async function approveVerification(profileId: string) {
     },
   });
 
-  await prisma.notification.create({
-    data: {
-      recipientId: profileId,
-      actorId: adminProfile?.id ?? profileId,
-      type: "VERIFICATION_APPROVED",
-    },
-  });
+  try {
+    await prisma.notification.create({
+      data: {
+        recipientId: profileId,
+        actorId: adminProfile?.id ?? profileId,
+        type: "VERIFICATION_APPROVED",
+        dedupeKey: notificationDedupeKey(
+          profileId,
+          adminProfile?.id ?? profileId,
+          "VERIFICATION_APPROVED"
+        ),
+      },
+    });
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+  }
 
   revalidatePath("/admin/verificacoes");
   revalidatePath("/verificacao");
@@ -90,13 +103,22 @@ export async function rejectVerification(profileId: string, reason: string) {
     },
   });
 
-  await prisma.notification.create({
-    data: {
-      recipientId: profileId,
-      actorId: adminProfile?.id ?? profileId,
-      type: "VERIFICATION_REJECTED",
-    },
-  });
+  try {
+    await prisma.notification.create({
+      data: {
+        recipientId: profileId,
+        actorId: adminProfile?.id ?? profileId,
+        type: "VERIFICATION_REJECTED",
+        dedupeKey: notificationDedupeKey(
+          profileId,
+          adminProfile?.id ?? profileId,
+          "VERIFICATION_REJECTED"
+        ),
+      },
+    });
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+  }
 
   revalidatePath("/admin/verificacoes");
   revalidatePath("/verificacao");

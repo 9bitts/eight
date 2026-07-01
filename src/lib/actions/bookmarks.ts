@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { toggleUniqueRecord } from "@/lib/toggle-record";
 
 async function requireProfile() {
   const session = await auth();
@@ -17,15 +18,10 @@ export async function toggleBookmark(postId: string) {
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post) throw new Error("Publicação não encontrada.");
 
-  const existing = await prisma.bookmark.findUnique({
-    where: { profileId_postId: { profileId, postId } },
-  });
-
-  if (existing) {
-    await prisma.bookmark.delete({ where: { profileId_postId: { profileId, postId } } });
-  } else {
-    await prisma.bookmark.create({ data: { profileId, postId } });
-  }
+  await toggleUniqueRecord(
+    () => prisma.bookmark.deleteMany({ where: { profileId, postId } }),
+    () => prisma.bookmark.create({ data: { profileId, postId } })
+  );
 
   revalidatePath("/feed");
   revalidatePath("/salvos");

@@ -6,7 +6,7 @@ export const authConfig = {
     newUser: "/signup/complete",
     error: "/login/erro",
   },
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", updateAge: 60 },
   providers: [],
   callbacks: {
     async jwt({ token, user }) {

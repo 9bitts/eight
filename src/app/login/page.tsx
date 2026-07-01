@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, FormEvent } from "react";
+import { Suspense, useState, FormEvent, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
@@ -22,11 +22,14 @@ function LoginContent() {
   const [needs2fa, setNeeds2fa] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current || loading) return;
     setError("");
     setLoading(true);
+    submittingRef.current = true;
 
     try {
       const normalized = email.trim().toLowerCase();
@@ -65,6 +68,7 @@ function LoginContent() {
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

@@ -9,6 +9,7 @@ import { syncHashtags, notifyMentions } from "@/lib/post-server";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 import { rateLimit } from "@/lib/rate-limit";
 import { detectPII } from "@/lib/pii-detector";
+import { toggleUniqueRecord } from "@/lib/toggle-record";
 import { POST_EDIT_WINDOW_MS, POST_MAX_LENGTH } from "@/lib/constants";
 import type { CreatePostInput } from "@/lib/types";
 
@@ -308,42 +309,40 @@ export async function votePoll(pollId: string, optionId: string) {
 
 export async function toggleLike(postId: string) {
   const profileId = await requireProfile();
-  const existing = await prisma.like.findUnique({
-    where: { profileId_postId: { profileId, postId } },
-  });
   const post = await prisma.post.findUnique({
     where: { id: postId },
     select: { authorId: true },
   });
   if (!post) throw new Error("Publicação não encontrada");
 
-  if (existing) {
-    await prisma.like.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.like.create({ data: { profileId, postId } });
-    await notify(post.authorId, profileId, "LIKE", postId);
-  }
+  await toggleUniqueRecord(
+    () => prisma.like.deleteMany({ where: { profileId, postId } }),
+    async () => {
+      await prisma.like.create({ data: { profileId, postId } });
+      await notify(post.authorId, profileId, "LIKE", postId);
+    }
+  );
+
   revalidatePath("/feed");
   revalidatePath(`/post/${postId}`);
 }
 
 export async function toggleRepost(postId: string) {
   const profileId = await requireProfile();
-  const existing = await prisma.repost.findUnique({
-    where: { profileId_postId: { profileId, postId } },
-  });
   const post = await prisma.post.findUnique({
     where: { id: postId },
     select: { authorId: true },
   });
   if (!post) throw new Error("Publicação não encontrada");
 
-  if (existing) {
-    await prisma.repost.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.repost.create({ data: { profileId, postId } });
-    await notify(post.authorId, profileId, "REPOST", postId);
-  }
+  await toggleUniqueRecord(
+    () => prisma.repost.deleteMany({ where: { profileId, postId } }),
+    async () => {
+      await prisma.repost.create({ data: { profileId, postId } });
+      await notify(post.authorId, profileId, "REPOST", postId);
+    }
+  );
+
   revalidatePath("/feed");
   revalidatePath(`/post/${postId}`);
 }
@@ -402,16 +401,19 @@ export async function toggleFollow(targetProfileId: string) {
   });
   if (block) throw new Error("Não é possível seguir este perfil.");
 
-  const existing = await prisma.follow.findUnique({
-    where: { followerId_followingId: { followerId: profileId, followingId: targetProfileId } },
-  });
+  await toggleUniqueRecord(
+    () =>
+      prisma.follow.deleteMany({
+        where: { followerId: profileId, followingId: targetProfileId },
+      }),
+    async () => {
+      await prisma.follow.create({
+        data: { followerId: profileId, followingId: targetProfileId },
+      });
+      await notify(targetProfileId, profileId, "FOLLOW");
+    }
+  );
 
-  if (existing) {
-    await prisma.follow.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.follow.create({ data: { followerId: profileId, followingId: targetProfileId } });
-    await notify(targetProfileId, profileId, "FOLLOW");
-  }
   revalidatePath("/feed");
   revalidatePath("/explore");
 }

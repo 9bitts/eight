@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { removeFollowsBetween } from "@/lib/relationships";
+import { toggleUniqueRecord } from "@/lib/toggle-record";
 
 async function requireProfile() {
   const session = await auth();
@@ -16,18 +17,18 @@ export async function toggleBlock(targetProfileId: string) {
   const profileId = await requireProfile();
   if (profileId === targetProfileId) throw new Error("Ação inválida");
 
-  const existing = await prisma.block.findUnique({
-    where: { blockerId_blockedId: { blockerId: profileId, blockedId: targetProfileId } },
-  });
-
-  if (existing) {
-    await prisma.block.delete({ where: { id: existing.id } });
-  } else {
-    await removeFollowsBetween(profileId, targetProfileId);
-    await prisma.block.create({
-      data: { blockerId: profileId, blockedId: targetProfileId },
-    });
-  }
+  await toggleUniqueRecord(
+    () =>
+      prisma.block.deleteMany({
+        where: { blockerId: profileId, blockedId: targetProfileId },
+      }),
+    async () => {
+      await removeFollowsBetween(profileId, targetProfileId);
+      await prisma.block.create({
+        data: { blockerId: profileId, blockedId: targetProfileId },
+      });
+    }
+  );
 
   revalidatePath("/feed");
   revalidatePath("/explore");
@@ -38,17 +39,17 @@ export async function toggleMute(targetProfileId: string) {
   const profileId = await requireProfile();
   if (profileId === targetProfileId) throw new Error("Ação inválida");
 
-  const existing = await prisma.mute.findUnique({
-    where: { muterId_mutedId: { muterId: profileId, mutedId: targetProfileId } },
-  });
-
-  if (existing) {
-    await prisma.mute.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.mute.create({
-      data: { muterId: profileId, mutedId: targetProfileId },
-    });
-  }
+  await toggleUniqueRecord(
+    () =>
+      prisma.mute.deleteMany({
+        where: { muterId: profileId, mutedId: targetProfileId },
+      }),
+    async () => {
+      await prisma.mute.create({
+        data: { muterId: profileId, mutedId: targetProfileId },
+      });
+    }
+  );
 
   revalidatePath("/feed");
   revalidatePath("/settings");

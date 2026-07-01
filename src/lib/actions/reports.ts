@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 
 type ReportTarget = "POST" | "PROFILE";
@@ -47,19 +48,22 @@ export async function submitReport(
       reporterId: profileId,
       targetType,
       targetId,
+      targetPostId: targetType === "POST" ? targetId : null,
+      targetProfileId: targetType === "PROFILE" ? targetId : null,
       reason,
       details: details?.trim() || null,
     },
     update: {
       reason,
       details: details?.trim() || null,
+      targetPostId: targetType === "POST" ? targetId : null,
+      targetProfileId: targetType === "PROFILE" ? targetId : null,
     },
   });
 }
 
 export async function getReportsForAdmin() {
-  const session = await auth();
-  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+  await requireAdmin();
 
   const rows = await prisma.report.findMany({
     where: { reviewedAt: null },
@@ -67,27 +71,28 @@ export async function getReportsForAdmin() {
     take: 100,
     include: {
       reporter: { select: { displayName: true, handle: true } },
+      targetPost: { select: { id: true } },
+      reportedProfile: { select: { id: true, handle: true } },
     },
   });
 
-  const profileIds = rows.filter((r) => r.targetType === "PROFILE").map((r) => r.targetId);
-  const profiles = profileIds.length
-    ? await prisma.profile.findMany({
-        where: { id: { in: profileIds } },
-        select: { id: true, handle: true },
-      })
-    : [];
-  const handleById = new Map(profiles.map((p) => [p.id, p.handle]));
-
   return rows.map((r) => ({
-    ...r,
-    targetHandle: r.targetType === "PROFILE" ? handleById.get(r.targetId) ?? null : null,
+    id: r.id,
+    targetType: r.targetType,
+    targetId: r.targetId,
+    reason: r.reason,
+    details: r.details,
+    createdAt: r.createdAt,
+    reporter: r.reporter,
+    targetHandle:
+      r.targetType === "PROFILE" ? r.reportedProfile?.handle ?? null : null,
+    targetExists:
+      r.targetType === "POST" ? !!r.targetPost : !!r.reportedProfile,
   }));
 }
 
 export async function dismissReport(reportId: string) {
-  const session = await auth();
-  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+  await requireAdmin();
 
   await prisma.report.update({
     where: { id: reportId },
@@ -98,8 +103,7 @@ export async function dismissReport(reportId: string) {
 }
 
 export async function adminHidePost(postId: string) {
-  const session = await auth();
-  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+  await requireAdmin();
 
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post) throw new Error("Publicação não encontrada.");
@@ -120,8 +124,7 @@ export async function adminHidePost(postId: string) {
 }
 
 export async function adminSuspendProfile(profileId: string) {
-  const session = await auth();
-  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
+  await requireAdmin();
 
   const profile = await prisma.profile.findUnique({ where: { id: profileId } });
   if (!profile) throw new Error("Perfil não encontrado.");

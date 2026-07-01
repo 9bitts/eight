@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 
@@ -38,9 +39,58 @@ export async function validateInvite(code: string, email: string) {
 }
 
 export async function markInviteUsed(code: string, userId: string) {
-  await prisma.invite.update({
-    where: { code },
+  const claimed = await claimInvite(code, userId);
+  if (!claimed) {
+    throw new Error("Convite inválido ou já utilizado.");
+  }
+}
+
+/** Marca convite como usado de forma atômica (evita race condition no cadastro). */
+export async function claimInvite(code: string, userId: string): Promise<boolean> {
+  const result = await prisma.invite.updateMany({
+    where: {
+      code: code.trim(),
+      usedAt: null,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
     data: { usedAt: new Date(), usedById: userId },
+  });
+  return result.count === 1;
+}
+
+export async function createUserWithInvite(
+  inviteCode: string,
+  email: string,
+  userData: Prisma.UserCreateInput
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const trimmedCode = inviteCode.trim();
+
+  return prisma.$transaction(async (tx) => {
+    const claimed = await tx.invite.updateMany({
+      where: {
+        code: trimmedCode,
+        usedAt: null,
+        email: normalizedEmail,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      data: { usedAt: new Date() },
+    });
+    if (claimed.count !== 1) {
+      throw new Error("Convite inválido ou já utilizado.");
+    }
+
+    const user = await tx.user.create({
+      data: userData,
+      include: { profile: true },
+    });
+
+    await tx.invite.update({
+      where: { code: trimmedCode },
+      data: { usedById: user.id },
+    });
+
+    return user;
   });
 }
 

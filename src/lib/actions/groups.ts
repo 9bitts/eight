@@ -200,7 +200,8 @@ export async function leaveGroup(conversationId: string) {
   return { left: true as const };
 }
 
-export async function getGroupMemberCandidates(profileId: string) {
+export async function getGroupMemberCandidates() {
+  const profileId = await requireProfile();
   const following = await prisma.follow.findMany({
     where: { followerId: profileId },
     select: {
@@ -226,7 +227,8 @@ export async function getGroupMemberCandidates(profileId: string) {
     }));
 }
 
-export async function getGroupAddCandidates(conversationId: string, profileId: string) {
+export async function getGroupAddCandidates(conversationId: string) {
+  const profileId = await requireProfile();
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
     include: { participants: { select: { profileId: true } } },
@@ -234,6 +236,6 @@ export async function getGroupAddCandidates(conversationId: string, profileId: s
   if (!conversation?.isGroup) return [];
 
   const memberIds = new Set(conversation.participants.map((p) => p.profileId));
-  const candidates = await getGroupMemberCandidates(profileId);
+  const candidates = await getGroupMemberCandidates();
   return candidates.filter((c) => !memberIds.has(c.id));
 }

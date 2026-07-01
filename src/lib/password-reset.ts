@@ -4,18 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { passwordError } from "@/lib/validators";
 
+import { resolveSiteUrl } from "@/lib/site-url";
+
 const RESET_TTL_MS = 60 * 60 * 1000;
 
 function resetIdentifier(email: string) {
   return `reset:${email.trim().toLowerCase()}`;
-}
-
-function siteUrl() {
-  return (
-    process.env.AUTH_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "http://localhost:3000"
-  ).replace(/\/$/, "");
 }
 
 export async function requestPasswordReset(email: string) {
@@ -34,7 +28,7 @@ export async function requestPasswordReset(email: string) {
     data: { identifier, token, expires },
   });
 
-  const link = `${siteUrl()}/login/redefinir-senha?token=${token}&email=${encodeURIComponent(normalized)}`;
+  const link = `${resolveSiteUrl()}/login/redefinir-senha?token=${token}&email=${encodeURIComponent(normalized)}`;
 
   const result = await sendEmail({
     to: normalized,

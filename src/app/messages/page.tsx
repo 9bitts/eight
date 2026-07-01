@@ -17,7 +17,7 @@ export default async function MessagesPage() {
     getConversationPreviews(user.profileId),
     getPendingMessageRequests(user.profileId),
     getUnreadNotificationCount(user.profileId),
-    user.verified ? getGroupMemberCandidates(user.profileId) : Promise.resolve([]),
+    user.verified ? getGroupMemberCandidates() : Promise.resolve([]),
   ]);
 
   return (

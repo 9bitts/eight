@@ -1,3 +1,5 @@
+import { safeFetch } from "@/lib/safe-url-fetch";
+
 export type LinkPreview = {
   url: string;
   title: string | null;
@@ -7,13 +9,8 @@ export type LinkPreview = {
 
 export async function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { "User-Agent": "eight-bot/1.0" },
-    });
-    clearTimeout(timeout);
+    const res = await safeFetch(url, { timeoutMs: 5000 });
+    if (!res) return null;
     if (!res.ok) return { url, title: null, description: null, image: null };
 
     const html = await res.text();

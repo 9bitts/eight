@@ -18,8 +18,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ needs2fa: false });
   }
 
-  const user = await prisma.user.findUnique({ where: { email: normalized } });
-  if (!user?.passwordHash) {
+  const user = await prisma.user.findUnique({
+    where: { email: normalized },
+    include: { profile: { select: { suspended: true } } },
+  });
+  if (!user?.passwordHash || user.profile?.suspended) {
     return NextResponse.json({ needs2fa: false });
   }
 

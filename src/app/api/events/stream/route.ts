@@ -5,12 +5,17 @@ import { SSE_POLL_INTERVAL_MS } from "@/lib/constants";
 import { getUnreadNotificationCount } from "@/lib/feed";
 import { getUnreadMessageCount } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
+import { acquireSseConnection, releaseSseConnection } from "@/lib/sse-connections";
 
 export async function GET(req: Request) {
   const session = await auth();
   const profileId = session?.user?.profileId;
   if (!profileId) {
     return new Response("Não autorizado", { status: 401 });
+  }
+
+  if (!acquireSseConnection(profileId)) {
+    return new Response("Muitas conexões simultâneas", { status: 429 });
   }
 
   const conversationId = new URL(req.url).searchParams.get("conversation");
@@ -71,6 +76,7 @@ export async function GET(req: Request) {
       req.signal.addEventListener("abort", () => {
         closed = true;
         clearInterval(interval);
+        releaseSseConnection(profileId);
         try {
           controller.close();
         } catch {

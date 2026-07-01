@@ -26,10 +26,10 @@ export default async function SettingsPage() {
     getBlockedUsers(user.profileId),
     getMutedUsers(user.profileId),
     getUnreadNotificationCount(user.profileId),
-    getProfileForEdit(user.profileId),
+    getProfileForEdit(),
     getNotificationPrefs(user.profileId),
     countPushSubscriptions(user.profileId),
-    getMutedWordsForSettings(user.profileId),
+    getMutedWordsForSettings(),
   ]);
 
   if (!profileData) redirect("/signup/complete");

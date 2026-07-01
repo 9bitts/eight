@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { resolveSiteUrl } from "@/lib/site-url";
 
 function getTransport() {
   const host = process.env.SMTP_HOST;
@@ -42,11 +43,7 @@ export function isEmailConfigured() {
 }
 
 function siteUrl() {
-  return (
-    process.env.AUTH_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://doctor8.com.br"
-  ).replace(/\/$/, "");
+  return resolveSiteUrl();
 }
 
 export async function sendVerificationApprovedEmail(to: string, displayName: string) {

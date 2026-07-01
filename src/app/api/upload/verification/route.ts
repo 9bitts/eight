@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { uploadPrivateVerificationFile } from "@/lib/storage";
+import { uploadPrivateVerificationFile, extensionForMime } from "@/lib/storage";
 import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const MAX_DOC = 10 * 1024 * 1024;
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Arquivo muito grande (máx. 10 MB)." }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+  const ext = extensionForMime(file.type);
   const buffer = Buffer.from(await file.arrayBuffer());
   const key = await uploadPrivateVerificationFile(buffer, ext, file.type);
 

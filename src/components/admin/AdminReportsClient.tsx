@@ -27,6 +27,7 @@ export type AdminReport = {
   createdAt: Date | string;
   reporter: { displayName: string; handle: string };
   targetHandle: string | null;
+  targetExists: boolean;
 };
 
 export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
@@ -85,9 +86,13 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
                 )}
                 <div className="flex gap-3 mt-3 items-center flex-wrap">
                   {r.targetType === "POST" ? (
-                    <Link href={`/post/${r.targetId}`} style={{ color: "#176a88", fontWeight: 600, fontSize: 13 }}>
-                      Ver publicação →
-                    </Link>
+                    r.targetExists ? (
+                      <Link href={`/post/${r.targetId}`} style={{ color: "#176a88", fontWeight: 600, fontSize: 13 }}>
+                        Ver publicação →
+                      </Link>
+                    ) : (
+                      <span style={{ color: MUTED, fontSize: 13 }}>Publicação removida</span>
+                    )
                   ) : r.targetHandle ? (
                     <Link href={`/${r.targetHandle}`} style={{ color: "#176a88", fontWeight: 600, fontSize: 13 }}>
                       Ver perfil →
@@ -110,7 +115,7 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
                   >
                     Marcar como revisada
                   </button>
-                  {r.targetType === "POST" && (
+                  {r.targetType === "POST" && r.targetExists && (
                     <button
                       type="button"
                       disabled={pending}
@@ -127,7 +132,7 @@ export function AdminReportsClient({ reports }: { reports: AdminReport[] }) {
                       Ocultar publicação
                     </button>
                   )}
-                  {r.targetType === "PROFILE" && (
+                  {r.targetType === "PROFILE" && r.targetExists && (
                     <button
                       type="button"
                       disabled={pending}

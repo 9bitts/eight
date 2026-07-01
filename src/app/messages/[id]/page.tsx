@@ -19,7 +19,7 @@ export default async function ConversationPage({ params }: Props) {
 
   const [notificationCount, addCandidates] = await Promise.all([
     getUnreadNotificationCount(user.profileId),
-    data.isGroup ? getGroupAddCandidates(params.id, user.profileId) : Promise.resolve([]),
+    data.isGroup ? getGroupAddCandidates(params.id) : Promise.resolve([]),
   ]);
 
   return (

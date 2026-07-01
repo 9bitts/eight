@@ -10,8 +10,16 @@ let redis: Redis | null = null;
 let warnedNoRedis = false;
 const limiterCache = new Map<string, Ratelimit>();
 
+function pruneMemoryStore(now: number) {
+  if (memoryStore.size < 500) return;
+  for (const [key, bucket] of memoryStore) {
+    if (now >= bucket.resetAt) memoryStore.delete(key);
+  }
+}
+
 function rateLimitMemory(key: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now();
+  pruneMemoryStore(now);
   const bucket = memoryStore.get(key);
 
   if (!bucket || now >= bucket.resetAt) {

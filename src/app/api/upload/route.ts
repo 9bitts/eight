@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile, extensionForMime } from "@/lib/storage";
 import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const MAX_IMAGE = 5 * 1024 * 1024;
@@ -38,9 +38,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Arquivo muito grande" }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+  const ext = extensionForMime(file.type);
   const buffer = Buffer.from(await file.arrayBuffer());
-  const url = await uploadFile(buffer, ext, file.type);
+  let url: string;
+  try {
+    url = await uploadFile(buffer, ext, file.type);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Falha no upload";
+    if (message.includes("Cota")) {
+      return NextResponse.json({ error: message }, { status: 507 });
+    }
+    throw err;
+  }
 
   return NextResponse.json({
     url,

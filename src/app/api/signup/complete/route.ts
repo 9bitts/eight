@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { handleError, normalizeHandle } from "@/lib/validators";
+import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Faça login primeiro." }, { status: 401 });
   }
+
+  const ip = clientIp(req);
+  const limited = await rateLimit(`signup-complete:${session.user.id}:${ip}`, 10, 60_000);
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const existing = await prisma.profile.findUnique({
     where: { userId: session.user.id },
@@ -16,7 +21,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Perfil já configurado." }, { status: 409 });
   }
 
-  const body = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = (await req.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+  }
+
   const displayName = (body.displayName as string)?.trim() || session.user.name?.trim() || "Profissional";
   const handle = normalizeHandle((body.handle as string) ?? "");
   const specialty = (body.specialty as string)?.trim() ?? "";
@@ -52,9 +63,9 @@ export async function POST(req: Request) {
           registrationNumber,
           registrationCountry: registrationCountry || null,
           location: location || null,
-            verified: false,
-            verificationStatus: "PENDING",
-            verificationSubmittedAt: new Date(),
+          verified: false,
+          verificationStatus: "PENDING",
+          verificationSubmittedAt: new Date(),
         },
       },
     },

@@ -11,7 +11,7 @@ import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import {
   inviteRequired,
   validateInvite,
-  markInviteUsed,
+  createUserWithInvite,
 } from "@/lib/invites";
 
 type SignupBody = {
@@ -104,31 +104,42 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: {
-        name: displayName,
-        email,
-        passwordHash,
-        profile: {
-          create: {
-            handle,
-            displayName,
-            specialty,
-            registrationType,
-            registrationNumber,
-            registrationCountry: registrationCountry || null,
-            location: location || null,
-            verified: false,
-            verificationStatus: "PENDING",
-            verificationSubmittedAt: new Date(),
-          },
+    const userData = {
+      name: displayName,
+      email,
+      passwordHash,
+      profile: {
+        create: {
+          handle,
+          displayName,
+          specialty,
+          registrationType,
+          registrationNumber,
+          registrationCountry: registrationCountry || null,
+          location: location || null,
+          verified: false,
+          verificationStatus: "PENDING",
+          verificationSubmittedAt: new Date(),
         },
       },
-      include: { profile: true },
-    });
+    };
 
+    let user;
     if (inviteCode) {
-      await markInviteUsed(inviteCode, user.id);
+      try {
+        user = await createUserWithInvite(inviteCode, email, userData);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "";
+        if (message.includes("Convite")) {
+          return NextResponse.json({ error: message }, { status: 403 });
+        }
+        throw err;
+      }
+    } else {
+      user = await prisma.user.create({
+        data: userData,
+        include: { profile: true },
+      });
     }
 
     return NextResponse.json({

@@ -8,7 +8,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const body = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = (await req.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+  }
+
   const endpoint = body?.endpoint as string | undefined;
   if (!endpoint) {
     return NextResponse.json({ error: "Endpoint ausente." }, { status: 400 });

@@ -290,7 +290,9 @@ async function buildForYouFeed(
       sortAt: p.createdAt,
       post: mapPost(p, viewerProfileId),
     })),
-    ...repostRows.map((r) => ({
+    ...repostRows
+      .filter((r) => !hiddenIds.includes((r.post as RawPost).authorId))
+      .map((r) => ({
       score: scoreForYouItem(
         r.post as RawPost,
         r.createdAt,
@@ -306,7 +308,10 @@ async function buildForYouFeed(
   ];
 
   items.sort(
-    (a, b) => b.score - a.score || b.sortAt.getTime() - a.sortAt.getTime()
+    (a, b) =>
+      b.score - a.score ||
+      b.sortAt.getTime() - a.sortAt.getTime() ||
+      b.post.id.localeCompare(a.post.id)
   );
   return items.slice(0, 50).map((i) => i.post);
 }
@@ -392,7 +397,9 @@ export async function getFeedPosts(
         sortAt: p.createdAt,
         post: mapPost(p as RawPost, viewerProfileId),
       })),
-      ...repostRows.map((r) => ({
+      ...repostRows
+        .filter((r) => !hiddenIds.includes((r.post as RawPost).authorId))
+        .map((r) => ({
         sortAt: r.createdAt,
         post: mapRepostRow(r, viewerProfileId),
       })),

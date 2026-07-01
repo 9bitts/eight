@@ -1,13 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.isAdmin) throw new Error("Não autorizado");
-}
 
 export async function getClinicalCasesForAdmin() {
   await requireAdmin();

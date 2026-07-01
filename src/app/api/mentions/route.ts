@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { SEARCH_QUERY_MAX_LENGTH } from "@/lib/constants";
 import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(req: Request) {
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
   if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { searchParams } = new URL(req.url);
-  const q = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const q = (searchParams.get("q") ?? "").trim().toLowerCase().slice(0, SEARCH_QUERY_MAX_LENGTH);
   if (!q) return NextResponse.json([]);
 
   const profiles = await prisma.profile.findMany({

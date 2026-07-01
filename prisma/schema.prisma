@@ -56,6 +56,7 @@ model User {
   isAdmin       Boolean   @default(false)
   totpSecret    String?
   totpEnabled   Boolean   @default(false)
+  totpLastUsed  String?
   locale        String    @default("pt")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -141,6 +142,7 @@ model Profile {
   viewsReceived      ProfileView[]         @relation("viewsReceived")
   viewsMade          ProfileView[]         @relation("viewsMade")
   reportsSent        Report[]              @relation("reportsSent")
+  reportsReceived    Report[]              @relation("reportsReceived")
   bookmarks          Bookmark[]
   pushSubscriptions  PushSubscription[]
   postViewsMade      PostView[]
@@ -190,6 +192,7 @@ model Post {
   likes         Like[]
   repostRecords Repost[]
   bookmarks     Bookmark[]
+  reports       Report[]
   views         PostView[]
   edits         PostEdit[]
 
@@ -359,6 +362,7 @@ model Notification {
   postId         String?
   conversationId String?
   groupName      String?          @db.VarChar(80)
+  dedupeKey      String?          @unique
   read           Boolean          @default(false)
   createdAt      DateTime         @default(now())
 
@@ -463,16 +467,20 @@ enum ReportReason {
 }
 
 model Report {
-  id         String       @id @default(cuid())
-  reporterId String
-  targetType ReportTarget
-  targetId   String
-  reason     ReportReason
-  details    String?      @db.VarChar(500)
-  reviewedAt DateTime?
-  createdAt  DateTime     @default(now())
+  id              String       @id @default(cuid())
+  reporterId      String
+  targetType      ReportTarget
+  targetId        String
+  targetPostId    String?
+  targetProfileId String?
+  reason          ReportReason
+  details         String?      @db.VarChar(500)
+  reviewedAt      DateTime?
+  createdAt       DateTime     @default(now())
 
-  reporter Profile @relation("reportsSent", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter        Profile  @relation("reportsSent", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetPost      Post?    @relation(fields: [targetPostId], references: [id], onDelete: SetNull)
+  reportedProfile Profile? @relation("reportsReceived", fields: [targetProfileId], references: [id], onDelete: SetNull)
 
   @@unique([reporterId, targetType, targetId])
   @@index([targetType, targetId, createdAt])

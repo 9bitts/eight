@@ -51,7 +51,11 @@ export async function sendPushToProfile(
         );
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode;
-        if (status === 404 || status === 410) stale.push(sub.endpoint);
+        if (status === 404 || status === 410) {
+          stale.push(sub.endpoint);
+        } else {
+          console.warn("[push] falha ao enviar:", sub.endpoint, status ?? e);
+        }
       }
     })
   );

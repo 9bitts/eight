@@ -1,8 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { sendActivityEmail } from "@/lib/email";
 import { sendPushToProfile } from "@/lib/push";
+import { resolveSiteUrl } from "@/lib/site-url";
+import { isUniqueViolation } from "@/lib/prisma-errors";
 
 type NotifyType = "LIKE" | "REPOST" | "FOLLOW" | "REPLY" | "MENTION" | "MESSAGE";
+
+export function notificationDedupeKey(
+  recipientId: string,
+  actorId: string,
+  type: string,
+  postId?: string | null,
+  conversationId?: string | null
+) {
+  return `${recipientId}:${actorId}:${type}:${postId ?? ""}:${conversationId ?? ""}`;
+}
 
 type NotifyOptions = {
   conversationId?: string;
@@ -23,11 +35,7 @@ const PREF_FIELD: Record<
 };
 
 function siteUrl() {
-  return (
-    process.env.AUTH_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://doctor8.com.br"
-  ).replace(/\/$/, "");
+  return resolveSiteUrl();
 }
 
 function notificationText(
@@ -113,6 +121,17 @@ export async function createNotificationIfAllowed(
 ) {
   if (recipientId === actorId) return;
 
+  const block = await prisma.block.findFirst({
+    where: {
+      OR: [
+        { blockerId: recipientId, blockedId: actorId },
+        { blockerId: actorId, blockedId: recipientId },
+      ],
+    },
+    select: { id: true },
+  });
+  if (block) return;
+
   const profile = await prisma.profile.findUnique({
     where: { id: recipientId },
     select: {
@@ -129,16 +148,28 @@ export async function createNotificationIfAllowed(
   const field = PREF_FIELD[type];
   if (!profile[field]) return;
 
-  await prisma.notification.create({
-    data: {
-      recipientId,
-      actorId,
-      type,
-      postId: postId ?? null,
-      conversationId: options?.conversationId ?? null,
-      groupName: options?.groupName ?? null,
-    },
-  });
+  try {
+    await prisma.notification.create({
+      data: {
+        recipientId,
+        actorId,
+        type,
+        postId: postId ?? null,
+        conversationId: options?.conversationId ?? null,
+        groupName: options?.groupName ?? null,
+        dedupeKey: notificationDedupeKey(
+          recipientId,
+          actorId,
+          type,
+          postId,
+          options?.conversationId
+        ),
+      },
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) return;
+    throw error;
+  }
 
   void deliverExternalNotifications(recipientId, actorId, type, postId, options).catch((e) => {
     console.warn("[notifications] external delivery failed:", e);

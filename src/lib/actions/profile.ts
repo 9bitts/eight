@@ -50,7 +50,8 @@ export async function updateProfile(data: ProfileEditInput) {
   revalidatePath("/feed");
 }
 
-export async function getProfileForEdit(profileId: string) {
+export async function getProfileForEdit() {
+  const profileId = await requireProfile();
   return prisma.profile.findUnique({
     where: { id: profileId },
     select: {

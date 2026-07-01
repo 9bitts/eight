@@ -40,7 +40,8 @@ export async function removeMutedWord(word: string) {
   revalidatePath("/feed");
 }
 
-export async function getMutedWordsForSettings(profileId: string) {
+export async function getMutedWordsForSettings() {
+  const profileId = await requireProfile();
   return prisma.mutedWord.findMany({
     where: { profileId },
     orderBy: { word: "asc" },

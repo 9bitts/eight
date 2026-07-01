@@ -28,7 +28,7 @@ vi.mock("@/lib/rate-limit", async (importOriginal) => {
 vi.mock("@/lib/invites", () => ({
   inviteRequired: vi.fn(() => false),
   validateInvite: vi.fn(),
-  markInviteUsed: vi.fn(),
+  createUserWithInvite: vi.fn(),
 }));
 
 vi.mock("bcryptjs", () => ({
