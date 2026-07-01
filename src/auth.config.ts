@@ -11,6 +11,7 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.sub = user.id;
         token.id = user.id;
         token.handle = user.handle;
         token.verified = user.verified;

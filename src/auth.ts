@@ -96,7 +96,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
-      if (user?.id) token.id = user.id;
+      if (user?.id) {
+        token.sub = user.id;
+        token.id = user.id;
+      }
 
       if (token.id) {
         const profile = await prisma.profile.findUnique({

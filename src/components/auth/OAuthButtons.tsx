@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/i18n/LocaleProvider";
+import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 function XIcon() {
   return (
@@ -61,7 +62,7 @@ export function OAuthButtons({
     setError("");
     setLoading(provider);
     try {
-      await signIn(provider, { callbackUrl });
+      await signIn(provider, { callbackUrl: sanitizeCallbackUrl(callbackUrl) });
     } catch {
       setError("Não foi possível conectar. Tente com e-mail.");
       setLoading(null);

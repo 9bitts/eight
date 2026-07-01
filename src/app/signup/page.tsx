@@ -8,6 +8,7 @@ import { BadgeCheck, ArrowLeft, ArrowRight, Loader2, Check, X } from "lucide-rea
 import Logo from "@/components/Logo";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { normalizeHandle, handleError } from "@/lib/validators";
+import { redirectAfterAuth } from "@/lib/auth-redirect";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
@@ -412,14 +413,13 @@ function SignupPageInner() {
         redirect: false,
       });
 
-      if (signInRes?.error) {
+      if (!signInRes?.ok) {
         setGlobalError("Conta criada! Faça login para continuar.");
         router.push("/login");
         return;
       }
 
-      router.push("/feed");
-      router.refresh();
+      redirectAfterAuth("/feed");
     } catch {
       setGlobalError("Erro de conexão. Tente novamente.");
       setLoading(false);

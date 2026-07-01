@@ -2,18 +2,18 @@
 
 import { Suspense, useState, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { getSession, signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { useLocale } from "@/components/i18n/LocaleProvider";
+import { redirectAfterAuth, sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/feed";
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const resetOk = searchParams.get("reset") === "ok";
 
   const [email, setEmail] = useState("");
@@ -28,42 +28,45 @@ function LoginContent() {
     setError("");
     setLoading(true);
 
-    const normalized = email.trim().toLowerCase();
+    try {
+      const normalized = email.trim().toLowerCase();
 
-    if (!needs2fa) {
-      const check = await fetch("/api/auth/check-2fa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalized, password }),
+      if (!needs2fa) {
+        const check = await fetch("/api/auth/check-2fa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalized, password }),
+        });
+        const data = await check.json();
+        if (data.needs2fa) {
+          setNeeds2fa(true);
+          return;
+        }
+      }
+
+      const res = await signIn("credentials", {
+        email: normalized,
+        password,
+        totp: needs2fa ? totp : "",
+        redirect: false,
       });
-      const data = await check.json();
-      if (data.needs2fa) {
-        setNeeds2fa(true);
-        setLoading(false);
+
+      if (!res?.ok) {
+        setError(
+          needs2fa
+            ? "Código 2FA inválido ou senha incorreta."
+            : "E-mail ou senha incorretos."
+        );
         return;
       }
+
+      await getSession();
+      redirectAfterAuth(callbackUrl);
+    } catch {
+      setError("Erro de conexão. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-
-    const res = await signIn("credentials", {
-      email: normalized,
-      password,
-      totp: needs2fa ? totp : "",
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (res?.error) {
-      setError(
-        needs2fa
-          ? "Código 2FA inválido ou senha incorreta."
-          : "E-mail ou senha incorretos."
-      );
-      return;
-    }
-
-    router.push(callbackUrl);
-    router.refresh();
   };
 
   return (

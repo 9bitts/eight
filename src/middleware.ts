@@ -1,13 +1,14 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
+import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 const { auth } = NextAuth(authConfig);
 
 const PROTECTED = ["/feed", "/explore", "/notifications", "/messages", "/cases", "/settings", "/post", "/verificacao", "/admin", "/listas", "/agendados", "/salvos", "/analytics"];
 
 export default auth((req) => {
-  const isLoggedIn = !!req.auth;
+  const isLoggedIn = !!(req.auth?.user?.id ?? req.auth?.user?.email);
   const { pathname } = req.nextUrl;
   const isSuspended = !!req.auth?.user?.suspended;
 
@@ -35,7 +36,9 @@ export default auth((req) => {
   }
 
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/feed", req.nextUrl.origin));
+    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
+    const dest = sanitizeCallbackUrl(callbackUrl, req.nextUrl.origin);
+    return NextResponse.redirect(new URL(dest, req.nextUrl.origin));
   }
 
   return NextResponse.next();
