@@ -1,3 +1,5 @@
+import { readFile } from "fs/promises";
+import path from "path";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { isAdminUser } from "@/lib/admin";
@@ -5,7 +7,6 @@ import { prisma } from "@/lib/prisma";
 import {
   getSignedDownloadUrl,
   isCloudStorageEnabled,
-  localVerificationFilePath,
   parseStorageKey,
   readLocalVerificationFile,
 } from "@/lib/storage";
@@ -57,7 +58,21 @@ export async function GET(req: Request) {
   }
 
   if (stored.startsWith("/")) {
-    return NextResponse.redirect(new URL(stored, req.url));
+    try {
+      const relative = stored.replace(/^\/+/, "");
+      const buffer = await readFile(path.join(process.cwd(), "public", relative));
+      const filename = relative.split("/").pop() ?? "documento";
+      const contentType = contentTypeForFilename(filename);
+      return new NextResponse(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": contentType,
+          "Content-Disposition": `inline; filename="${filename}"`,
+          "Cache-Control": "private, no-store",
+        },
+      });
+    } catch {
+      return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
+    }
   }
 
   try {
@@ -72,10 +87,6 @@ export async function GET(req: Request) {
       },
     });
   } catch {
-    const legacyPath = localVerificationFilePath(stored);
-    return NextResponse.json(
-      { error: `Arquivo não encontrado (${legacyPath})` },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
   }
 }

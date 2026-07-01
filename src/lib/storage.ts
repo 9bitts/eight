@@ -107,6 +107,8 @@ export async function uploadFile(
         ContentType: contentType,
       })
     );
+    // S3_PUBLIC_URL: apenas uploads públicos (avatares, mídia de posts).
+    // Documentos de verificação usam uploadPrivateVerificationFile + URL assinada.
     const publicBase = process.env.S3_PUBLIC_URL?.replace(/\/$/, "");
     if (publicBase) return `${publicBase}/${key}`;
     return `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${key}`;

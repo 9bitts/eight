@@ -14,7 +14,5 @@ export async function resolveVerificationDocumentUrl(
     return getSignedDownloadUrl(parseStorageKey(stored));
   }
 
-  if (stored.startsWith("/")) return stored;
-
   return `/api/verification/document?profileId=${encodeURIComponent(profileId)}`;
 }

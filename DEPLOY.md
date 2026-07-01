@@ -27,10 +27,17 @@ O script é idempotente: segredos com prefixo `v1:` são ignorados. Não imprime
 - `npx prisma generate` — roda automaticamente no `postinstall` (`npm install`)
 - `npx prisma db push` — só necessário quando `schema.prisma` mudar (as correções de segurança não alteraram o schema)
 
-## S3
+## S3 / object storage
 
-- Bucket privado para o prefixo `verification/`
-- Documentos de verificação usam URLs assinadas (15 min), nunca `S3_PUBLIC_URL`
+- Bucket **privado** para o prefixo `verification/`
+- Documentos de verificação: URLs assinadas (15 min) via `getSignedDownloadUrl` — **nunca** `S3_PUBLIC_URL`
+- `S3_PUBLIC_URL` serve **somente** para uploads públicos (`uploads/`: avatares, imagens/vídeos de posts)
+
+### Confirmação manual pós-deploy
+
+- [ ] `S3_PUBLIC_URL` não expõe paths `verification/` no CDN/bucket
+- [ ] Bucket policy não permite acesso público a `verification/*`
+- [ ] Testar upload em `/verificacao` e confirmar que o link de download expira (~15 min)
 
 ## Verificação pós-deploy
 
