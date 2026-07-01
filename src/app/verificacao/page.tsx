@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { VerificationClient } from "@/components/verification/VerificationClient";
 import { getSessionUser } from "@/lib/feed";
 import { prisma } from "@/lib/prisma";
+import { resolveVerificationDocumentUrl } from "@/lib/verification-document";
 
 export default async function VerificationPage() {
   const session = await auth();
@@ -28,6 +29,11 @@ export default async function VerificationPage() {
   });
   if (!profile) redirect("/signup/complete");
 
+  const verificationDocumentUrl = await resolveVerificationDocumentUrl(
+    profile.verificationDocumentUrl,
+    user.profileId
+  );
+
   return (
     <VerificationClient
       profile={{
@@ -38,7 +44,7 @@ export default async function VerificationPage() {
         registrationNumber: profile.registrationNumber ?? "",
         registrationCountry: profile.registrationCountry ?? "",
         verificationStatus: profile.verificationStatus,
-        verificationDocumentUrl: profile.verificationDocumentUrl,
+        verificationDocumentUrl,
         rejectionReason: profile.rejectionReason,
         verified: profile.verified,
       }}

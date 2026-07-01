@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { parseStorageKey } from "@/lib/storage";
 
 async function requireProfile() {
   const session = await auth();
@@ -11,10 +12,10 @@ async function requireProfile() {
   return profileId;
 }
 
-export async function submitVerificationDocument(documentUrl: string) {
+export async function submitVerificationDocument(documentKey: string) {
   const profileId = await requireProfile();
-  const url = documentUrl.trim();
-  if (!url) throw new Error("Envie um documento.");
+  const key = parseStorageKey(documentKey.trim());
+  if (!key) throw new Error("Envie um documento.");
 
   const profile = await prisma.profile.findUnique({
     where: { id: profileId },
@@ -28,7 +29,7 @@ export async function submitVerificationDocument(documentUrl: string) {
   await prisma.profile.update({
     where: { id: profileId },
     data: {
-      verificationDocumentUrl: url,
+      verificationDocumentUrl: key,
       verificationStatus: "PENDING",
       verificationSubmittedAt: new Date(),
       rejectionReason: null,

@@ -98,11 +98,11 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await fetch("/api/upload/verification", { method: "POST", body: fd });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       startTransition(async () => {
-        await submitVerificationDocument(json.url);
+        await submitVerificationDocument(json.key);
         router.refresh();
       });
     } catch (e) {
