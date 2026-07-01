@@ -16,17 +16,14 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
-  clientIp: vi.fn(() => "203.0.113.1"),
-  rateLimit: vi.fn(),
-  rateLimitResponse: vi.fn(
-    (retryAfterSec: number) =>
-      new Response(
-        JSON.stringify({ error: `Muitas tentativas. Aguarde ${retryAfterSec}s.` }),
-        { status: 429, headers: { "Content-Type": "application/json" } }
-      )
-  ),
-}));
+vi.mock("@/lib/rate-limit", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/rate-limit")>();
+  return {
+    ...actual,
+    clientIp: vi.fn(() => "203.0.113.1"),
+    rateLimit: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/invites", () => ({
   inviteRequired: vi.fn(() => false),
@@ -121,6 +118,7 @@ describe("POST /api/signup", () => {
 
     expect(res.status).toBe(429);
     expect(json.error).toContain("Aguarde 45s");
+    expect(res.headers.get("Retry-After")).toBe("45");
     expect(prisma.user.create).not.toHaveBeenCalled();
   });
 });
