@@ -12,9 +12,9 @@ const limiterCache = new Map<string, Ratelimit>();
 
 function pruneMemoryStore(now: number) {
   if (memoryStore.size < 500) return;
-  for (const [key, bucket] of memoryStore) {
+  memoryStore.forEach((bucket, key) => {
     if (now >= bucket.resetAt) memoryStore.delete(key);
-  }
+  });
 }
 
 function rateLimitMemory(key: string, limit: number, windowMs: number): RateLimitResult {

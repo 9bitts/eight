@@ -20,7 +20,9 @@ export async function toggleBookmark(postId: string) {
 
   await toggleUniqueRecord(
     () => prisma.bookmark.deleteMany({ where: { profileId, postId } }),
-    () => prisma.bookmark.create({ data: { profileId, postId } })
+    async () => {
+      await prisma.bookmark.create({ data: { profileId, postId } });
+    }
   );
 
   revalidatePath("/feed");

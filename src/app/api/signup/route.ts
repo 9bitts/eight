@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { VerificationStatus, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   normalizeHandle,
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const userData = {
+    const userData: Prisma.UserCreateInput = {
       name: displayName,
       email,
       passwordHash,
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
           registrationCountry: registrationCountry || null,
           location: location || null,
           verified: false,
-          verificationStatus: "PENDING",
+          verificationStatus: VerificationStatus.PENDING,
           verificationSubmittedAt: new Date(),
         },
       },
