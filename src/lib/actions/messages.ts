@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { assertCanMessage } from "@/lib/messages";
 import { rateLimit } from "@/lib/rate-limit";
+import { detectPII } from "@/lib/pii-detector";
 import { DM_MAX_LENGTH } from "@/lib/constants";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 
@@ -29,6 +30,10 @@ export async function sendDirectMessage(
   const text = body.trim();
   const image = imageUrl?.trim() || null;
   if (!text && !image) throw new Error("Mensagem vazia");
+  if (text) {
+    const pii = detectPII(text);
+    if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da mensagem.");
+  }
   if (text.length > DM_MAX_LENGTH) throw new Error(`Máximo ${DM_MAX_LENGTH} caracteres`);
 
   const limited = await rateLimit(`dm:${profileId}`, 40, 60_000);

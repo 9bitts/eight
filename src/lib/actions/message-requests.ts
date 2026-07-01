@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { assertCanMessage, findOrCreateConversation } from "@/lib/messages";
 import { canOpenDirectConversation } from "@/lib/message-requests";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
+import { detectPII } from "@/lib/pii-detector";
+import { MESSAGE_REQUEST_MAX_LENGTH } from "@/lib/constants";
 
 async function requireProfile() {
   const session = await auth();
@@ -39,7 +41,12 @@ export async function tryStartConversation(targetProfileId: string) {
 export async function sendMessageRequest(targetProfileId: string, body: string) {
   const profileId = await requireProfile();
   const text = body.trim();
-  if (!text || text.length > 300) throw new Error("Escreva uma mensagem de até 300 caracteres.");
+  if (!text) throw new Error("Escreva uma mensagem de apresentação.");
+  const pii = detectPII(text);
+  if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da mensagem.");
+  if (text.length > MESSAGE_REQUEST_MAX_LENGTH) {
+    throw new Error(`Escreva uma mensagem de até ${MESSAGE_REQUEST_MAX_LENGTH} caracteres.`);
+  }
 
   await assertCanMessage(profileId, targetProfileId);
 
