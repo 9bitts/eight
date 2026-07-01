@@ -8,6 +8,7 @@ import { canOpenDirectConversation } from "@/lib/message-requests";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 import { detectPII } from "@/lib/pii-detector";
 import { MESSAGE_REQUEST_MAX_LENGTH } from "@/lib/constants";
+import { rateLimit } from "@/lib/rate-limit";
 
 async function requireProfile() {
   const session = await auth();
@@ -47,6 +48,9 @@ export async function sendMessageRequest(targetProfileId: string, body: string) 
   if (text.length > MESSAGE_REQUEST_MAX_LENGTH) {
     throw new Error(`Escreva uma mensagem de até ${MESSAGE_REQUEST_MAX_LENGTH} caracteres.`);
   }
+
+  const limited = await rateLimit(`message-request:${profileId}`, 20, 60_000);
+  if (!limited.ok) throw new Error(`Aguarde ${limited.retryAfterSec}s.`);
 
   await assertCanMessage(profileId, targetProfileId);
 

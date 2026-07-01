@@ -45,3 +45,30 @@ O script é idempotente: segredos com prefixo `v1:` são ignorados. Não imprime
 npm run test
 npm run build
 ```
+
+## Follow-up de segurança — status
+
+### Item 1 — Auditoria `await` em `rateLimit` ✓
+
+- Todas as 14 chamadas em `src/` usam `await rateLimit(...)`
+- `sendMessageRequest` recebeu rate limit (`message-request:${profileId}`, 20/min)
+- Testes 429 (rotas HTTP): signup, check-2fa, forgot-password, reset-password, search
+- Testes de bloqueio (server actions): `sendDirectMessage`, `sendMessageRequest` (lançam `Aguarde Xs.`)
+
+### Item 2 — Migration TOTP legado ✓ (script pronto; execução manual)
+
+Script: `scripts/migrate-encrypt-totp-secrets.ts`  
+Comando: `npm run db:migrate-totp-secrets`
+
+**Pré-requisitos antes de rodar em produção:**
+
+1. Backup do banco de dados
+2. `TOTP_ENCRYPTION_KEY` configurada (mesma chave usada pelo app em produção)
+3. `DATABASE_URL` apontando para o banco alvo (via `.env` ou variável no shell)
+4. Rodar **uma única vez** após deploy da criptografia TOTP (commit `df35eb6+`)
+
+O script é idempotente, loga apenas contagens e nunca imprime secrets.
+
+### Item 3 — PII na edição de DMs/pedidos ✓ (não aplicável)
+
+Não existe fluxo de edição de mensagens diretas nem de pedidos de mensagem no produto (`editDirectMessage`, `editMessageRequest`, etc.). Os únicos `messageRequest.update` alteram status (aceitar/recusar), não o corpo do texto. Nenhuma mudança necessária.
