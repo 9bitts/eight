@@ -8,6 +8,7 @@ import { extractFirstUrl } from "@/lib/post-text";
 import { syncHashtags, notifyMentions } from "@/lib/post-server";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 import { rateLimit } from "@/lib/rate-limit";
+import { detectPII } from "@/lib/pii-detector";
 import { POST_EDIT_WINDOW_MS, POST_MAX_LENGTH } from "@/lib/constants";
 import type { CreatePostInput } from "@/lib/types";
 
@@ -65,6 +66,11 @@ async function createSinglePost(
     throw new Error("Publicação vazia");
   }
   if (text.length > POST_MAX_LENGTH) throw new Error(`Máximo ${POST_MAX_LENGTH} caracteres`);
+
+  if (text) {
+    const pii = detectPII(text);
+    if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
+  }
 
   const linkFields = text ? await buildLinkFields(text) : {};
 
@@ -149,6 +155,9 @@ export async function editPost(postId: string, body: string) {
   const profileId = await requireProfile();
   const text = body.trim();
   if (!text || text.length > POST_MAX_LENGTH) throw new Error("Texto inválido");
+
+  const pii = detectPII(text);
+  if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
 
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
@@ -237,6 +246,9 @@ export async function editScheduledPost(postId: string, body: string) {
   const profileId = await requireProfile();
   const text = body.trim();
   if (!text || text.length > POST_MAX_LENGTH) throw new Error("Texto inválido");
+
+  const pii = detectPII(text);
+  if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
 
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
@@ -347,6 +359,9 @@ export async function createQuotePost(postId: string, body: string) {
   const text = body.trim();
   if (!text) throw new Error("Adicione um comentário à citação.");
   if (text.length > POST_MAX_LENGTH) throw new Error(`Máximo ${POST_MAX_LENGTH} caracteres`);
+
+  const pii = detectPII(text);
+  if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
 
   const linkFields = await buildLinkFields(text);
 
