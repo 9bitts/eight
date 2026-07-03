@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { BadgeCheck, ArrowLeft, ArrowRight, Loader2, Check, X } from "lucide-react";
 import Logo from "@/components/Logo";
-import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { normalizeHandle, handleError } from "@/lib/validators";
 import { redirectAfterAuth } from "@/lib/auth-redirect";
 
@@ -103,9 +102,6 @@ function StepAccount({
         Crie sua conta
       </h2>
       <p className="signup-sub">Passo 1 de 3 — cadastro com e-mail.</p>
-
-      <OAuthButtons mode="signup" callbackUrl="/feed" />
-      <div className="divider" style={{ margin: "16px 0" }}>ou com e-mail</div>
 
       {error && <p className="signup-error">{error}</p>}
 

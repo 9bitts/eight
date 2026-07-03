@@ -1,12 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Twitter from "next-auth/providers/twitter";
-import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
-import { verifyAndConsumeTotp } from "@/lib/totp";
-import { decrypt } from "@/lib/crypto";
 import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 
@@ -17,15 +14,6 @@ if (process.env.AUTH_TWITTER_ID && process.env.AUTH_TWITTER_SECRET) {
     Twitter({
       clientId: process.env.AUTH_TWITTER_ID,
       clientSecret: process.env.AUTH_TWITTER_SECRET,
-    })
-  );
-}
-
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
-  oauthProviders.push(
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
     })
   );
 }
@@ -49,12 +37,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "E-mail", type: "email" },
         password: { label: "Senha", type: "password" },
-        totp: { label: "2FA", type: "text" },
       },
       async authorize(credentials) {
         const email = credentials?.email?.toString().trim().toLowerCase();
         const password = credentials?.password?.toString() ?? "";
-        const totp = credentials?.totp?.toString().trim() ?? "";
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({
@@ -66,12 +52,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
-
-        if (user.totpEnabled && user.totpSecret) {
-          if (!totp || !(await verifyAndConsumeTotp(user.id, totp, decrypt(user.totpSecret)))) {
-            return null;
-          }
-        }
 
         const adminEmails =
           process.env.ADMIN_EMAILS?.split(",")

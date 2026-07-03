@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
-import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
-
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: { findUnique: vi.fn() },
-  },
-}));
 
 vi.mock("@/lib/rate-limit", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/rate-limit")>();
@@ -18,11 +11,7 @@ vi.mock("@/lib/rate-limit", async (importOriginal) => {
   };
 });
 
-vi.mock("bcryptjs", () => ({
-  default: { compare: vi.fn() },
-}));
-
-function check2faRequest(body: Record<string, string>) {
+function check2faRequest(body: Record<string, string> = {}) {
   return new Request("http://localhost/api/auth/check-2fa", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -47,6 +36,15 @@ describe("POST /api/auth/check-2fa", () => {
     expect(res.status).toBe(429);
     expect(json.error).toContain("Aguarde 30s");
     expect(res.headers.get("Retry-After")).toBe("30");
-    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("sempre retorna needs2fa false enquanto 2FA estiver desativado", async () => {
+    const res = await POST(
+      check2faRequest({ email: "ana@demo.eight", password: "senha-segura" })
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toEqual({ needs2fa: false });
   });
 });
