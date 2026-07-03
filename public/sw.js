@@ -1,4 +1,4 @@
-const CACHE = "eight-v3";
+const CACHE = "eight-v4";
 const PRECACHE = ["/feed", "/manifest.json", "/icon.svg", "/offline.html"];
 
 self.addEventListener("install", (event) => {
@@ -54,6 +54,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith("/api/auth")) return;
 
   event.respondWith(
     fetch(event.request).catch(() =>

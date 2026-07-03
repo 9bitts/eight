@@ -2,6 +2,12 @@ const DEFAULT_CALLBACK = "/feed";
 
 const AUTH_PREFIXES = ["/login", "/signup"];
 
+function isAuthPath(pathname: string): boolean {
+  return AUTH_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
 /** Evita loops e redirecionamentos externos após login. */
 export function sanitizeCallbackUrl(
   raw: string | null | undefined,
@@ -25,9 +31,25 @@ export function sanitizeCallbackUrl(
 
   if (!path.startsWith("/")) path = `/${path}`;
 
-  const pathname = path.split("?")[0];
-  if (AUTH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+  const parsed = new URL(path, "http://local");
+  if (isAuthPath(parsed.pathname)) {
+    const nested = parsed.searchParams.get("callbackUrl");
+    if (nested) return sanitizeCallbackUrl(nested, origin);
     return DEFAULT_CALLBACK;
+  }
+
+  const nested = parsed.searchParams.get("callbackUrl");
+  if (nested) {
+    const safeNested = sanitizeCallbackUrl(nested, origin);
+    if (safeNested !== nested) {
+      if (safeNested === DEFAULT_CALLBACK) {
+        parsed.searchParams.delete("callbackUrl");
+      } else {
+        parsed.searchParams.set("callbackUrl", safeNested);
+      }
+      const qs = parsed.searchParams.toString();
+      return qs ? `${parsed.pathname}?${qs}` : parsed.pathname;
+    }
   }
 
   return path;

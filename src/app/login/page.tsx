@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useState, FormEvent, useRef } from "react";
+import { Suspense, useState, FormEvent, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import Logo from "@/components/Logo";
@@ -11,9 +11,23 @@ import { redirectAfterAuth, sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 function LoginContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { t } = useLocale();
   const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const resetOk = searchParams.get("reset") === "ok";
+
+  useEffect(() => {
+    const raw = searchParams.get("callbackUrl");
+    if (!raw) return;
+    const safe = sanitizeCallbackUrl(raw);
+    if (raw === safe) return;
+    const params = new URLSearchParams();
+    if (safe !== "/feed") params.set("callbackUrl", safe);
+    const reset = searchParams.get("reset");
+    if (reset) params.set("reset", reset);
+    const qs = params.toString();
+    router.replace(qs ? `/login?${qs}` : "/login");
+  }, [searchParams, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

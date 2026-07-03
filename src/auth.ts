@@ -1,31 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Twitter from "next-auth/providers/twitter";
-import Apple from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 
-const oauthProviders = [];
-
-if (process.env.AUTH_TWITTER_ID && process.env.AUTH_TWITTER_SECRET) {
-  oauthProviders.push(
-    Twitter({
-      clientId: process.env.AUTH_TWITTER_ID,
-      clientSecret: process.env.AUTH_TWITTER_SECRET,
-    })
-  );
-}
-
-if (process.env.AUTH_APPLE_ID && process.env.AUTH_APPLE_SECRET) {
-  oauthProviders.push(
-    Apple({
-      clientId: process.env.AUTH_APPLE_ID,
-      clientSecret: process.env.AUTH_APPLE_SECRET,
-    })
-  );
-}
+// OAuth desativado temporariamente — login apenas por e-mail/senha.
+const oauthProviders: never[] = [];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,

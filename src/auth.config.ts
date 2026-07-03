@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 export const authConfig = {
   pages: {
@@ -9,6 +10,20 @@ export const authConfig = {
   session: { strategy: "jwt", updateAge: 60 },
   providers: [],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        try {
+          const parsed = new URL(url);
+          if (parsed.origin !== baseUrl) return `${baseUrl}/feed`;
+          const path = parsed.pathname + parsed.search;
+          return `${baseUrl}${sanitizeCallbackUrl(path, baseUrl)}`;
+        } catch {
+          return `${baseUrl}/feed`;
+        }
+      }
+      const path = url.startsWith("/") ? url : `/${url}`;
+      return `${baseUrl}${sanitizeCallbackUrl(path, baseUrl)}`;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
