@@ -1,4 +1,4 @@
-const CACHE = "eight-v4";
+const CACHE = "eight-v5";
 const PRECACHE = ["/feed", "/manifest.json", "/icon.svg", "/offline.html"];
 
 self.addEventListener("install", (event) => {

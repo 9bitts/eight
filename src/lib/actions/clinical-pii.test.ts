@@ -159,4 +159,9 @@ describe("createPost — respostas em thread de caso clínico", () => {
     await createPost({ body: VALID_SHORT, parentId: "normal-1" });
     expect(prisma.post.create).toHaveBeenCalled();
   });
+
+  it("aceita post raiz comum sem parentId (composer principal)", async () => {
+    await createPost({ body: "Texto simples no feed principal, sem resposta." });
+    expect(prisma.post.create).toHaveBeenCalled();
+  });
 });

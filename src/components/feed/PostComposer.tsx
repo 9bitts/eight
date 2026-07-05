@@ -44,6 +44,7 @@ export function PostComposer({ user }: { user: SessionUser }) {
   const [pollHours, setPollHours] = useState(24);
   const [scheduledAt, setScheduledAt] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
   const charLeft = POST_MAX_LENGTH - body.length;
@@ -85,23 +86,28 @@ export function PostComposer({ user }: { user: SessionUser }) {
       : undefined;
 
     startTransition(async () => {
-      await createPost({
-        body: text,
-        images: images.length ? images : undefined,
-        videoUrl: video?.url,
-        gifUrl: gif?.url,
-        scheduledAt: scheduledAt || undefined,
-        threadParts: threadParts.filter((p) => p.trim()),
-        pollOptions: poll && poll.length >= 2 ? poll : undefined,
-        pollEndsInHours: pollHours,
-      });
-      setBody("");
-      setMedia([]);
-      setThreadParts([]);
-      setShowPoll(false);
-      setPollOptions(["", ""]);
-      setScheduledAt("");
-      router.refresh();
+      setError("");
+      try {
+        await createPost({
+          body: text,
+          images: images.length ? images : undefined,
+          videoUrl: video?.url,
+          gifUrl: gif?.url,
+          scheduledAt: scheduledAt || undefined,
+          threadParts: threadParts.filter((p) => p.trim()),
+          pollOptions: poll && poll.length >= 2 ? poll : undefined,
+          pollEndsInHours: pollHours,
+        });
+        setBody("");
+        setMedia([]);
+        setThreadParts([]);
+        setShowPoll(false);
+        setPollOptions(["", ""]);
+        setScheduledAt("");
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Falha ao publicar.");
+      }
     });
   };
 
@@ -124,6 +130,12 @@ export function PostComposer({ user }: { user: SessionUser }) {
         />
         {mentionQuery !== null && mentionOptions.length > 0 && (
           <MentionSuggestions options={mentionOptions} onSelect={onSelectMention} />
+        )}
+
+        {error && (
+          <p className="signup-error mt-2" style={{ fontSize: 14 }}>
+            {error}
+          </p>
         )}
 
         {media.length > 0 && (

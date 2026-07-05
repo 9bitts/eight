@@ -21,8 +21,12 @@ export function validateClinicalCaseBody(body: string): string | null {
 }
 
 /** Sobe a cadeia parentId até achar um post com isClinicalCase (raiz do caso). */
-export async function isInClinicalCaseThread(ancestorPostId: string): Promise<boolean> {
-  let currentId: string | null = ancestorPostId;
+export async function isInClinicalCaseThread(
+  ancestorPostId: string | null | undefined
+): Promise<boolean> {
+  if (!ancestorPostId?.trim()) return false;
+
+  let currentId: string | null = ancestorPostId.trim();
   const seen = new Set<string>();
 
   while (currentId && !seen.has(currentId)) {

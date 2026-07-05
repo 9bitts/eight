@@ -78,4 +78,11 @@ describe("isInClinicalCaseThread", () => {
 
     await expect(isInClinicalCaseThread("normal-1")).resolves.toBe(false);
   });
+
+  it("retorna false sem consultar o banco quando ancestorPostId é nulo ou vazio", async () => {
+    await expect(isInClinicalCaseThread(null)).resolves.toBe(false);
+    await expect(isInClinicalCaseThread(undefined)).resolves.toBe(false);
+    await expect(isInClinicalCaseThread("")).resolves.toBe(false);
+    expect(prisma.post.findUnique).not.toHaveBeenCalled();
+  });
 });
