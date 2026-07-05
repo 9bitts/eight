@@ -25,6 +25,7 @@ import { EightLogo } from "@/components/EightLogo";
 import type { SessionUser } from "@/lib/types";
 import { useRealtimeBadges } from "@/components/useRealtime";
 import { useLocale } from "@/components/i18n/LocaleProvider";
+import { PublishModal } from "@/components/feed/PublishModal";
 
 const BLUE = "#176a88";
 const ORANGE = "#e05930";
@@ -152,10 +153,10 @@ export function FeedShell({
   rightRail?: React.ReactNode;
 }) {
   const { t } = useLocale();
-  const pathname = usePathname();
   const [messageCount, setMessageCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(initialNotificationCount);
-  const showComposeFab = pathname === "/feed" || pathname === "/cases";
+  const [composeOpen, setComposeOpen] = useState(false);
+  const openComposer = useCallback(() => setComposeOpen(true), []);
 
   useEffect(() => {
     setNotificationCount(initialNotificationCount);
@@ -211,7 +212,7 @@ export function FeedShell({
             </nav>
             <button
               type="button"
-              onClick={() => document.getElementById("composer")?.focus()}
+              onClick={openComposer}
               className="mt-4 w-full rounded-full py-3 px-4 font-bold transition-transform hover:-translate-y-0.5"
               style={{
                 background: ORANGE,
@@ -276,30 +277,30 @@ export function FeedShell({
         <MobileNavLink href={`/${user.handle}`} icon={User} />
       </nav>
 
-      {showComposeFab && (
-        <button
-          type="button"
-          onClick={() => document.getElementById("composer")?.focus()}
-          className="sm:hidden fixed z-40 rounded-full flex items-center justify-center shadow-lg"
-          style={{
-            right: 16,
-            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
-            width: 56,
-            height: 56,
-            background: ORANGE,
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-            fontSize: 28,
-            fontWeight: 300,
-            lineHeight: 1,
-            boxShadow: "0 8px 24px -6px rgba(224,89,48,.65)",
-          }}
-          aria-label={t("nav.publish")}
-        >
-          +
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={openComposer}
+        className="sm:hidden fixed z-40 rounded-full flex items-center justify-center shadow-lg"
+        style={{
+          right: 16,
+          bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+          width: 56,
+          height: 56,
+          background: ORANGE,
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+          fontSize: 28,
+          fontWeight: 300,
+          lineHeight: 1,
+          boxShadow: "0 8px 24px -6px rgba(224,89,48,.65)",
+        }}
+        aria-label={t("nav.publish")}
+      >
+        +
+      </button>
+
+      {composeOpen && <PublishModal user={user} onClose={() => setComposeOpen(false)} />}
     </div>
   );
 }

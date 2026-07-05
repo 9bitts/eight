@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Image as ImageIcon,
@@ -25,7 +25,17 @@ const LINE = "var(--eight-line)";
 
 type MediaItem = { url: string; type: "image" | "video" | "gif" };
 
-export function PostComposer({ user }: { user: SessionUser }) {
+export function PostComposer({
+  user,
+  onPublished,
+  embedded,
+  autoFocus,
+}: {
+  user: SessionUser;
+  onPublished?: () => void;
+  embedded?: boolean;
+  autoFocus?: boolean;
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const {
@@ -48,6 +58,10 @@ export function PostComposer({ user }: { user: SessionUser }) {
   const [pending, startTransition] = useTransition();
 
   const charLeft = POST_MAX_LENGTH - body.length;
+
+  useEffect(() => {
+    if (autoFocus) textareaRef.current?.focus();
+  }, [autoFocus, textareaRef]);
 
   const uploadFile = async (file: File) => {
     setUploading(true);
@@ -105,6 +119,7 @@ export function PostComposer({ user }: { user: SessionUser }) {
         setPollOptions(["", ""]);
         setScheduledAt("");
         router.refresh();
+        onPublished?.();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Falha ao publicar.");
       }
@@ -112,7 +127,10 @@ export function PostComposer({ user }: { user: SessionUser }) {
   };
 
   return (
-    <div className="flex gap-3 px-4 py-4 border-b" style={{ borderColor: LINE, background: "var(--eight-card-bg)" }}>
+    <div
+      className={`flex gap-3 px-4 py-4${embedded ? "" : " border-b"}`}
+      style={{ borderColor: LINE, background: embedded ? "transparent" : "var(--eight-card-bg)" }}
+    >
       <Avatar name={user.displayName} />
       <div className="flex-1 relative">
         <textarea
