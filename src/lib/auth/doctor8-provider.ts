@@ -20,25 +20,22 @@ export function doctor8Provider(
   return {
     id: "doctor8",
     name: "Doctor8",
-    type: "oidc",
+    // OAuth2 explícito: evita validação rígida de id_token/JWKS do OIDC (Doctor8 emite JWT próprio).
+    type: "oauth",
     issuer,
     clientId: process.env.AUTH_DOCTOR8_ID,
     clientSecret: process.env.AUTH_DOCTOR8_SECRET,
     allowDangerousEmailAccountLinking: true,
-    // Doctor8 OIDC: sem PKCE no discovery e o callback retorna só ?code= (sem state).
     checks: ["none"],
-    // id_token pode não trazer email/role; buscar em /api/oauth/userinfo.
-    idToken: false,
     client: {
       token_endpoint_auth_method: "client_secret_post",
     },
     authorization: {
-      params: {
-        scope: "openid email profile",
-        // Garante tela de login na Doctor8 (evita sessão de conta paciente/admin errada).
-        prompt: "login",
-      },
+      url: `${issuer}/api/oauth/authorize`,
+      params: { scope: "openid email profile", prompt: "login" },
     },
+    token: `${issuer}/api/oauth/token`,
+    userinfo: `${issuer}/api/oauth/userinfo`,
     profile(profile) {
       const sub = String(profile.sub ?? "");
       const emailRaw =

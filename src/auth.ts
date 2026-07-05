@@ -16,6 +16,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [doctor8Provider()],
   debug: process.env.AUTH_DEBUG === "true",
+  logger: {
+    error(code, ...message) {
+      console.error("[auth]", code, ...message);
+    },
+    warn(code, ...message) {
+      console.warn("[auth]", code, ...message);
+    },
+    debug(code, ...message) {
+      if (process.env.AUTH_DEBUG === "true") {
+        console.debug("[auth]", code, ...message);
+      }
+    },
+  },
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ account, profile }) {
@@ -24,52 +37,72 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (role && !DOCTOR8_SSO_ROLES.has(role)) return false;
       return true;
     },
-    async jwt({ token, user }) {
-      if (user?.id) {
+    async jwt({ token, user, account, profile, trigger, session }) {
+      if (user) {
         token.sub = user.id;
         token.id = user.id;
+        token.handle = user.handle;
+        token.verified = user.verified;
+        token.verificationStatus = user.verificationStatus;
+        token.isAdmin = user.isAdmin;
+        token.profileId = user.profileId;
+      }
+
+      if (account?.provider === "doctor8" && profile && typeof profile === "object") {
+        const role = (profile as { role?: string }).role;
+        if (role) (token as { doctor8Role?: string }).doctor8Role = role;
+      }
+
+      if (trigger === "update" && session) {
+        const s = session as Record<string, unknown>;
+        if (s.handle !== undefined) token.handle = s.handle as string | undefined;
+        if (s.verified !== undefined) token.verified = s.verified as boolean | undefined;
       }
 
       if (token.id) {
-        const profile = await prisma.profile.findUnique({
-          where: { userId: token.id as string },
-          select: {
-            id: true,
-            handle: true,
-            verified: true,
-            verificationStatus: true,
-            suspended: true,
-            user: { select: { isAdmin: true, email: true } },
-          },
-        });
-        if (profile) {
-          if (profile.suspended) {
-            token.suspended = true;
+        try {
+          const dbProfile = await prisma.profile.findUnique({
+            where: { userId: token.id as string },
+            select: {
+              id: true,
+              handle: true,
+              verified: true,
+              verificationStatus: true,
+              suspended: true,
+              user: { select: { isAdmin: true, email: true } },
+            },
+          });
+          if (dbProfile) {
+            if (dbProfile.suspended) {
+              token.suspended = true;
+              delete token.profileId;
+              delete token.handle;
+              delete token.verified;
+              delete token.verificationStatus;
+              delete token.isAdmin;
+            } else {
+              delete token.suspended;
+              const adminEmails =
+                process.env.ADMIN_EMAILS?.split(",")
+                  .map((e) => e.trim().toLowerCase())
+                  .filter(Boolean) ?? [];
+              token.profileId = dbProfile.id;
+              token.handle = dbProfile.handle;
+              token.verified = dbProfile.verified;
+              token.verificationStatus = dbProfile.verificationStatus;
+              token.isAdmin =
+                dbProfile.user.isAdmin ||
+                adminEmails.includes(dbProfile.user.email?.toLowerCase() ?? "");
+            }
+          } else {
             delete token.profileId;
             delete token.handle;
             delete token.verified;
             delete token.verificationStatus;
             delete token.isAdmin;
-          } else {
-            delete token.suspended;
-            const adminEmails =
-              process.env.ADMIN_EMAILS?.split(",")
-                .map((e) => e.trim().toLowerCase())
-                .filter(Boolean) ?? [];
-            token.profileId = profile.id;
-            token.handle = profile.handle;
-            token.verified = profile.verified;
-            token.verificationStatus = profile.verificationStatus;
-            token.isAdmin =
-              profile.user.isAdmin ||
-              adminEmails.includes(profile.user.email?.toLowerCase() ?? "");
           }
-        } else {
-          delete token.profileId;
-          delete token.handle;
-          delete token.verified;
-          delete token.verificationStatus;
-          delete token.isAdmin;
+        } catch (err) {
+          console.error("[auth] jwt profile lookup failed:", err);
         }
       }
 
