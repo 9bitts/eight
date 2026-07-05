@@ -135,7 +135,6 @@ export function PostComposer({
       <div className="flex-1 relative">
         <textarea
           ref={textareaRef}
-          id="composer"
           value={body}
           onChange={(e) => onBodyChange(e.target.value, e.target.selectionStart)}
           onClick={(e) => onBodyChange(body, e.currentTarget.selectionStart)}
