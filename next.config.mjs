@@ -1,7 +1,13 @@
+import { getGlobalSecurityHeaders } from "./security-headers.mjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
     return [
+      {
+        source: "/(.*)",
+        headers: getGlobalSecurityHeaders(),
+      },
       {
         source: "/uploads/:path*",
         headers: [
