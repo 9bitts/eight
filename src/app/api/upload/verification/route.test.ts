@@ -21,8 +21,11 @@ vi.mock("@/lib/rate-limit", async (importOriginal) => {
   };
 });
 
-function verificationUploadRequest() {
-  const file = new File(["pdf-content"], "crm.pdf", { type: "application/pdf" });
+const PDF_BYTES = new TextEncoder().encode("%PDF-1.4\n");
+const EXE_BYTES = new Uint8Array([0x4d, 0x5a, 0x90, 0x00]);
+
+function verificationUploadRequest(bytes: Uint8Array, name: string, type: string) {
+  const file = new File([bytes], name, { type });
   const form = new FormData();
   form.append("file", file);
   return new Request("http://localhost/api/upload/verification", {
@@ -43,11 +46,33 @@ describe("POST /api/upload/verification", () => {
   it("retorna 429 quando rate limit estoura", async () => {
     vi.mocked(rateLimit).mockResolvedValue({ ok: false, retryAfterSec: 25 });
 
-    const res = await POST(verificationUploadRequest());
+    const res = await POST(verificationUploadRequest(PDF_BYTES, "crm.pdf", "application/pdf"));
     const json = await res.json();
 
     expect(res.status).toBe(429);
     expect(json.error).toContain("Aguarde 25s");
+    expect(uploadPrivateVerificationFile).not.toHaveBeenCalled();
+  });
+
+  it("aceita PDF com assinatura válida", async () => {
+    const res = await POST(verificationUploadRequest(PDF_BYTES, "crm.pdf", "application/pdf"));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.key).toBe("verification/test.pdf");
+    expect(uploadPrivateVerificationFile).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      "pdf",
+      "application/pdf"
+    );
+  });
+
+  it("rejeita executável disfarçado de PDF", async () => {
+    const res = await POST(verificationUploadRequest(EXE_BYTES, "crm.pdf", "application/pdf"));
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toContain("PDF válidos");
     expect(uploadPrivateVerificationFile).not.toHaveBeenCalled();
   });
 });

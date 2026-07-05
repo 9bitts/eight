@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { assertAllowedProfileMedia } from "@/lib/media-url";
 
 async function requireProfile() {
   const session = await auth();
@@ -32,6 +33,11 @@ export async function updateProfile(data: ProfileEditInput) {
 
   const bio = data.bio?.trim() || null;
   if (bio && bio.length > 160) throw new Error("Bio muito longa.");
+
+  assertAllowedProfileMedia({
+    avatarUrl: data.avatarUrl,
+    bannerUrl: data.bannerUrl,
+  });
 
   await prisma.profile.update({
     where: { id: profileId },

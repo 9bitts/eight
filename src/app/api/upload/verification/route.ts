@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { uploadPrivateVerificationFile, extensionForMime } from "@/lib/storage";
+import { uploadPrivateVerificationFile } from "@/lib/storage";
+import {
+  VERIFICATION_UPLOAD_MIMES,
+  validateFileSignature,
+} from "@/lib/file-signature";
 import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const MAX_DOC = 10 * 1024 * 1024;
-const DOC_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/pdf",
-];
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -25,16 +23,20 @@ export async function POST(req: Request) {
   const file = form.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Arquivo ausente" }, { status: 400 });
 
-  if (!DOC_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: "Envie imagem (JPG, PNG, WebP) ou PDF." }, { status: 400 });
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const detected = validateFileSignature(buffer, VERIFICATION_UPLOAD_MIMES);
+  if (!detected) {
+    return NextResponse.json(
+      { error: "Envie imagem (JPG, PNG, WebP) ou PDF válidos." },
+      { status: 400 }
+    );
   }
+
   if (file.size > MAX_DOC) {
     return NextResponse.json({ error: "Arquivo muito grande (máx. 10 MB)." }, { status: 400 });
   }
 
-  const ext = extensionForMime(file.type);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const key = await uploadPrivateVerificationFile(buffer, ext, file.type);
+  const key = await uploadPrivateVerificationFile(buffer, detected.ext, detected.mime);
 
   return NextResponse.json({ key });
 }

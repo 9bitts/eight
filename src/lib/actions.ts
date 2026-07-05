@@ -8,7 +8,12 @@ import { extractFirstUrl } from "@/lib/post-text";
 import { syncHashtags, notifyMentions } from "@/lib/post-server";
 import { createNotificationIfAllowed } from "@/lib/notifications-server";
 import { rateLimit } from "@/lib/rate-limit";
+import {
+  detectClinicalCaseViolations,
+  isInClinicalCaseThread,
+} from "@/lib/cases";
 import { detectPII } from "@/lib/pii-detector";
+import { assertAllowedPostMedia } from "@/lib/media-url";
 import { toggleUniqueRecord } from "@/lib/toggle-record";
 import { POST_EDIT_WINDOW_MS, POST_MAX_LENGTH } from "@/lib/constants";
 import type { CreatePostInput } from "@/lib/types";
@@ -34,6 +39,20 @@ async function notify(
   postId?: string
 ) {
   await createNotificationIfAllowed(recipientId, actorId, type, postId);
+}
+
+function assertTextAllowedForPost(
+  text: string,
+  opts: { isClinicalCasePost: boolean; inClinicalCaseThread: boolean }
+) {
+  if (opts.isClinicalCasePost || opts.inClinicalCaseThread) {
+    const violation = detectClinicalCaseViolations(text);
+    if (violation) throw new Error(violation);
+    return;
+  }
+
+  const pii = detectPII(text);
+  if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
 }
 
 async function buildLinkFields(body: string) {
@@ -68,9 +87,17 @@ async function createSinglePost(
   }
   if (text.length > POST_MAX_LENGTH) throw new Error(`Máximo ${POST_MAX_LENGTH} caracteres`);
 
+  assertAllowedPostMedia({
+    images: data.images,
+    videoUrl: data.videoUrl,
+    gifUrl: data.gifUrl,
+  });
+
   if (text) {
-    const pii = detectPII(text);
-    if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
+    const inClinicalCaseThread = data.parentId
+      ? await isInClinicalCaseThread(data.parentId)
+      : false;
+    assertTextAllowedForPost(text, { isClinicalCasePost: false, inClinicalCaseThread });
   }
 
   const linkFields = text ? await buildLinkFields(text) : {};
@@ -157,11 +184,13 @@ export async function editPost(postId: string, body: string) {
   const text = body.trim();
   if (!text || text.length > POST_MAX_LENGTH) throw new Error("Texto inválido");
 
-  const pii = detectPII(text);
-  if (pii.blocked) throw new Error(pii.reason ?? "Remova dados identificáveis da publicação.");
-
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.authorId !== profileId) throw new Error("Não autorizado");
+
+  assertTextAllowedForPost(text, {
+    isClinicalCasePost: post.isClinicalCase,
+    inClinicalCaseThread: false,
+  });
 
   const editDeadline = post.createdAt.getTime() + POST_EDIT_WINDOW_MS;
   if (Date.now() > editDeadline) {
