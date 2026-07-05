@@ -40,6 +40,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[signup/basic]", err);
+    const code = (err as { code?: string }).code;
+    if (code === "P2022") {
+      return NextResponse.json(
+        { error: "Banco de dados desatualizado. Aguarde o deploy ou contate o suporte." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Não foi possível criar a conta." }, { status: 500 });
   }
 }
