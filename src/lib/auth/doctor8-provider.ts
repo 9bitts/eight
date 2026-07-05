@@ -25,16 +25,24 @@ export function doctor8Provider(
     clientId: process.env.AUTH_DOCTOR8_ID,
     clientSecret: process.env.AUTH_DOCTOR8_SECRET,
     allowDangerousEmailAccountLinking: true,
+    // Doctor8 OIDC não expõe PKCE em /.well-known/openid-configuration;
+    // Auth.js usa PKCE por padrão e a troca do code falha com erro "Configuration".
+    checks: ["state"],
     client: {
       token_endpoint_auth_method: "client_secret_post",
     },
     authorization: { params: { scope: "openid email profile" } },
     profile(profile) {
+      const email =
+        typeof profile.email === "string" && profile.email.trim()
+          ? profile.email.trim()
+          : undefined;
+
       return {
         id: profile.sub,
-        name: profile.name ?? profile.preferred_username ?? null,
-        email: profile.email ?? null,
-        image: profile.picture ?? null,
+        name: profile.name ?? profile.preferred_username ?? undefined,
+        email,
+        image: profile.picture ?? undefined,
         role: profile.role,
       };
     },

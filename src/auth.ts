@@ -61,7 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.verificationStatus = profile.verificationStatus;
             token.isAdmin =
               profile.user.isAdmin ||
-              adminEmails.includes(profile.user.email.toLowerCase());
+              adminEmails.includes(profile.user.email?.toLowerCase() ?? "");
           }
         } else {
           delete token.profileId;
