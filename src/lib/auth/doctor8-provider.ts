@@ -31,6 +31,7 @@ export function doctor8Provider(
     authorization: { params: { scope: "openid email profile" } },
     profile(profile) {
       return {
+        id: profile.sub,
         name: profile.name ?? profile.preferred_username ?? null,
         email: profile.email ?? null,
         image: profile.picture ?? null,

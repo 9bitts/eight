@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/i18n/LocaleProvider";
@@ -42,7 +43,7 @@ export function Doctor8LoginButton({
       .catch(() => setConfigured(false));
   }, []);
 
-  const onLogin = () => {
+  const onLogin = async () => {
     if (loading) return;
     setError("");
 
@@ -53,13 +54,18 @@ export function Doctor8LoginButton({
 
     setLoading(true);
 
-    if (invite) {
-      document.cookie = `eight_invite=${encodeURIComponent(invite)}; path=/; max-age=3600; SameSite=Lax`;
-    }
+    try {
+      if (invite) {
+        document.cookie = `eight_invite=${encodeURIComponent(invite)}; path=/; max-age=3600; SameSite=Lax`;
+      }
 
-    const safe = sanitizeCallbackUrl(callbackUrl);
-    const params = new URLSearchParams({ callbackUrl: safe });
-    window.location.assign(`/api/auth/signin/doctor8?${params.toString()}`);
+      await signIn("doctor8", {
+        callbackUrl: sanitizeCallbackUrl(callbackUrl),
+      });
+    } catch {
+      setError(t("auth.doctor8Error"));
+      setLoading(false);
+    }
   };
 
   return (
