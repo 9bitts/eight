@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     if (message.includes("Cota")) {
       return NextResponse.json({ error: message }, { status: 507 });
     }
+    console.error(err);
     throw err;
   }
 

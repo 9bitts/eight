@@ -159,6 +159,10 @@ export async function uploadFile(
     return `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${key}`;
   }
 
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Storage de objeto não configurado em produção");
+  }
+
   const dir = path.join(process.cwd(), "public", "uploads");
   await assertLocalUploadQuota(buffer.length);
   await mkdir(dir, { recursive: true });
@@ -189,6 +193,10 @@ export async function uploadPrivateVerificationFile(
       })
     );
     return key;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Storage de objeto não configurado em produção");
   }
 
   const relative = key.slice("verification/".length);
