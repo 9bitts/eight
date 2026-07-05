@@ -43,6 +43,8 @@ const pt: Dict = {
     loginSubtitleDoctor8: "Use sua conta Doctor8 para acessar a rede.",
     loginWithDoctor8: "Entrar com a Doctor8",
     doctor8Error: "Não foi possível conectar à Doctor8. Tente novamente.",
+    doctor8NotConfigured:
+      "Login Doctor8 não configurado no servidor. Verifique AUTH_DOCTOR8_ID, AUTH_DOCTOR8_SECRET e AUTH_DOCTOR8_ISSUER.",
     signup: "Criar conta",
     emailLogin: "Entrar com e-mail",
     emailSignup: "Cadastrar com e-mail",
@@ -126,6 +128,8 @@ const en: Dict = {
     loginSubtitleDoctor8: "Use your Doctor8 account to access the network.",
     loginWithDoctor8: "Sign in with Doctor8",
     doctor8Error: "Could not connect to Doctor8. Please try again.",
+    doctor8NotConfigured:
+      "Doctor8 login is not configured on the server. Check AUTH_DOCTOR8_ID, AUTH_DOCTOR8_SECRET and AUTH_DOCTOR8_ISSUER.",
     signup: "Create account",
     emailLogin: "Sign in with email",
     emailSignup: "Sign up with email",
@@ -209,6 +213,8 @@ const es: Dict = {
     loginSubtitleDoctor8: "Usa tu cuenta Doctor8 para acceder a la red.",
     loginWithDoctor8: "Entrar con Doctor8",
     doctor8Error: "No se pudo conectar con Doctor8. Inténtalo de nuevo.",
+    doctor8NotConfigured:
+      "El login Doctor8 no está configurado en el servidor. Verifique AUTH_DOCTOR8_ID, AUTH_DOCTOR8_SECRET y AUTH_DOCTOR8_ISSUER.",
     signup: "Crear cuenta",
     emailLogin: "Entrar con e-mail",
     emailSignup: "Registrarse con e-mail",

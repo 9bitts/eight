@@ -24,14 +24,17 @@ export function doctor8Provider(
     issuer,
     clientId: process.env.AUTH_DOCTOR8_ID,
     clientSecret: process.env.AUTH_DOCTOR8_SECRET,
+    allowDangerousEmailAccountLinking: true,
+    client: {
+      token_endpoint_auth_method: "client_secret_post",
+    },
     authorization: { params: { scope: "openid email profile" } },
     profile(profile) {
       return {
-        id: profile.sub,
         name: profile.name ?? profile.preferred_username ?? null,
         email: profile.email ?? null,
         image: profile.picture ?? null,
-        doctor8Role: profile.role,
+        role: profile.role,
       };
     },
     ...config,

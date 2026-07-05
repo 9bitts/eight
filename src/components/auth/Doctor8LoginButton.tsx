@@ -1,8 +1,7 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
@@ -34,24 +33,33 @@ export function Doctor8LoginButton({
   const { t } = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [configured, setConfigured] = useState<boolean | null>(null);
 
-  const onLogin = async () => {
+  useEffect(() => {
+    fetch("/api/auth/providers")
+      .then((r) => r.json())
+      .then((data: { doctor8?: boolean }) => setConfigured(!!data.doctor8))
+      .catch(() => setConfigured(false));
+  }, []);
+
+  const onLogin = () => {
     if (loading) return;
     setError("");
+
+    if (configured === false) {
+      setError(t("auth.doctor8NotConfigured"));
+      return;
+    }
+
     setLoading(true);
 
-    try {
-      if (invite) {
-        document.cookie = `eight_invite=${encodeURIComponent(invite)}; path=/; max-age=3600; SameSite=Lax`;
-      }
-
-      await signIn("doctor8", {
-        callbackUrl: sanitizeCallbackUrl(callbackUrl),
-      });
-    } catch {
-      setError(t("auth.doctor8Error"));
-      setLoading(false);
+    if (invite) {
+      document.cookie = `eight_invite=${encodeURIComponent(invite)}; path=/; max-age=3600; SameSite=Lax`;
     }
+
+    const safe = sanitizeCallbackUrl(callbackUrl);
+    const params = new URLSearchParams({ callbackUrl: safe });
+    window.location.assign(`/api/auth/signin/doctor8?${params.toString()}`);
   };
 
   return (
@@ -65,7 +73,7 @@ export function Doctor8LoginButton({
         type="button"
         className={className}
         onClick={onLogin}
-        disabled={loading}
+        disabled={loading || configured === false}
         style={{ opacity: loading ? 0.85 : 1, width: fullWidth ? "100%" : undefined }}
       >
         {loading ? (
