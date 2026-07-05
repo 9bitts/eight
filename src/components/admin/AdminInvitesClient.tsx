@@ -109,7 +109,7 @@ export function AdminInvitesClient({
                 <strong>{r.email}</strong>
                 {r.sent && <span style={{ color: "#1a9c5b" }}> · e-mail enviado</span>}
                 <br />
-                <code style={{ fontSize: 12 }}>{site}/signup?invite={r.code}</code>
+                <code style={{ fontSize: 12 }}>{site}/login?invite={r.code}</code>
               </div>
             ))}
           </div>

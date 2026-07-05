@@ -7,7 +7,6 @@ export default function Home() {
   return (
     <>
       <div className="screen" style={{ fontFamily: "var(--font-body), system-ui, sans-serif" }}>
-        {/* ESQUERDA */}
         <div className="left">
           <div className="brand">
             <Logo size={34} />
@@ -32,10 +31,6 @@ export default function Home() {
 
           <AuthEntry />
 
-          <p className="signin">
-            Já faz parte? <Link href="/login">Entrar</Link>
-          </p>
-
           <p className="legal">
             Ao continuar, você concorda com os <Link href="/termos">Termos</Link> e a{" "}
             <Link href="/privacidade">Política de Privacidade</Link> da eight. Seu registro profissional
@@ -43,7 +38,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* DIREITA */}
         <div className="right" aria-hidden="true">
           <div className="glow glow-b"></div>
           <div className="glow glow-o"></div>

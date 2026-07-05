@@ -8,7 +8,7 @@ export default function HowItWorksPage() {
     <LegalLayout title="Como funciona">
       <ol style={{ paddingLeft: 20 }}>
         <li style={{ marginBottom: 12 }}>
-          <strong>Crie sua conta</strong> com e-mail ou login social (X, Google, Apple).
+          <strong>Entre com sua conta Doctor8</strong> — o login da eight usa a mesma identidade da plataforma Doctor8.
         </li>
         <li style={{ marginBottom: 12 }}>
           <strong>Complete o perfil</strong> com especialidade e registro profissional (CRM, COREN, etc.).

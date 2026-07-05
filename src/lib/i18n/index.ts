@@ -40,6 +40,9 @@ const pt: Dict = {
   auth: {
     login: "Entrar na eight",
     loginSubtitle: "A rede dos profissionais de saúde verificados.",
+    loginSubtitleDoctor8: "Use sua conta Doctor8 para acessar a rede.",
+    loginWithDoctor8: "Entrar com a Doctor8",
+    doctor8Error: "Não foi possível conectar à Doctor8. Tente novamente.",
     signup: "Criar conta",
     emailLogin: "Entrar com e-mail",
     emailSignup: "Cadastrar com e-mail",
@@ -120,6 +123,9 @@ const en: Dict = {
   auth: {
     login: "Sign in to eight",
     loginSubtitle: "The network for verified healthcare professionals.",
+    loginSubtitleDoctor8: "Use your Doctor8 account to access the network.",
+    loginWithDoctor8: "Sign in with Doctor8",
+    doctor8Error: "Could not connect to Doctor8. Please try again.",
     signup: "Create account",
     emailLogin: "Sign in with email",
     emailSignup: "Sign up with email",
@@ -200,6 +206,9 @@ const es: Dict = {
   auth: {
     login: "Entrar en eight",
     loginSubtitle: "La red de profesionales de salud verificados.",
+    loginSubtitleDoctor8: "Usa tu cuenta Doctor8 para acceder a la red.",
+    loginWithDoctor8: "Entrar con Doctor8",
+    doctor8Error: "No se pudo conectar con Doctor8. Inténtalo de nuevo.",
     signup: "Crear cuenta",
     emailLogin: "Entrar con e-mail",
     emailSignup: "Registrarse con e-mail",

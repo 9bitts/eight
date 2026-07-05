@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { handleError, normalizeHandle } from "@/lib/validators";
 import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { inviteRequired, markInviteUsed, validateInvite } from "@/lib/invites";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -19,6 +21,23 @@ export async function POST(req: Request) {
   });
   if (existing) {
     return NextResponse.json({ error: "Perfil já configurado." }, { status: 409 });
+  }
+
+  const userEmail = session.user.email?.trim().toLowerCase();
+  let inviteCode: string | undefined;
+
+  if (inviteRequired()) {
+    if (!userEmail) {
+      return NextResponse.json({ error: "E-mail da conta Doctor8 não disponível." }, { status: 403 });
+    }
+    inviteCode = cookies().get("eight_invite")?.value?.trim();
+    if (!inviteCode) {
+      return NextResponse.json({ error: "Convite necessário para criar perfil." }, { status: 403 });
+    }
+    const check = await validateInvite(inviteCode, userEmail);
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 403 });
+    }
   }
 
   let body: Record<string, unknown>;
@@ -70,6 +89,10 @@ export async function POST(req: Request) {
       },
     },
   });
+
+  if (inviteCode) {
+    await markInviteUsed(inviteCode, session.user.id);
+  }
 
   return NextResponse.json({ ok: true, handle });
 }

@@ -1,20 +1,18 @@
 "use client";
 
-import { Suspense, useState, FormEvent, useRef, useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getSession, signIn } from "next-auth/react";
-import { Loader2 } from "lucide-react";
 import Logo from "@/components/Logo";
+import { Doctor8LoginButton } from "@/components/auth/Doctor8LoginButton";
 import { useLocale } from "@/components/i18n/LocaleProvider";
-import { redirectAfterAuth, sanitizeCallbackUrl } from "@/lib/auth-redirect";
+import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 function LoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { t } = useLocale();
   const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
-  const resetOk = searchParams.get("reset") === "ok";
+  const invite = searchParams.get("invite");
 
   useEffect(() => {
     const raw = searchParams.get("callbackUrl");
@@ -23,92 +21,13 @@ function LoginContent() {
     if (raw === safe) return;
     const params = new URLSearchParams();
     if (safe !== "/feed") params.set("callbackUrl", safe);
-    const reset = searchParams.get("reset");
-    if (reset) params.set("reset", reset);
+    const inv = searchParams.get("invite");
+    if (inv) params.set("invite", inv);
     const qs = params.toString();
     router.replace(qs ? `/login?${qs}` : "/login");
   }, [searchParams, router]);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const submittingRef = useRef(false);
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (submittingRef.current || loading) return;
-    setError("");
-    setLoading(true);
-    submittingRef.current = true;
-
-    try {
-      const normalized = email.trim().toLowerCase();
-
-      const res = await signIn("credentials", {
-        email: normalized,
-        password,
-        redirect: false,
-      });
-
-      if (!res?.ok) {
-        setError("E-mail ou senha incorretos.");
-        return;
-      }
-
-      await getSession();
-      redirectAfterAuth(callbackUrl);
-    } catch {
-      setError("Erro de conexão. Tente novamente.");
-    } finally {
-      submittingRef.current = false;
-      setLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <form onSubmit={onSubmit} className="auth">
-        {resetOk && (
-          <p className="signup-hint ok" style={{ marginBottom: 8 }}>
-            {t("auth.resetSuccess")}
-          </p>
-        )}
-        {error && <p className="signup-error" style={{ marginBottom: 8 }}>{error}</p>}
-        <input
-          className="field"
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoFocus
-        />
-        <input
-          className="field"
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <p style={{ textAlign: "right", marginTop: -4, marginBottom: 8 }}>
-          <Link href="/login/esqueci-senha" style={{ fontSize: 13, color: "#4aa9c6" }}>
-            {t("auth.forgotPassword")}
-          </Link>
-        </p>
-        <button type="submit" className="auth-btn btn-orange" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 size={18} className="spin" /> …
-            </>
-          ) : (
-            t("auth.emailLogin")
-          )}
-        </button>
-      </form>
-    </>
-  );
+  return <Doctor8LoginButton callbackUrl={callbackUrl} invite={invite} />;
 }
 
 export default function LoginPage() {
@@ -129,17 +48,14 @@ export default function LoginPage() {
           {t("auth.login")}
         </h1>
         <p className="lede" style={{ marginBottom: 28 }}>
-          {t("auth.loginSubtitle")}
+          {t("auth.loginSubtitleDoctor8")}
         </p>
 
         <Suspense fallback={<p className="lede">…</p>}>
           <LoginContent />
         </Suspense>
 
-        <p className="signin">
-          {t("auth.noAccount")} <Link href="/signup">{t("auth.signup")}</Link>
-        </p>
-        <p className="signin" style={{ marginTop: 12 }}>
+        <p className="signin" style={{ marginTop: 20 }}>
           <Link href="/">← Voltar ao início</Link>
         </p>
       </div>

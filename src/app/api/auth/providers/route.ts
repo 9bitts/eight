@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
+import { isDoctor8AuthConfigured } from "@/lib/auth/doctor8-provider";
 
 export async function GET() {
   return NextResponse.json({
-    twitter: false,
-    google: false,
-    apple: false,
+    doctor8: isDoctor8AuthConfigured(),
   });
 }

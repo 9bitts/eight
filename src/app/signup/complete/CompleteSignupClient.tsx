@@ -126,7 +126,7 @@ function CompleteForm({
             Escolha seu @nome
           </h2>
           <p className="signup-sub">
-            Você entrou com o X. Falta só configurar seu perfil profissional na eight.
+            Você entrou com a Doctor8. Falta só configurar seu perfil profissional na eight.
           </p>
 
           <label className="signup-label">Nome de exibição</label>

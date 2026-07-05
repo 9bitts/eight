@@ -95,13 +95,13 @@ export async function createUserWithInvite(
 }
 
 export async function sendInviteEmail(email: string, code: string) {
-  const link = `${SITE()}/signup?invite=${code}`;
+  const link = `${SITE()}/login?invite=${code}`;
   const result = await sendEmail({
     to: email,
     subject: "Convite para a eight — rede Doctor8",
     html: `
       <p>Você foi convidado para a <strong>eight</strong>, a rede dos profissionais de saúde.</p>
-      <p><a href="${link}">Criar minha conta</a></p>
+      <p><a href="${link}">Entrar na eight com Doctor8</a></p>
       <p style="color:#666;font-size:13px">Ou copie o link: ${link}</p>
     `,
   });
