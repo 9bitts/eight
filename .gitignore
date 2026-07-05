@@ -9,3 +9,6 @@ next-env.d.ts
 
 /src/generated/prisma
 /data/verification
+
+doctor8-sso-private.pem
+*.pem
