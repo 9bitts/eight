@@ -36,7 +36,10 @@ function LogoMark() {
   return (
     <div className="flex items-center gap-2 px-3 py-2">
       <EightLogo variant="icon" size={30} />
-      <span style={{ fontWeight: 800, fontSize: 21, color: INK, letterSpacing: "-0.03em" }}>
+      <span
+        className="hidden xl:inline"
+        style={{ fontWeight: 800, fontSize: 21, color: INK, letterSpacing: "-0.03em" }}
+      >
         eight
       </span>
     </div>
@@ -177,10 +180,10 @@ export function FeedShell({
     <div style={{ background: BG, minHeight: "100vh", color: INK }}>
       <div className="mx-auto flex" style={{ maxWidth: 1280 }}>
         <aside
-          className="hidden sm:flex flex-col sticky top-0 h-screen px-2 py-2"
-          style={{ width: 88, borderRight: `1px solid ${LINE}`, background: BG }}
+          className="hidden sm:flex shrink-0 flex-col sticky top-0 h-screen w-[88px] xl:w-64 px-2 py-2"
+          style={{ borderRight: `1px solid ${LINE}`, background: BG }}
         >
-          <div className="xl:w-64 flex flex-col h-full">
+          <div className="flex flex-col h-full w-full min-w-0">
             <Link href="/feed">
               <LogoMark />
             </Link>
@@ -209,7 +212,7 @@ export function FeedShell({
             <button
               type="button"
               onClick={() => document.getElementById("composer")?.focus()}
-              className="mt-4 rounded-full py-3 px-4 font-bold transition-transform hover:-translate-y-0.5"
+              className="mt-4 w-full rounded-full py-3 px-4 font-bold transition-transform hover:-translate-y-0.5"
               style={{
                 background: ORANGE,
                 color: "#fff",
