@@ -7,6 +7,12 @@ vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: vi.fn(),
 }));
 
+const KEY_A =
+  "verification/profile-a/550e8400-e29b-41d4-a716-446655440000.pdf";
+const KEY_B =
+  "verification/profile-b/660e8400-e29b-41d4-a716-446655440001.pdf";
+const LEGACY_KEY = "verification/770e8400-e29b-41d4-a716-446655440002.pdf";
+
 describe("getSignedDownloadUrl", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -29,14 +35,14 @@ describe("getSignedDownloadUrl", () => {
   });
 
   it("passa expiração padrão de 900 segundos ao presigner", async () => {
-    await getSignedDownloadUrl("verification/doc.pdf");
+    await getSignedDownloadUrl(KEY_A, undefined, "profile-a");
 
     expect(getSignedUrl).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         input: expect.objectContaining({
           Bucket: "eight-private",
-          Key: "verification/doc.pdf",
+          Key: KEY_A,
         }),
       }),
       { expiresIn: 900 }
@@ -44,31 +50,37 @@ describe("getSignedDownloadUrl", () => {
   });
 
   it("gera URLs distintas para documentos de usuários diferentes", async () => {
-    const urlA = await getSignedDownloadUrl("verification/user-a.pdf");
-    const urlB = await getSignedDownloadUrl("verification/user-b.pdf");
+    const urlA = await getSignedDownloadUrl(KEY_A, undefined, "profile-a");
+    const urlB = await getSignedDownloadUrl(KEY_B, undefined, "profile-b");
 
-    expect(urlA).toContain("verification/user-a.pdf");
-    expect(urlB).toContain("verification/user-b.pdf");
+    expect(urlA).toContain(KEY_A);
+    expect(urlB).toContain(KEY_B);
     expect(urlA).not.toBe(urlB);
 
     const calls = vi.mocked(getSignedUrl).mock.calls;
     const keyA = (calls[0][1] as GetObjectCommand).input.Key;
     const keyB = (calls[1][1] as GetObjectCommand).input.Key;
-    expect(keyA).toBe("verification/user-a.pdf");
-    expect(keyB).toBe("verification/user-b.pdf");
+    expect(keyA).toBe(KEY_A);
+    expect(keyB).toBe(KEY_B);
   });
 
   it("extrai chave de URL legada antes de assinar", async () => {
     await getSignedDownloadUrl(
-      "https://s3.example.com/eight-private/verification/legacy.pdf"
+      "https://s3.example.com/eight-private/verification/770e8400-e29b-41d4-a716-446655440002.pdf"
     );
 
     expect(getSignedUrl).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        input: expect.objectContaining({ Key: "verification/legacy.pdf" }),
+        input: expect.objectContaining({ Key: LEGACY_KEY }),
       }),
       expect.objectContaining({ expiresIn: 900 })
+    );
+  });
+
+  it("rejeita chave de verificação de outro perfil", async () => {
+    await expect(getSignedDownloadUrl(KEY_A, undefined, "profile-other")).rejects.toThrow(
+      "Documento inválido."
     );
   });
 });

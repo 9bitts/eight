@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BadgeCheck, Clock, XCircle, Upload, Loader2, FileText } from "lucide-react";
 import {
-  submitVerificationDocument,
   updateRegistrationInfo,
 } from "@/lib/actions/verification";
 import {
@@ -101,8 +100,7 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
       const res = await fetch("/api/upload/verification", { method: "POST", body: fd });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
-      startTransition(async () => {
-        await submitVerificationDocument(json.key);
+      startTransition(() => {
         router.refresh();
       });
     } catch (e) {

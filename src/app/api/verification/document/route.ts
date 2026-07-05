@@ -1,5 +1,3 @@
-import { readFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { isAdminUser } from "@/lib/admin";
@@ -7,9 +5,9 @@ import { prisma } from "@/lib/prisma";
 import {
   getSignedDownloadUrl,
   isCloudStorageEnabled,
-  parseStorageKey,
   readLocalVerificationFile,
 } from "@/lib/storage";
+import { assertSafeVerificationStorageKey } from "@/lib/verification-storage";
 
 function contentTypeForFilename(filename: string): string {
   const ext = filename.split(".").pop()?.toLowerCase();
@@ -28,6 +26,10 @@ function contentTypeForFilename(filename: string): string {
   }
 }
 
+function notFound() {
+  return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+}
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user?.id || !session.user.profileId) {
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
   const isOwner = profileId === session.user.profileId;
   const isAdmin = await isAdminUser(session.user.id, session.user.email);
   if (!isOwner && !isAdmin) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    return notFound();
   }
 
   const profile = await prisma.profile.findUnique({
@@ -49,35 +51,28 @@ export async function GET(req: Request) {
   });
   const stored = profile?.verificationDocumentUrl;
   if (!stored) {
-    return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
+    return notFound();
+  }
+
+  let safeKey: string;
+  try {
+    safeKey = assertSafeVerificationStorageKey(stored, profileId);
+  } catch {
+    return notFound();
   }
 
   if (isCloudStorageEnabled()) {
-    const signed = await getSignedDownloadUrl(parseStorageKey(stored));
-    return NextResponse.redirect(signed);
-  }
-
-  if (stored.startsWith("/")) {
     try {
-      const relative = stored.replace(/^\/+/, "");
-      const buffer = await readFile(path.join(process.cwd(), "public", relative));
-      const filename = relative.split("/").pop() ?? "documento";
-      const contentType = contentTypeForFilename(filename);
-      return new NextResponse(new Uint8Array(buffer), {
-        headers: {
-          "Content-Type": contentType,
-          "Content-Disposition": `inline; filename="${filename}"`,
-          "Cache-Control": "private, no-store",
-        },
-      });
+      const signed = await getSignedDownloadUrl(safeKey, undefined, profileId);
+      return NextResponse.redirect(signed);
     } catch {
-      return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
+      return notFound();
     }
   }
 
   try {
-    const buffer = await readLocalVerificationFile(stored);
-    const filename = parseStorageKey(stored).split("/").pop() ?? "documento";
+    const buffer = await readLocalVerificationFile(safeKey, profileId);
+    const filename = safeKey.split("/").pop() ?? "documento";
     const contentType = contentTypeForFilename(filename);
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
@@ -87,6 +82,6 @@ export async function GET(req: Request) {
       },
     });
   } catch {
-    return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
+    return notFound();
   }
 }

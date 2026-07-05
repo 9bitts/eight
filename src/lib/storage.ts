@@ -9,6 +9,12 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { LOCAL_UPLOADS_MAX_BYTES } from "@/lib/constants";
 import { extensionForMime } from "@/lib/mime-ext";
+import {
+  LOCAL_VERIFICATION_DIR,
+  assertSafeVerificationStorageKey,
+  buildVerificationStorageKey,
+  resolveLocalVerificationFilePath,
+} from "@/lib/verification-storage";
 
 const VERIFICATION_SIGNED_URL_TTL_SEC = 15 * 60;
 
@@ -93,12 +99,16 @@ export function parseStorageKey(stored: string): string {
 
 export async function getSignedDownloadUrl(
   keyOrStored: string,
-  expiresInSec = VERIFICATION_SIGNED_URL_TTL_SEC
+  expiresInSec = VERIFICATION_SIGNED_URL_TTL_SEC,
+  expectedProfileId?: string
 ): Promise<string> {
   if (!s3Configured()) {
     throw new Error("S3 não configurado");
   }
   const key = parseStorageKey(keyOrStored);
+  if (key.startsWith("verification/")) {
+    assertSafeVerificationStorageKey(key, expectedProfileId);
+  }
   const client = getS3Client();
   return getSignedUrl(
     client,
@@ -110,14 +120,17 @@ export async function getSignedDownloadUrl(
   );
 }
 
-export function localVerificationFilePath(keyOrStored: string): string {
+export function localVerificationFilePath(keyOrStored: string, expectedProfileId?: string): string {
   const key = parseStorageKey(keyOrStored);
-  const relative = key.startsWith("verification/") ? key.slice("verification/".length) : key;
-  return path.join(process.cwd(), "data", "verification", relative);
+  assertSafeVerificationStorageKey(key, expectedProfileId);
+  return resolveLocalVerificationFilePath(key);
 }
 
-export async function readLocalVerificationFile(keyOrStored: string): Promise<Buffer> {
-  return readFile(localVerificationFilePath(keyOrStored));
+export async function readLocalVerificationFile(
+  keyOrStored: string,
+  expectedProfileId?: string
+): Promise<Buffer> {
+  return readFile(localVerificationFilePath(keyOrStored, expectedProfileId));
 }
 
 export async function uploadFile(
@@ -157,10 +170,13 @@ export async function uploadFile(
 export async function uploadPrivateVerificationFile(
   buffer: Buffer,
   ext: string,
-  contentType: string
+  contentType: string,
+  ownerProfileId: string
 ): Promise<string> {
-  const filename = `${randomUUID()}.${extensionForMime(contentType) !== "bin" ? extensionForMime(contentType) : ext}`;
-  const key = `verification/${filename}`;
+  const key = buildVerificationStorageKey(
+    ownerProfileId,
+    extensionForMime(contentType) !== "bin" ? extensionForMime(contentType) : ext
+  );
 
   if (s3Configured()) {
     const client = getS3Client();
@@ -175,8 +191,9 @@ export async function uploadPrivateVerificationFile(
     return key;
   }
 
-  const dir = path.join(process.cwd(), "data", "verification");
+  const relative = key.slice("verification/".length);
+  const dir = path.dirname(path.join(LOCAL_VERIFICATION_DIR, relative));
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), buffer);
+  await writeFile(path.join(LOCAL_VERIFICATION_DIR, relative), buffer);
   return key;
 }

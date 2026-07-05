@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { uploadPrivateVerificationFile } from "@/lib/storage";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -8,8 +9,20 @@ vi.mock("@/auth", () => ({
   auth: vi.fn(),
 }));
 
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    profile: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+  },
+}));
+
 vi.mock("@/lib/storage", () => ({
-  uploadPrivateVerificationFile: vi.fn(async () => "verification/test.pdf"),
+  uploadPrivateVerificationFile: vi.fn(
+    async () =>
+      "verification/profile-1/550e8400-e29b-41d4-a716-446655440000.pdf"
+  ),
 }));
 
 vi.mock("@/lib/rate-limit", async (importOriginal) => {
@@ -41,6 +54,10 @@ describe("POST /api/upload/verification", () => {
       user: { id: "user-1", profileId: "profile-1" },
     } as never);
     vi.mocked(rateLimit).mockResolvedValue({ ok: true });
+    vi.mocked(prisma.profile.findUnique).mockResolvedValue({
+      verificationStatus: "PENDING",
+    } as never);
+    vi.mocked(prisma.profile.update).mockResolvedValue({} as never);
   });
 
   it("retorna 429 quando rate limit estoura", async () => {
@@ -54,16 +71,27 @@ describe("POST /api/upload/verification", () => {
     expect(uploadPrivateVerificationFile).not.toHaveBeenCalled();
   });
 
-  it("aceita PDF com assinatura válida", async () => {
+  it("aceita PDF com assinatura válida e persiste chave no servidor", async () => {
     const res = await POST(verificationUploadRequest(PDF_BYTES, "crm.pdf", "application/pdf"));
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.key).toBe("verification/test.pdf");
+    expect(json).toEqual({ ok: true });
+    expect(json.key).toBeUndefined();
     expect(uploadPrivateVerificationFile).toHaveBeenCalledWith(
       expect.any(Buffer),
       "pdf",
-      "application/pdf"
+      "application/pdf",
+      "profile-1"
+    );
+    expect(prisma.profile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "profile-1" },
+        data: expect.objectContaining({
+          verificationDocumentUrl:
+            "verification/profile-1/550e8400-e29b-41d4-a716-446655440000.pdf",
+        }),
+      })
     );
   });
 
@@ -74,5 +102,6 @@ describe("POST /api/upload/verification", () => {
     expect(res.status).toBe(400);
     expect(json.error).toContain("PDF válidos");
     expect(uploadPrivateVerificationFile).not.toHaveBeenCalled();
+    expect(prisma.profile.update).not.toHaveBeenCalled();
   });
 });

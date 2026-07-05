@@ -11,7 +11,7 @@ export async function resolveVerificationDocumentUrl(
   if (!stored) return null;
 
   if (isCloudStorageEnabled()) {
-    return getSignedDownloadUrl(parseStorageKey(stored));
+    return getSignedDownloadUrl(parseStorageKey(stored), undefined, profileId);
   }
 
   return `/api/verification/document?profileId=${encodeURIComponent(profileId)}`;
