@@ -55,6 +55,12 @@ export function sanitizeCallbackUrl(
   return path;
 }
 
+/** Destino após login/cadastro — perfil incompleto vai para completar cadastro. */
+export function resolvePostAuthRedirect(callbackUrl: string, hasProfile: boolean): string {
+  if (!hasProfile) return "/signup/complete";
+  return sanitizeCallbackUrl(callbackUrl);
+}
+
 /** Navegação completa após login — garante que o cookie de sessão vá no próximo request. */
 export function redirectAfterAuth(url: string) {
   const safe = sanitizeCallbackUrl(url);

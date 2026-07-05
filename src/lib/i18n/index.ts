@@ -39,7 +39,7 @@ const pt: Dict = {
   },
   auth: {
     login: "Entrar na eight",
-    loginSubtitle: "A rede dos profissionais de saúde verificados.",
+    loginSubtitle: "Entre com e-mail e senha ou use sua conta Doctor8.",
     loginSubtitleDoctor8: "Use sua conta Doctor8 para acessar a rede.",
     loginWithDoctor8: "Entrar com a Doctor8",
     doctor8Error: "Não foi possível conectar à Doctor8. Tente novamente.",

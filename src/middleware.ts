@@ -52,6 +52,12 @@ export default auth((req) => {
   }
 
   if (isLoggedIn && isAuthPage) {
+    if (!req.auth?.user?.profileId && pathname !== "/signup/complete") {
+      return NextResponse.redirect(new URL("/signup/complete", req.nextUrl.origin));
+    }
+    if (pathname === "/signup/complete") {
+      return NextResponse.next();
+    }
     const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
     const dest = sanitizeCallbackUrl(callbackUrl, req.nextUrl.origin);
     return NextResponse.redirect(new URL(dest, req.nextUrl.origin));

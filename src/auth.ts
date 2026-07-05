@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
 import { authConfig } from "@/auth.config";
 import { doctor8Provider } from "@/lib/auth/doctor8-provider";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +16,51 @@ const DOCTOR8_SSO_ROLES = new Set([
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
-  providers: [doctor8Provider()],
+  providers: [
+    doctor8Provider(),
+    Credentials({
+      id: "credentials",
+      name: "E-mail e senha",
+      credentials: {
+        email: { label: "E-mail", type: "email" },
+        password: { label: "Senha", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email?.toString().trim().toLowerCase();
+        const password = credentials?.password?.toString() ?? "";
+        if (!email || !password) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+          include: { profile: true },
+        });
+        if (!user?.passwordHash) return null;
+        if (user.profile?.suspended) return null;
+
+        const ok = await bcrypt.compare(password, user.passwordHash);
+        if (!ok) return null;
+
+        const adminEmails =
+          process.env.ADMIN_EMAILS?.split(",")
+            .map((e) => e.trim().toLowerCase())
+            .filter(Boolean) ?? [];
+        const isAdmin =
+          user.isAdmin || adminEmails.includes(user.email.toLowerCase());
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.profile?.displayName ?? user.name ?? user.email,
+          image: user.image,
+          handle: user.profile?.handle,
+          verified: user.profile?.verified,
+          verificationStatus: user.profile?.verificationStatus,
+          isAdmin,
+          profileId: user.profile?.id,
+        };
+      },
+    }),
+  ],
   debug: process.env.AUTH_DEBUG === "true",
   logger: {
     error(code, ...message) {
