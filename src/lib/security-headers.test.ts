@@ -45,6 +45,7 @@ describe("security headers globais", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("form-action 'self'");
+    expect(csp).toContain("report-uri /api/csp-report");
   });
 
   it("CSP omite unsafe-eval em produção e inclui em dev", () => {

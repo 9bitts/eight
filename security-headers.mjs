@@ -76,6 +76,7 @@ export function buildContentSecurityPolicyReportOnly(env = process.env) {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "report-uri /api/csp-report",
   ];
 
   return directives.join("; ");
