@@ -8,6 +8,7 @@
     "start": "next start",
     "start:prod": "prisma db push --skip-generate && next start",
     "db:push": "prisma db push",
+    "db:sync": "tsx scripts/railway-db-sync.ts",
     "db:migrate-totp-secrets": "tsx scripts/migrate-encrypt-totp-secrets.ts",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",

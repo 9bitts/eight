@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-releaseCommand = "npx prisma db push --skip-generate"
+releaseCommand = "npm run db:sync"
 startCommand = "npm run start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
