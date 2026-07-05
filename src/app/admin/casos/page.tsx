@@ -1,11 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { AdminCasesClient } from "@/components/admin/AdminCasesClient";
+import { requireAdminPage } from "@/lib/admin";
 import { getClinicalCasesForAdmin } from "@/lib/actions/cases-admin";
 
 export default async function AdminCasesPage() {
-  const session = await auth();
-  if (!session?.user?.isAdmin) redirect("/feed");
+  await requireAdminPage();
 
   const cases = await getClinicalCasesForAdmin();
 

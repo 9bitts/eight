@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
+import { shouldDenyAdminPathToNonAdmin } from "@/lib/admin-access";
 import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 
 const { auth } = NextAuth(authConfig);
@@ -49,6 +50,15 @@ export default auth((req) => {
     const login = new URL("/login", req.nextUrl.origin);
     login.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(login);
+  }
+
+  if (
+    shouldDenyAdminPathToNonAdmin(pathname, {
+      isLoggedIn,
+      jwtIsAdmin: req.auth?.user?.isAdmin,
+    })
+  ) {
+    return NextResponse.redirect(new URL("/feed", req.nextUrl.origin));
   }
 
   if (isLoggedIn && isAuthPage) {
