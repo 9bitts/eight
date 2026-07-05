@@ -7,6 +7,18 @@ import { getUnreadMessageCount } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 import { acquireSseConnection, releaseSseConnection } from "@/lib/sse-connections";
 
+/** Mesma checagem de participação que sendDirectMessage (conversationId_profileId). */
+async function isConversationParticipant(
+  conversationId: string,
+  profileId: string
+): Promise<boolean> {
+  const row = await prisma.conversationParticipant.findUnique({
+    where: { conversationId_profileId: { conversationId, profileId } },
+    select: { id: true },
+  });
+  return row !== null;
+}
+
 export async function GET(req: Request) {
   const session = await auth();
   const profileId = session?.user?.profileId;
@@ -14,17 +26,36 @@ export async function GET(req: Request) {
     return new Response("Não autorizado", { status: 401 });
   }
 
+  const conversationId =
+    new URL(req.url).searchParams.get("conversation")?.trim() || null;
+
+  if (conversationId) {
+    const allowed = await isConversationParticipant(conversationId, profileId);
+    if (!allowed) {
+      return new Response(null, { status: 404 });
+    }
+  }
+
   if (!acquireSseConnection(profileId)) {
     return new Response("Muitas conexões simultâneas", { status: 429 });
   }
-
-  const conversationId = new URL(req.url).searchParams.get("conversation");
 
   const encoder = new TextEncoder();
   let lastNotif = -1;
   let lastMsg = -1;
   let lastMessageId: string | null | undefined = undefined;
   let closed = false;
+  let interval: ReturnType<typeof setInterval> | null = null;
+
+  const cleanup = () => {
+    if (closed) return;
+    closed = true;
+    if (interval !== null) {
+      clearInterval(interval);
+      interval = null;
+    }
+    releaseSseConnection(profileId);
+  };
 
   const stream = new ReadableStream({
     start(controller) {
@@ -71,18 +102,19 @@ export async function GET(req: Request) {
 
       send({ connected: true });
       tick();
-      const interval = setInterval(tick, SSE_POLL_INTERVAL_MS);
+      interval = setInterval(tick, SSE_POLL_INTERVAL_MS);
 
       req.signal.addEventListener("abort", () => {
-        closed = true;
-        clearInterval(interval);
-        releaseSseConnection(profileId);
+        cleanup();
         try {
           controller.close();
         } catch {
           /* já fechado */
         }
       });
+    },
+    cancel() {
+      cleanup();
     },
   });
 
