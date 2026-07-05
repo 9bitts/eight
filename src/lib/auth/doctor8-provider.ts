@@ -1,4 +1,4 @@
-import type { OAuthConfig, OAuthUserConfig } from "@auth/core/providers";
+import type { OAuth2Config } from "@auth/core/providers";
 
 export interface Doctor8Profile {
   sub: string;
@@ -10,9 +10,7 @@ export interface Doctor8Profile {
   role?: string;
 }
 
-export function doctor8Provider(
-  config?: OAuthUserConfig<Doctor8Profile>
-): OAuthConfig<Doctor8Profile> {
+export function doctor8Provider(): OAuth2Config<Doctor8Profile> {
   const issuer =
     process.env.AUTH_DOCTOR8_ISSUER?.replace(/\/$/, "") ??
     "https://app.doctor8.org";
@@ -50,7 +48,6 @@ export function doctor8Provider(
         role: profile.role,
       };
     },
-    ...config,
   };
 }
 
