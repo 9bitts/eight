@@ -5,23 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Logo from "@/components/Logo";
 import { Doctor8LoginButton } from "@/components/auth/Doctor8LoginButton";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 function ErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error") ?? "unknown";
-
-  const messages: Record<string, string> = {
-    OAuthSignin: "Não foi possível iniciar o login social. Tente novamente.",
-    OAuthCallback: "O provedor de login recusou ou cancelou a autenticação.",
-    OAuthAccountNotLinked:
-      "Este e-mail já está vinculado a outra conta. Entre com a Doctor8.",
-    AccessDenied:
-      "Acesso negado. A eight é exclusiva para profissionais de saúde com conta Doctor8.",
-    Configuration: "Erro de configuração do servidor. Contate o suporte.",
-    SuspendedAccount:
-      "Sua conta foi suspensa por violação das regras da plataforma. Entre em contato com suporte@doctor8.com.br.",
-    unknown: "Não foi possível entrar. Tente novamente.",
-  };
+  const message = getAuthErrorMessage(error) ?? getAuthErrorMessage("unknown");
 
   return (
     <div
@@ -37,7 +26,7 @@ function ErrorContent() {
           Erro no login
         </h1>
         <p className="lede" style={{ marginBottom: 24 }}>
-          {messages[error] ?? messages.unknown}
+          {message}
         </p>
         <Doctor8LoginButton callbackUrl="/feed" />
         <p className="signin" style={{ marginTop: 20 }}>

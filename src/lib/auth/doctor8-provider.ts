@@ -32,7 +32,13 @@ export function doctor8Provider(
     client: {
       token_endpoint_auth_method: "client_secret_post",
     },
-    authorization: { params: { scope: "openid email profile" } },
+    authorization: {
+      params: {
+        scope: "openid email profile",
+        // Garante tela de login na Doctor8 (evita sessão de conta paciente/admin errada).
+        prompt: "login",
+      },
+    },
     profile(profile) {
       const sub = String(profile.sub ?? "");
       const emailRaw =

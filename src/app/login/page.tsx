@@ -7,12 +7,14 @@ import Logo from "@/components/Logo";
 import { Doctor8LoginButton } from "@/components/auth/Doctor8LoginButton";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 function LoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const invite = searchParams.get("invite");
+  const authError = getAuthErrorMessage(searchParams.get("error"));
 
   useEffect(() => {
     const raw = searchParams.get("callbackUrl");
@@ -27,7 +29,16 @@ function LoginContent() {
     router.replace(qs ? `/login?${qs}` : "/login");
   }, [searchParams, router]);
 
-  return <Doctor8LoginButton callbackUrl={callbackUrl} invite={invite} />;
+  return (
+    <>
+      {authError && (
+        <p className="signup-error" style={{ marginBottom: 16 }}>
+          {authError}
+        </p>
+      )}
+      <Doctor8LoginButton callbackUrl={callbackUrl} invite={invite} />
+    </>
+  );
 }
 
 export default function LoginPage() {
