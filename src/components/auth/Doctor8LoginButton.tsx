@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/i18n/LocaleProvider";
@@ -35,36 +34,29 @@ export function Doctor8LoginButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [csrfToken, setCsrfToken] = useState("");
+
+  const safeCallbackUrl = sanitizeCallbackUrl(callbackUrl);
 
   useEffect(() => {
     fetch("/api/auth/providers")
       .then((r) => r.json())
       .then((data: { doctor8?: boolean }) => setConfigured(!!data.doctor8))
       .catch(() => setConfigured(false));
+
+    fetch("/api/auth/csrf")
+      .then((r) => r.json())
+      .then((data: { csrfToken?: string }) => setCsrfToken(data.csrfToken ?? ""))
+      .catch(() => setCsrfToken(""));
   }, []);
 
-  const onLogin = async () => {
-    if (loading) return;
+  const onSubmit = () => {
+    if (loading || configured === false || !csrfToken) return;
     setError("");
-
-    if (configured === false) {
-      setError(t("auth.doctor8NotConfigured"));
-      return;
-    }
-
     setLoading(true);
 
-    try {
-      if (invite) {
-        document.cookie = `eight_invite=${encodeURIComponent(invite)}; path=/; max-age=3600; SameSite=Lax`;
-      }
-
-      await signIn("doctor8", {
-        callbackUrl: sanitizeCallbackUrl(callbackUrl),
-      });
-    } catch {
-      setError(t("auth.doctor8Error"));
-      setLoading(false);
+    if (invite) {
+      document.cookie = `eight_invite=${encodeURIComponent(invite)}; path=/; max-age=3600; SameSite=Lax`;
     }
   };
 
@@ -75,24 +67,32 @@ export function Doctor8LoginButton({
           {error}
         </p>
       )}
-      <button
-        type="button"
-        className={className}
-        onClick={onLogin}
-        disabled={loading || configured === false}
-        style={{ opacity: loading ? 0.85 : 1, width: fullWidth ? "100%" : undefined }}
+      <form
+        method="post"
+        action="/api/auth/signin/doctor8"
+        onSubmit={onSubmit}
+        style={{ margin: 0 }}
       >
-        {loading ? (
-          <>
-            <Loader2 size={18} className="spin" /> …
-          </>
-        ) : (
-          <>
-            <Doctor8Icon />
-            {t("auth.loginWithDoctor8")}
-          </>
-        )}
-      </button>
+        <input type="hidden" name="callbackUrl" value={safeCallbackUrl} />
+        <input type="hidden" name="csrfToken" value={csrfToken} />
+        <button
+          type="submit"
+          className={className}
+          disabled={loading || configured === false || !csrfToken}
+          style={{ opacity: loading ? 0.85 : 1, width: fullWidth ? "100%" : undefined }}
+        >
+          {loading ? (
+            <>
+              <Loader2 size={18} className="spin" /> …
+            </>
+          ) : (
+            <>
+              <Doctor8Icon />
+              {t("auth.loginWithDoctor8")}
+            </>
+          )}
+        </button>
+      </form>
     </div>
   );
 }

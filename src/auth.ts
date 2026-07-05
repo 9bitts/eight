@@ -15,6 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [doctor8Provider()],
+  debug: process.env.AUTH_DEBUG === "true",
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ account, profile }) {
