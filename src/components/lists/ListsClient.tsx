@@ -155,7 +155,7 @@ export function ListsClient({
             <div className="p-4 border-b" style={{ borderColor: LINE }}>
               <div className="flex gap-2">
                 <input
-                  className="field flex-1"
+                  className="field field-app flex-1"
                   placeholder="Nome da lista"
                   value={name}
                   onChange={(e) => setName(e.target.value)}

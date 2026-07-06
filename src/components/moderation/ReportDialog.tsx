@@ -87,7 +87,7 @@ export function ReportDialog({
               ))}
             </div>
             <textarea
-              className="field w-full"
+              className="field field-app w-full"
               rows={2}
               placeholder="Detalhes (opcional)"
               value={details}

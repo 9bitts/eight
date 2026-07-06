@@ -207,8 +207,8 @@ export function PostComposer({
                   setPollOptions(next);
                 }}
                 placeholder={`Opção ${i + 1}`}
-                className="w-full mb-2 px-3 py-2 rounded-lg border outline-none"
-                style={{ borderColor: LINE, fontSize: 14 }}
+                className="w-full mb-2 px-3 py-2 rounded-lg border outline-none field field-app"
+                style={{ fontSize: 14 }}
               />
             ))}
             {pollOptions.length < 4 && (
@@ -223,7 +223,7 @@ export function PostComposer({
             <select
               value={pollHours}
               onChange={(e) => setPollHours(Number(e.target.value))}
-              className="mt-2 text-sm border rounded-lg px-2 py-1"
+              className="mt-2 text-sm border rounded-lg px-2 py-1 field field-app"
             >
               <option value={24}>1 dia</option>
               <option value={72}>3 dias</option>
@@ -288,8 +288,7 @@ export function PostComposer({
             type="datetime-local"
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
-            className="mt-2 text-sm border rounded-lg px-2 py-1"
-            style={{ borderColor: LINE }}
+            className="mt-2 text-sm border rounded-lg px-2 py-1 field field-app"
           />
         )}
       </div>

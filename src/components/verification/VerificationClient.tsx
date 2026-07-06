@@ -84,6 +84,7 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     specialty: profile.specialty,
     registrationType: profile.registrationType,
@@ -115,7 +116,8 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
     startTransition(async () => {
       try {
         await updateRegistrationInfo(form);
-        router.refresh();
+        setSubmitted(true);
+        setTimeout(() => router.push("/feed"), 2500);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro ao salvar");
       }
@@ -137,6 +139,15 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
       </header>
 
       <main className="mx-auto px-6 py-6" style={{ maxWidth: 560 }}>
+        {submitted ? (
+          <>
+            <StatusBanner status="PENDING" reason={null} />
+            <p style={{ fontSize: 14, color: MUTED, textAlign: "center", marginTop: 8 }}>
+              Redirecionando para a página inicial…
+            </p>
+          </>
+        ) : (
+          <>
         <StatusBanner status={profile.verificationStatus} reason={profile.rejectionReason} />
         {error && <p className="signup-error mb-4">{error}</p>}
 
@@ -144,15 +155,15 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
           <>
             <section className="rounded-xl border p-4 mb-4" style={{ borderColor: LINE, background: CARD }}>
               <h2 style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: INK }}>Dados do registro</h2>
-              <label className="signup-label">Especialidade</label>
+              <label className="label-app">Especialidade</label>
               <input
-                className="field signup-field"
+                className="field field-app signup-field"
                 value={form.specialty}
                 onChange={(e) => setForm({ ...form, specialty: e.target.value })}
               />
-              <label className="signup-label">Tipo de registro</label>
+              <label className="label-app">Tipo de registro</label>
               <select
-                className="field signup-field"
+                className="field field-app signup-field"
                 value={form.registrationType}
                 onChange={(e) => setForm({ ...form, registrationType: e.target.value })}
               >
@@ -160,15 +171,15 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </select>
-              <label className="signup-label">Número</label>
+              <label className="label-app">Número</label>
               <input
-                className="field signup-field"
+                className="field field-app signup-field"
                 value={form.registrationNumber}
                 onChange={(e) => setForm({ ...form, registrationNumber: e.target.value })}
               />
-              <label className="signup-label">País</label>
+              <label className="label-app">País</label>
               <select
-                className="field signup-field"
+                className="field field-app signup-field"
                 value={form.registrationCountry}
                 onChange={(e) => setForm({ ...form, registrationCountry: e.target.value })}
               >
@@ -236,6 +247,8 @@ export function VerificationClient({ profile }: { profile: ProfileVerification }
             <p style={{ fontWeight: 700, fontSize: 18, color: INK }}>Selo verificado ativo</p>
             <p style={{ color: MUTED, marginTop: 8 }}>O selo azul aparece em todas as suas publicações.</p>
           </div>
+        )}
+          </>
         )}
       </main>
     </div>

@@ -248,7 +248,7 @@ export function SettingsClient({
               <div className="mt-2">
                 <p style={{ fontSize: 13, color: "#1a9c5b", fontWeight: 600 }}>{t("settings.twoFaOn")}</p>
                 <input
-                  className="field signup-field mt-2"
+                  className="field field-app signup-field mt-2"
                   placeholder={t("auth.totpCode")}
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -270,7 +270,7 @@ export function SettingsClient({
                   {twoFaSetup.secret}
                 </code>
                 <input
-                  className="field signup-field mt-2"
+                  className="field field-app signup-field mt-2"
                   placeholder={t("auth.totpCode")}
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -326,7 +326,7 @@ export function SettingsClient({
               {hasPassword && (
                 <input
                   type="password"
-                  className="field signup-field mt-2"
+                  className="field field-app signup-field mt-2"
                   placeholder="Senha para confirmar"
                   value={deletePassword}
                   onChange={(e) => setDeletePassword(e.target.value)}

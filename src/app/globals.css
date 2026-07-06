@@ -68,6 +68,41 @@ body{ -webkit-font-smoothing:antialiased; font-family:var(--font-body); }
 .field{height:50px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);padding:0 16px;font-size:15px;outline:none;transition:border .15s}
 .field::placeholder{color:var(--muted)}
 .field:focus{border-color:var(--blue)}
+/* Light app surfaces (feed, settings, verification) */
+.field.field-app,
+textarea.field.field-app,
+select.field.field-app{
+  border-color:var(--eight-line);
+  background:var(--eight-card-bg);
+  color:var(--eight-ink);
+  -webkit-text-fill-color:var(--eight-ink);
+  caret-color:var(--eight-ink);
+}
+.field.field-app::placeholder,
+textarea.field.field-app::placeholder{
+  color:var(--eight-muted);
+  -webkit-text-fill-color:var(--eight-muted);
+  opacity:1;
+}
+.field.field-app:focus,
+textarea.field.field-app:focus,
+select.field.field-app:focus{border-color:var(--blue)}
+textarea.field.field-app{height:auto;min-height:50px;padding-top:12px;padding-bottom:12px}
+select.field.field-app option{color:var(--eight-ink);background:var(--eight-card-bg)}
+/* Standalone inputs on app surfaces (no .field class) */
+input:not(.field):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+textarea:not(.field),
+select:not(.field){
+  color:var(--eight-ink);
+  caret-color:var(--eight-ink);
+}
+input:not(.field):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])::placeholder,
+textarea:not(.field)::placeholder{
+  color:var(--eight-muted);
+  opacity:1;
+}
+/* Labels on light app surfaces */
+.label-app{display:block;font-size:13px;font-weight:600;color:var(--eight-muted);margin:14px 0 6px}
 .btn-orange{background:var(--orange);color:#fff;box-shadow:0 10px 26px -10px rgba(224,89,48,.7)}
 .btn-orange:hover{transform:translateY(-1px)}
 .signin{margin-top:22px;font-size:15px;color:var(--muted)}

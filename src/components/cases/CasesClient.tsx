@@ -58,15 +58,15 @@ function CaseComposer({ specialty }: { specialty: string }) {
         Descreva o caso sem nomes, documentos ou dados que identifiquem o paciente. Use idade, sexo e achados clínicos.
       </p>
       <input
-        className="field signup-field mb-2"
+        className="field field-app signup-field mb-2"
         placeholder="Especialidade do caso"
         value={caseSpecialty}
         onChange={(e) => setCaseSpecialty(e.target.value)}
       />
       <textarea
         id="composer"
-        className="w-full border rounded-xl p-3 outline-none mb-2"
-        style={{ borderColor: LINE, fontSize: 15, minHeight: 100 }}
+        className="w-full border rounded-xl p-3 outline-none mb-2 field field-app"
+        style={{ fontSize: 15, minHeight: 100 }}
         placeholder="Ex.: Paciente masculino, 52 anos, dor torácica há 2h, sem antecedentes conhecidos…"
         value={body}
         onChange={(e) => setBody(e.target.value)}

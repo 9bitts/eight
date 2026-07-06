@@ -62,8 +62,8 @@ export function MutedWordsSection({
           onKeyDown={(e) => e.key === "Enter" && add()}
           placeholder="Ex.: spam, política…"
           maxLength={50}
-          className="flex-1 px-3 py-2 rounded-lg border outline-none"
-          style={{ borderColor: LINE, fontSize: 14 }}
+          className="flex-1 px-3 py-2 rounded-lg border outline-none field field-app"
+          style={{ fontSize: 14 }}
         />
         <button
           type="button"

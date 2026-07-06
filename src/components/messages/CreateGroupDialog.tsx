@@ -81,8 +81,8 @@ export function CreateGroupDialog({
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex.: Plantão UTI — SP"
             maxLength={GROUP_NAME_MAX_LENGTH}
-            className="w-full mt-1 mb-4 px-3 py-2 rounded-lg border outline-none"
-            style={{ borderColor: LINE, fontSize: 15 }}
+            className="w-full mt-1 mb-4 px-3 py-2 rounded-lg border outline-none field field-app"
+            style={{ fontSize: 15 }}
           />
 
           <p style={{ fontSize: 13, fontWeight: 700, color: INK, marginBottom: 8 }}>

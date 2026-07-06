@@ -58,7 +58,7 @@ function ScheduledRow({
       {editingText ? (
         <div className="px-4 pt-4" style={{ borderBottom: `1px solid ${LINE}` }}>
           <textarea
-            className="field w-full"
+            className="field field-app w-full"
             rows={4}
             maxLength={500}
             value={textValue}
@@ -102,7 +102,7 @@ function ScheduledRow({
               type="datetime-local"
               value={dateValue}
               onChange={(e) => setDateValue(e.target.value)}
-              className="field"
+              className="field field-app"
               style={{ fontSize: 13, maxWidth: 220 }}
             />
             <button type="button" onClick={saveDate} disabled={pending || !dateValue} className="rounded-full px-4 py-1.5 font-bold" style={{ fontSize: 13, border: "none", background: BLUE, color: "#fff", cursor: "pointer" }}>

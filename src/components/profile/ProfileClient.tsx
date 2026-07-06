@@ -471,7 +471,7 @@ export function ProfileClient({
               <strong>{profile.displayName}</strong> aceitar.
             </p>
             <textarea
-              className="field w-full mt-4"
+              className="field field-app w-full mt-4"
               rows={3}
               maxLength={300}
               value={requestBody}

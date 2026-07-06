@@ -72,10 +72,10 @@ export function AdminInvitesClient({
 
       <main className="mx-auto px-6 py-6" style={{ maxWidth: 720 }}>
         <div className="rounded-xl border p-4 mb-6" style={{ borderColor: LINE, background: CARD }}>
-          <label className="signup-label">E-mails (um por linha ou separados por vírgula)</label>
+          <label className="label-app">E-mails (um por linha ou separados por vírgula)</label>
           <textarea
-            className="w-full border rounded-lg p-3 outline-none"
-            style={{ borderColor: LINE, fontSize: 14, minHeight: 120 }}
+            className="w-full border rounded-lg p-3 outline-none field field-app"
+            style={{ fontSize: 14, minHeight: 120 }}
             value={emails}
             onChange={(e) => setEmails(e.target.value)}
             placeholder={"dr.silva@clinica.com\ndra.maria@hospital.com"}

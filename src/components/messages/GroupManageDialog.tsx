@@ -93,8 +93,8 @@ export function GroupManageDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={GROUP_NAME_MAX_LENGTH}
-              className="flex-1 px-3 py-2 rounded-lg border outline-none"
-              style={{ borderColor: LINE, fontSize: 15 }}
+              className="flex-1 px-3 py-2 rounded-lg border outline-none field field-app"
+              style={{ fontSize: 15 }}
             />
             <button
               type="button"

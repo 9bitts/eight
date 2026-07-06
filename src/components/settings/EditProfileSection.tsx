@@ -118,22 +118,22 @@ export function EditProfileSection({ profile }: { profile: ProfileEditData }) {
         </div>
 
         <div>
-          <label className="signup-label">Nome</label>
+          <label className="label-app">Nome</label>
           <input
-            className="field w-full"
+            className="field field-app w-full"
             value={form.displayName}
             onChange={(e) => setForm({ ...form, displayName: e.target.value })}
             maxLength={50}
           />
         </div>
         <div>
-          <label className="signup-label">@{profile.handle}</label>
+          <label className="label-app">@{profile.handle}</label>
           <p style={{ fontSize: 12, color: MUTED }}>O @handle não pode ser alterado aqui.</p>
         </div>
         <div>
-          <label className="signup-label">Bio</label>
+          <label className="label-app">Bio</label>
           <textarea
-            className="field w-full"
+            className="field field-app w-full"
             rows={3}
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -141,9 +141,9 @@ export function EditProfileSection({ profile }: { profile: ProfileEditData }) {
           />
         </div>
         <div>
-          <label className="signup-label">Especialidade</label>
+          <label className="label-app">Especialidade</label>
           <select
-            className="field w-full"
+            className="field field-app w-full"
             value={form.specialty}
             onChange={(e) => setForm({ ...form, specialty: e.target.value })}
           >
@@ -154,18 +154,18 @@ export function EditProfileSection({ profile }: { profile: ProfileEditData }) {
           </select>
         </div>
         <div>
-          <label className="signup-label">Localização</label>
+          <label className="label-app">Localização</label>
           <input
-            className="field w-full"
+            className="field field-app w-full"
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
             placeholder="São Paulo, BR"
           />
         </div>
         <div>
-          <label className="signup-label">Link teleconsulta Doctor8</label>
+          <label className="label-app">Link teleconsulta Doctor8</label>
           <input
-            className="field w-full"
+            className="field field-app w-full"
             value={form.teleconsultUrl}
             onChange={(e) => setForm({ ...form, teleconsultUrl: e.target.value })}
             placeholder="https://..."

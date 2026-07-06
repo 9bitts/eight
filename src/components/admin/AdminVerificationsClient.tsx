@@ -118,8 +118,8 @@ function PendingCard({ profile }: { profile: PendingProfile }) {
             onChange={(e) => setReason(e.target.value)}
             placeholder="Motivo da recusa (o profissional verá esta mensagem)…"
             rows={3}
-            className="w-full border rounded-lg p-2 outline-none"
-            style={{ borderColor: LINE, fontSize: 14 }}
+            className="w-full border rounded-lg p-2 outline-none field field-app"
+            style={{ fontSize: 14 }}
           />
           <button
             type="button"

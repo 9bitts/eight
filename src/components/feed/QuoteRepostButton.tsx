@@ -74,7 +74,7 @@ export function QuoteRepostButton({ postId }: { postId: string }) {
             <div className="relative">
               <textarea
                 ref={textareaRef}
-                className="field w-full"
+                className="field field-app w-full"
                 rows={4}
                 placeholder="Adicione seu comentário… use @ para mencionar"
                 value={text}

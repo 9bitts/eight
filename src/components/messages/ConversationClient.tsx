@@ -289,8 +289,8 @@ export function ConversationClient({
               }}
               placeholder="Escreva uma mensagem…"
               rows={2}
-              className="flex-1 border rounded-xl p-3 outline-none resize-none"
-              style={{ borderColor: LINE, fontSize: 15 }}
+              className="flex-1 border rounded-xl p-3 outline-none resize-none field field-app"
+              style={{ fontSize: 15 }}
               maxLength={DM_MAX_LENGTH}
             />
             <button

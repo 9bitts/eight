@@ -118,8 +118,8 @@ export function PostMenu({
           onChange={(e) => setEditText(e.target.value)}
           maxLength={POST_MAX_LENGTH}
           rows={3}
-          className="w-full border rounded-lg p-2 outline-none"
-          style={{ borderColor: LINE, fontSize: 15 }}
+          className="w-full border rounded-lg p-2 outline-none field field-app"
+          style={{ fontSize: 15 }}
         />
         <div className="flex gap-2 mt-2">
           <button
