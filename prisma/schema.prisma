@@ -57,6 +57,10 @@ model User {
   totpSecret    String?
   totpEnabled   Boolean   @default(false)
   totpLastUsed  String?
+  // Incrementado a cada reset de senha (e disponível pra outros eventos
+  // sensíveis no futuro). Sessões JWT emitidas com uma versão menor são
+  // consideradas inválidas — força novo login em todos os dispositivos.
+  sessionVersion Int      @default(0)
   locale        String    @default("pt")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -106,6 +110,7 @@ model Profile {
   verificationReviewedAt  DateTime?
   rejectionReason         String?            @db.VarChar(300)
   verifiedAt              DateTime?
+  verifiedViaDoctor8      Boolean            @default(false)
   pinnedPostId        String?   @unique
   teleconsultUrl       String?
   notifyLike           Boolean            @default(true)

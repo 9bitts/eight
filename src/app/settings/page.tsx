@@ -18,7 +18,7 @@ export default async function SettingsPage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { totpEnabled: true, passwordHash: true, locale: true },
+    select: { passwordHash: true, locale: true },
   });
 
   const [blocked, muted, notificationCount, profileData, notificationPrefs, pushCount, mutedWords] =
@@ -40,7 +40,6 @@ export default async function SettingsPage() {
       notificationCount={notificationCount}
       blocked={blocked}
       muted={muted}
-      totpEnabled={dbUser?.totpEnabled ?? false}
       hasPassword={!!dbUser?.passwordHash}
       profile={profileData}
       notificationPrefs={notificationPrefs}

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import { Doctor8LoginButton } from "@/components/auth/Doctor8LoginButton";
-import { EmailLoginForm } from "@/components/auth/EmailLoginForm";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 import { sanitizeCallbackUrl } from "@/lib/auth-redirect";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
@@ -16,7 +15,6 @@ function LoginContent() {
   const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const invite = searchParams.get("invite");
   const authError = getAuthErrorMessage(searchParams.get("error"));
-  const resetOk = searchParams.get("reset") === "ok";
 
   useEffect(() => {
     const raw = searchParams.get("callbackUrl");
@@ -27,8 +25,6 @@ function LoginContent() {
     if (safe !== "/feed") params.set("callbackUrl", safe);
     const inv = searchParams.get("invite");
     if (inv) params.set("invite", inv);
-    const reset = searchParams.get("reset");
-    if (reset) params.set("reset", reset);
     const qs = params.toString();
     router.replace(qs ? `/login?${qs}` : "/login");
   }, [searchParams, router]);
@@ -40,15 +36,6 @@ function LoginContent() {
           {authError}
         </p>
       )}
-
-      <EmailLoginForm callbackUrl={callbackUrl} resetOk={resetOk} />
-
-      <p
-        className="signup-sub"
-        style={{ textAlign: "center", margin: "20px 0 16px", color: "var(--eight-muted)" }}
-      >
-        ou com Doctor8
-      </p>
 
       <Doctor8LoginButton callbackUrl={callbackUrl} invite={invite} />
     </>
@@ -80,9 +67,6 @@ export default function LoginPage() {
           <LoginContent />
         </Suspense>
 
-        <p className="signin" style={{ marginTop: 20 }}>
-          {t("auth.noAccount")} <Link href="/signup">{t("auth.signup")}</Link>
-        </p>
         <p className="signin" style={{ marginTop: 12 }}>
           <Link href="/">← Voltar ao início</Link>
         </p>

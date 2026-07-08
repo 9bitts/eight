@@ -8,6 +8,12 @@ export interface Doctor8Profile {
   picture?: string;
   preferred_username?: string;
   role?: string;
+  // Aprovação do cadastro profissional feita pelo admin da Doctor8
+  // (ProfessionalProfile.verified / PsychoanalystProfile.verified / etc).
+  // Opcional: só existe quando a Doctor8 passar a expor essa claim no
+  // userinfo/token do client "eight" — até lá, fica undefined e o gate
+  // de acesso continua baseado só em `role`.
+  verified?: boolean;
 }
 
 export function doctor8Provider(): OAuth2Config<Doctor8Profile> {
@@ -23,8 +29,16 @@ export function doctor8Provider(): OAuth2Config<Doctor8Profile> {
     issuer,
     clientId: process.env.AUTH_DOCTOR8_ID,
     clientSecret: process.env.AUTH_DOCTOR8_SECRET,
+    // Perigoso por padrão (vincula/cria conta só casando e-mail), mas o
+    // callback signIn em auth.ts bloqueia esse vínculo quando o e-mail não
+    // vem confirmado (email_verified) pela Doctor8 — ver comentário lá.
     allowDangerousEmailAccountLinking: true,
-    checks: ["none"],
+    // "state" impede CSRF no fluxo OAuth (o valor gerado no /authorize precisa
+    // voltar exatamente igual no callback). Não usamos "pkce"/"nonce" aqui
+    // porque não sabemos se o /authorize da Doctor8 suporta code_challenge,
+    // e "nonce" é validação de id_token OIDC que já evitamos de propósito
+    // (comentário acima) — a Doctor8 emite JWT próprio, não JWKS padrão.
+    checks: ["state"],
     client: {
       token_endpoint_auth_method: "client_secret_post",
     },
@@ -46,6 +60,7 @@ export function doctor8Provider(): OAuth2Config<Doctor8Profile> {
         email,
         image: profile.picture ?? undefined,
         role: profile.role,
+        verified: profile.verified,
       };
     },
   };

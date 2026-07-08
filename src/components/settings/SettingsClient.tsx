@@ -11,13 +11,7 @@ import { useLocale } from "@/components/i18n/LocaleProvider";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { LOCALES } from "@/lib/i18n";
 import { unblockUser, unmuteUser } from "@/lib/actions/relationships";
-import {
-  updateLocale,
-  setup2FA,
-  confirm2FA,
-  disable2FA,
-  deleteAccount,
-} from "@/lib/actions/settings";
+import { updateLocale, deleteAccount } from "@/lib/actions/settings";
 import { EditProfileSection, type ProfileEditData } from "@/components/settings/EditProfileSection";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MutedWordsSection } from "@/components/settings/MutedWordsSection";
@@ -80,7 +74,6 @@ export function SettingsClient({
   notificationCount,
   blocked,
   muted,
-  totpEnabled,
   hasPassword,
   profile,
   notificationPrefs,
@@ -92,7 +85,6 @@ export function SettingsClient({
   notificationCount: number;
   blocked: ConnectionProfile[];
   muted: ConnectionProfile[];
-  totpEnabled: boolean;
   hasPassword: boolean;
   profile: ProfileEditData;
   notificationPrefs: NotificationPrefs;
@@ -105,8 +97,6 @@ export function SettingsClient({
   const { theme, setTheme } = useTheme();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
-  const [twoFaSetup, setTwoFaSetup] = useState<{ secret: string; otpauth: string } | null>(null);
-  const [totpCode, setTotpCode] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
 
   const onLocale = (code: "pt" | "en" | "es") => {
@@ -114,45 +104,6 @@ export function SettingsClient({
     startTransition(async () => {
       await updateLocale(code);
       router.refresh();
-    });
-  };
-
-  const onSetup2FA = () => {
-    setError("");
-    startTransition(async () => {
-      try {
-        const data = await setup2FA();
-        setTwoFaSetup(data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro");
-      }
-    });
-  };
-
-  const onConfirm2FA = () => {
-    setError("");
-    startTransition(async () => {
-      try {
-        await confirm2FA(totpCode);
-        setTwoFaSetup(null);
-        setTotpCode("");
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro");
-      }
-    });
-  };
-
-  const onDisable2FA = () => {
-    setError("");
-    startTransition(async () => {
-      try {
-        await disable2FA(totpCode);
-        setTotpCode("");
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro");
-      }
     });
   };
 
@@ -235,72 +186,6 @@ export function SettingsClient({
                 {t(mode === "light" ? "settings.themeLight" : "settings.themeDark")}
               </button>
             ))}
-          </div>
-        </section>
-
-        <section className="py-4 border-b" style={{ borderColor: LINE }}>
-          <h2 className="px-4 pb-2" style={{ fontWeight: 700, fontSize: 16, color: INK }}>
-            {t("settings.security")}
-          </h2>
-          <div className="px-4">
-            <p style={{ fontSize: 14, fontWeight: 600, color: INK }}>{t("settings.twoFa")}</p>
-            {totpEnabled ? (
-              <div className="mt-2">
-                <p style={{ fontSize: 13, color: "#1a9c5b", fontWeight: 600 }}>{t("settings.twoFaOn")}</p>
-                <input
-                  className="field field-app signup-field mt-2"
-                  placeholder={t("auth.totpCode")}
-                  value={totpCode}
-                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                />
-                <button
-                  type="button"
-                  onClick={onDisable2FA}
-                  disabled={pending || totpCode.length < 6}
-                  className="mt-2 rounded-full px-4 py-2 font-bold"
-                  style={{ border: `1px solid ${LINE}`, background: CARD, color: ORANGE, cursor: "pointer" }}
-                >
-                  Desativar 2FA
-                </button>
-              </div>
-            ) : twoFaSetup ? (
-              <div className="mt-2">
-                <p style={{ fontSize: 13, color: MUTED, marginBottom: 8 }}>{t("settings.twoFaSetup")}</p>
-                <code className="block p-2 rounded text-xs break-all" style={{ background: "var(--eight-surface-subtle)" }}>
-                  {twoFaSetup.secret}
-                </code>
-                <input
-                  className="field field-app signup-field mt-2"
-                  placeholder={t("auth.totpCode")}
-                  value={totpCode}
-                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                />
-                <button
-                  type="button"
-                  onClick={onConfirm2FA}
-                  disabled={pending || totpCode.length < 6}
-                  className="auth-btn btn-orange mt-2 w-full"
-                  style={{ border: "none", cursor: "pointer" }}
-                >
-                  Confirmar 2FA
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={onSetup2FA}
-                disabled={pending || !hasPassword}
-                className="mt-2 rounded-full px-4 py-2 font-bold text-white"
-                style={{ background: BLUE, border: "none", cursor: "pointer", opacity: hasPassword ? 1 : 0.5 }}
-              >
-                {t("settings.twoFaOff")}
-              </button>
-            )}
-            {!hasPassword && (
-              <p style={{ fontSize: 12, color: MUTED, marginTop: 8 }}>
-                2FA por app requer login com e-mail e senha.
-              </p>
-            )}
           </div>
         </section>
 

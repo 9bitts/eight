@@ -69,6 +69,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Este @nome já está em uso." }, { status: 409 });
   }
 
+  // Profissional já conferido pela Doctor8 (documento aprovado pelo admin de lá)
+  // entra na eight já verificado — sem passar pela verificação manual própria.
+  const doctor8Verified = session.user.doctor8Verified === true;
+
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
@@ -82,9 +86,11 @@ export async function POST(req: Request) {
           registrationNumber,
           registrationCountry: registrationCountry || null,
           location: location || null,
-          verified: false,
-          verificationStatus: "PENDING",
+          verified: doctor8Verified,
+          verificationStatus: doctor8Verified ? "VERIFIED" : "PENDING",
           verificationSubmittedAt: new Date(),
+          verifiedAt: doctor8Verified ? new Date() : null,
+          verifiedViaDoctor8: doctor8Verified,
         },
       },
     },

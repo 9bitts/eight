@@ -87,7 +87,17 @@ export async function rateLimit(
 
 export function clientIp(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() ?? "unknown";
+  if (forwarded) {
+    const chain = forwarded
+      .split(",")
+      .map((ip) => ip.trim())
+      .filter(Boolean);
+    // O proxy da Railway (único hop confiável na frente do app) ANEXA a IP
+    // que observou ao final da cadeia — a primeira posição é o que o
+    // próprio cliente mandou no header e pode ser forjada livremente, o
+    // que antes deixava o rate limit por IP inteiramente burlável.
+    return chain[chain.length - 1] ?? "unknown";
+  }
   return req.headers.get("x-real-ip") ?? "unknown";
 }
 

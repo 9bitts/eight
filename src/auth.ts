@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import bcrypt from "bcryptjs";
 import { authConfig } from "@/auth.config";
 import { doctor8Provider } from "@/lib/auth/doctor8-provider";
+import { syncDoctor8Verification } from "@/lib/auth/doctor8-verification";
 import { prisma } from "@/lib/prisma";
 
 const DOCTOR8_SSO_ROLES = new Set([
@@ -16,51 +15,7 @@ const DOCTOR8_SSO_ROLES = new Set([
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
-  providers: [
-    doctor8Provider(),
-    Credentials({
-      id: "credentials",
-      name: "E-mail e senha",
-      credentials: {
-        email: { label: "E-mail", type: "email" },
-        password: { label: "Senha", type: "password" },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email?.toString().trim().toLowerCase();
-        const password = credentials?.password?.toString() ?? "";
-        if (!email || !password) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email },
-          include: { profile: true },
-        });
-        if (!user?.passwordHash) return null;
-        if (user.profile?.suspended) return null;
-
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
-
-        const adminEmails =
-          process.env.ADMIN_EMAILS?.split(",")
-            .map((e) => e.trim().toLowerCase())
-            .filter(Boolean) ?? [];
-        const isAdmin =
-          user.isAdmin || adminEmails.includes(user.email.toLowerCase());
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.profile?.displayName ?? user.name ?? user.email,
-          image: user.image,
-          handle: user.profile?.handle,
-          verified: user.profile?.verified,
-          verificationStatus: user.profile?.verificationStatus,
-          isAdmin,
-          profileId: user.profile?.id,
-        };
-      },
-    }),
-  ],
+  providers: [doctor8Provider()],
   debug: process.env.AUTH_DEBUG === "true",
   logger: {
     error(code, ...message) {
@@ -79,8 +34,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ account, profile }) {
       if (account?.provider !== "doctor8") return true;
-      const role = (profile as { role?: string } | undefined)?.role;
-      if (role && !DOCTOR8_SSO_ROLES.has(role)) return false;
+      const p = profile as
+        | { sub?: string; role?: string; email_verified?: boolean }
+        | undefined;
+      if (p?.role && !DOCTOR8_SSO_ROLES.has(p.role)) return false;
+
+      // allowDangerousEmailAccountLinking (no provider) vincula/cria conta
+      // automaticamente casando por e-mail. Só é seguro fazer isso quando a
+      // Doctor8 garante que o e-mail foi confirmado. Se não vier confirmado,
+      // só deixamos passar quando esse `sub` já está vinculado a uma conta
+      // existente (a identidade já foi estabelecida antes, pelo sub — não
+      // é um vínculo novo por e-mail, então não corre o risco de takeover).
+      if (p?.email_verified !== true) {
+        const alreadyLinked = p?.sub
+          ? await prisma.account.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider: "doctor8",
+                  providerAccountId: p.sub,
+                },
+              },
+            })
+          : null;
+        if (!alreadyLinked) return false;
+      }
+
       return true;
     },
     async jwt({ token, user, account, profile, trigger, session }) {
@@ -92,11 +70,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.verificationStatus = user.verificationStatus;
         token.isAdmin = user.isAdmin;
         token.profileId = user.profileId;
+        token.sessionVersion =
+          (user as { sessionVersion?: number }).sessionVersion ?? 0;
       }
 
       if (account?.provider === "doctor8" && profile && typeof profile === "object") {
-        const role = (profile as { role?: string }).role;
-        if (role) (token as { doctor8Role?: string }).doctor8Role = role;
+        const p = profile as { role?: string; verified?: boolean };
+        if (p.role) (token as { doctor8Role?: string }).doctor8Role = p.role;
+        if (typeof p.verified === "boolean") {
+          (token as { doctor8Verified?: boolean }).doctor8Verified = p.verified;
+          if (token.id) {
+            try {
+              await syncDoctor8Verification(token.id as string, p.verified);
+            } catch (err) {
+              console.error("[auth] doctor8 verification sync failed:", err);
+            }
+          }
+        }
       }
 
       if (trigger === "update" && session) {
@@ -107,17 +97,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (token.id) {
         try {
-          const dbProfile = await prisma.profile.findUnique({
-            where: { userId: token.id as string },
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
             select: {
-              id: true,
-              handle: true,
-              verified: true,
-              verificationStatus: true,
-              suspended: true,
-              user: { select: { isAdmin: true, email: true } },
+              isAdmin: true,
+              email: true,
+              sessionVersion: true,
+              profile: {
+                select: {
+                  id: true,
+                  handle: true,
+                  verified: true,
+                  verificationStatus: true,
+                  suspended: true,
+                },
+              },
             },
           });
+
+          if (!dbUser) {
+            delete token.profileId;
+            delete token.handle;
+            delete token.verified;
+            delete token.verificationStatus;
+            delete token.isAdmin;
+            return token;
+          }
+
+          // Sessão emitida antes de um evento que incrementa sessionVersion
+          // (ex.: reset de senha, quando ainda existia login por senha) —
+          // derruba o token: some com o id pra virar "deslogado" no próximo
+          // request (middleware/session).
+          const tokenVersion =
+            typeof token.sessionVersion === "number" ? token.sessionVersion : 0;
+          if (dbUser.sessionVersion > tokenVersion) {
+            delete token.id;
+            delete token.sub;
+            delete token.profileId;
+            delete token.handle;
+            delete token.verified;
+            delete token.verificationStatus;
+            delete token.isAdmin;
+            delete token.suspended;
+            return token;
+          }
+
+          const dbProfile = dbUser.profile;
           if (dbProfile) {
             if (dbProfile.suspended) {
               token.suspended = true;
@@ -137,8 +162,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               token.verified = dbProfile.verified;
               token.verificationStatus = dbProfile.verificationStatus;
               token.isAdmin =
-                dbProfile.user.isAdmin ||
-                adminEmails.includes(dbProfile.user.email?.toLowerCase() ?? "");
+                dbUser.isAdmin ||
+                adminEmails.includes(dbUser.email?.toLowerCase() ?? "");
             }
           } else {
             delete token.profileId;

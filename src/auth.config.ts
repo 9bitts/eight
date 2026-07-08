@@ -49,6 +49,7 @@ export const authConfig = {
         session.user.isAdmin = token.isAdmin as boolean | undefined;
         session.user.profileId = token.profileId as string | undefined;
         session.user.suspended = token.suspended as boolean | undefined;
+        session.user.doctor8Verified = token.doctor8Verified as boolean | undefined;
       }
       return session;
     },
