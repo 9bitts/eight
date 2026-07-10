@@ -58,9 +58,27 @@ export default function Home() {
             <Link href="/signup" className="land-btn land-btn-primary">
               Acessar a Rede Eight
             </Link>
-            <Link href="/login" className="land-btn land-btn-ghost">
+            <a
+              href="https://app.doctor8.org/register/professional/signup"
+              className="land-btn land-btn-ghost"
+            >
               Doctor8 Plataform
-            </Link>
+            </a>
+          </div>
+
+          <div className="land-whatsapp-row">
+            <a
+              href="https://wa.me/5531971720053?text=Ol%C3%A1!%20Quero%20falar%20com%20a%20equipe%20Doctor8%20ou%20fazer%20uma%20consulta."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="land-btn land-btn-whatsapp"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M17.47 14.38c-.29-.15-1.72-.85-1.99-.94-.27-.1-.46-.15-.66.15-.2.29-.75.94-.92 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.6-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.51h-.56c-.2 0-.51.07-.78.37-.27.29-1.02 1-1.02 2.43 0 1.43 1.04 2.82 1.19 3.01.15.2 2.05 3.13 4.96 4.39.69.3 1.23.48 1.65.61.69.22 1.32.19 1.82.11.55-.08 1.72-.7 1.96-1.38.24-.68.24-1.26.17-1.38-.07-.12-.26-.2-.55-.34z" />
+                <path d="M12.01 2C6.49 2 2.02 6.47 2.02 12c0 1.94.55 3.75 1.51 5.29L2 22l4.86-1.48A9.94 9.94 0 0 0 12.01 22C17.53 22 22 17.53 22 12S17.53 2 12.01 2zm0 18.13c-1.72 0-3.32-.5-4.67-1.36l-.33-.2-3.03.92.93-2.96-.22-.34a8.14 8.14 0 0 1-1.27-4.19c0-4.51 3.68-8.19 8.2-8.19 4.51 0 8.18 3.68 8.18 8.19 0 4.5-3.67 8.13-8.19 8.13z" />
+              </svg>
+              Falar com a equipe ou fazer uma consulta
+            </a>
           </div>
         </div>
 
@@ -84,9 +102,12 @@ export default function Home() {
             tudo no mesmo fluxo, com o sigilo do paciente preservado do início ao fim.
           </p>
           <div className="land-hero-ctas">
-            <Link href="/signup" className="land-btn land-btn-primary">
-              Começar agora
-            </Link>
+            <a
+              href="https://app.doctor8.org/register/professional/signup"
+              className="land-btn land-btn-primary"
+            >
+              Entre na Doctor8
+            </a>
             <Link href="/sobre" className="land-btn land-btn-ghost">
               Conhecer a Doctor8
             </Link>
