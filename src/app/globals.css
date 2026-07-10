@@ -173,7 +173,7 @@ textarea:not(.field)::placeholder{
 .land-journey-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
 .land-journey-grid{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:4vw;max-width:1180px;margin:0 auto;padding:0 6vw;width:100%}
 .land-journey-svg-wrap{display:flex;align-items:center;justify-content:center}
-.land-journey-svg{width:100%;max-width:440px;height:auto;filter:drop-shadow(0 0 40px rgba(42,144,176,.15))}
+.land-journey-svg{width:100%;max-width:540px;height:auto;filter:drop-shadow(0 0 40px rgba(42,144,176,.15))}
 .land-node circle{transition:r .3s ease}
 .land-panel{display:flex;flex-direction:column;gap:22px}
 .land-dots{display:flex;gap:8px}
@@ -193,10 +193,17 @@ textarea:not(.field)::placeholder{
 .land-closing .h1{font-size:clamp(32px,4.5vw,52px)}
 
 @media(max-width:900px){
-  .land-journey{height:auto;padding:60px 0}
-  .land-journey-sticky{position:relative;top:auto;height:auto;padding:20px 0}
-  .land-journey-grid{grid-template-columns:1fr;gap:32px;padding:0 24px}
-  .land-journey-svg{max-width:300px}
+  /* mantém o pin (sticky + 800vh) no mobile: a página só libera o scroll
+     depois que os 8 itens passam pela bolinha do 8 */
+  .land-journey-grid{grid-template-columns:1fr;grid-template-rows:auto auto;gap:14px;padding:0 20px;max-height:94vh;overflow:hidden}
+  .land-journey-svg-wrap{min-height:0}
+  .land-journey-svg{max-width:400px}
+  .land-panel{align-items:center;text-align:center;gap:14px}
+  .land-panel-card{max-width:340px}
+  .land-panel-icon{margin:0 auto 10px}
+  .land-panel-title{font-size:24px;margin-bottom:8px}
+  .land-panel-desc{font-size:14px;margin-bottom:10px}
+  .land-dots{justify-content:center}
   .land-chip{display:none}
 }
 @media(prefers-reduced-motion:reduce){

@@ -39,9 +39,9 @@ const STATUS_DOT: Record<Pillar["status"], string> = {
   Ausente: "#e05930",
 };
 
-const CX = 200;
-const CY = 250;
-const A = 150;
+const CX = 110;
+const CY = 175;
+const A = 130;
 
 function pointAt(t: number) {
   const x = (A * Math.sin(t) * Math.cos(t)) + CX;
@@ -133,7 +133,7 @@ export function EightJourney() {
       <div className="land-journey-sticky">
         <div className="land-journey-grid">
           <div className="land-journey-svg-wrap">
-            <svg viewBox="0 0 400 500" className="land-journey-svg" aria-hidden="true">
+            <svg viewBox="0 0 220 350" className="land-journey-svg" aria-hidden="true">
               <defs>
                 <linearGradient id="journey-line" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#3eb8d4" />
@@ -176,7 +176,7 @@ export function EightJourney() {
                     y={node.y + 0.5}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fontSize="8"
+                    fontSize="7"
                     fontWeight="700"
                     fill={i === activeIndex ? "#0a242e" : "#8fb0bb"}
                     style={{ pointerEvents: "none" }}
