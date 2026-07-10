@@ -169,7 +169,7 @@ textarea:not(.field)::placeholder{
 .land-scroll-cue{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:12px;padding-bottom:28px;animation:cue-bob 2.2s ease-in-out infinite}
 @keyframes cue-bob{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(6px);opacity:1}}
 
-.land-journey{position:relative;height:800vh;background:var(--ink)}
+.land-journey{position:relative;height:800vh;background:var(--ink);color:var(--txt)}
 .land-journey-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
 .land-journey-grid{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:4vw;max-width:1180px;margin:0 auto;padding:0 6vw;width:100%}
 .land-journey-svg-wrap{display:flex;align-items:center;justify-content:center}
@@ -183,7 +183,7 @@ textarea:not(.field)::placeholder{
 @keyframes panel-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .land-panel-icon{width:52px;height:52px;border-radius:14px;background:rgba(42,144,176,.14);border:1px solid rgba(42,144,176,.3);display:flex;align-items:center;justify-content:center;color:var(--blue-soft);margin-bottom:14px}
 .land-panel-num{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--orange-soft);margin-bottom:6px}
-.land-panel-title{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);font-weight:800;letter-spacing:-0.02em;margin:0 0 12px}
+.land-panel-title{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);font-weight:800;letter-spacing:-0.02em;margin:0 0 12px;color:#ff6a3d;text-shadow:0 0 22px rgba(255,106,61,.55),0 0 46px rgba(255,106,61,.25)}
 .land-panel-desc{font-size:16px;color:var(--muted);line-height:1.55;max-width:380px;margin:0 0 16px}
 .land-panel-status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--txt);background:rgba(255,255,255,.06);border:1px solid var(--line);padding:6px 14px;border-radius:999px;width:fit-content}
 .land-panel-status i{width:8px;height:8px;border-radius:50%;display:inline-block}
