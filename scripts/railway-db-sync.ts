@@ -15,6 +15,11 @@ async function main() {
   console.log("[db-sync] User.totpLastUsed OK");
 
   await prisma.$executeRawUnsafe(`
+    ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "sessionVersion" INTEGER NOT NULL DEFAULT 0
+  `);
+  console.log("[db-sync] User.sessionVersion OK");
+
+  await prisma.$executeRawUnsafe(`
     ALTER TABLE "Notification" ADD COLUMN IF NOT EXISTS "dedupeKey" TEXT
   `);
   await prisma.$executeRawUnsafe(`
