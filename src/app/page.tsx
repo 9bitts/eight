@@ -56,10 +56,10 @@ export default function Home() {
 
           <div className="land-hero-ctas">
             <Link href="/signup" className="land-btn land-btn-primary">
-              Criar conta
+              Acessar a Rede Eight
             </Link>
             <Link href="/login" className="land-btn land-btn-ghost">
-              Entrar
+              Doctor8 Plataform
             </Link>
           </div>
         </div>
