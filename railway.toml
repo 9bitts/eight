@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 
 [deploy]
 releaseCommand = "npm run db:sync"
-startCommand = "npm run start"
+startCommand = "npm run start:prod"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

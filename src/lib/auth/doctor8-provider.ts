@@ -59,8 +59,6 @@ export function doctor8Provider(): OAuth2Config<Doctor8Profile> {
         name: profile.name ?? profile.preferred_username ?? undefined,
         email,
         image: profile.picture ?? undefined,
-        role: profile.role,
-        verified: profile.verified,
       };
     },
   };

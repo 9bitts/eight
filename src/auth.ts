@@ -37,7 +37,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const p = profile as
         | { sub?: string; role?: string; email_verified?: boolean }
         | undefined;
-      if (p?.role && !DOCTOR8_SSO_ROLES.has(p.role)) return false;
+      if (p?.role && !DOCTOR8_SSO_ROLES.has(p.role)) {
+        console.warn(
+          `[auth] doctor8 SSO bloqueado: role não permitida (${p.role}), sub=${p.sub ?? "?"}`
+        );
+        return false;
+      }
 
       // allowDangerousEmailAccountLinking (no provider) vincula/cria conta
       // automaticamente casando por e-mail. Só é seguro fazer isso quando a
@@ -56,7 +61,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
             })
           : null;
-        if (!alreadyLinked) return false;
+        if (!alreadyLinked) {
+          console.warn(
+            `[auth] doctor8 SSO bloqueado: email não verificado, sub=${p?.sub ?? "?"}`
+          );
+          return false;
+        }
       }
 
       return true;

@@ -11,7 +11,7 @@ export function getAuthErrorMessage(error: string | null | undefined): string | 
     OAuthAccountNotLinked:
       "Este e-mail já está vinculado a outra conta. Entre com a Doctor8.",
     AccessDenied:
-      "Acesso negado. A eight é exclusiva para profissionais de saúde com conta Doctor8.",
+      "Sua conta Doctor8 precisa ter o e-mail confirmado e ser de profissional de saúde.",
     Configuration: "Erro de configuração do servidor. Contate o suporte.",
     SuspendedAccount:
       "Sua conta foi suspensa por violação das regras da plataforma. Entre em contato com suporte@doctor8.com.br.",
