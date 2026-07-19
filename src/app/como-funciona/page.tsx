@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
 import Link from "next/link";
+import { marketingMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Como funciona — eight" };
+export const metadata: Metadata = marketingMetadata("/como-funciona", "Como funciona — eight");
 
 export default function HowItWorksPage() {
   return (
@@ -14,9 +16,9 @@ export default function HowItWorksPage() {
           <strong>Complete o perfil</strong> com especialidade e registro profissional (CRM, COREN, etc.).
         </li>
         <li style={{ marginBottom: 12 }}>
-          <strong>Solicite verificação</strong> em{" "}
-          <Link href="/verificacao" style={{ color: "var(--blue-soft)" }}>
-            Verificação profissional
+          <strong>Solicite verificação</strong> após{" "}
+          <Link href="/login" style={{ color: "var(--blue-soft)" }}>
+            entrar na eight
           </Link>
           . Após aprovação, você recebe o selo azul.
         </li>

@@ -13,7 +13,7 @@ export async function buildPostMetadata(postId: string): Promise<Metadata> {
   });
 
   if (!post) {
-    return { title: "Publicação · eight" };
+    return { title: "Publicação · eight", robots: { index: false, follow: false } };
   }
 
   const title = `${post.author.displayName} na eight`;
@@ -23,6 +23,7 @@ export async function buildPostMetadata(postId: string): Promise<Metadata> {
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     openGraph: {
       title,
       description,
@@ -42,7 +43,7 @@ export async function buildPostMetadata(postId: string): Promise<Metadata> {
 export async function buildProfileMetadata(handle: string): Promise<Metadata> {
   const normalized = handle.toLowerCase();
   if (isReservedHandle(normalized)) {
-    return { title: "eight" };
+    return { title: "eight", robots: { index: false, follow: false } };
   }
 
   const profile = await prisma.profile.findUnique({
@@ -59,7 +60,7 @@ export async function buildProfileMetadata(handle: string): Promise<Metadata> {
   });
 
   if (!profile || profile.suspended) {
-    return { title: "Perfil · eight" };
+    return { title: "Perfil · eight", robots: { index: false, follow: false } };
   }
 
   const title = `${profile.displayName} (@${profile.handle}) · eight`;
@@ -70,6 +71,7 @@ export async function buildProfileMetadata(handle: string): Promise<Metadata> {
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     openGraph: {
       title: profile.displayName,
       description,

@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
+import { resolveSiteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://doctor8.com.br";
+  const base = resolveSiteUrl();
   const now = new Date();
 
+  // Only public marketing pages — never auth or app routes.
   const staticPages = [
     "",
     "/sobre",
@@ -12,12 +14,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/privacidade",
     "/regras",
     "/contato",
-    "/login",
-    "/signup",
-  ];
+  ] as const;
 
   return staticPages.map((path) => ({
-    url: `${base}${path}`,
+    url: path === "" ? base : `${base}${path}`,
     lastModified: now,
     changeFrequency: path === "" ? "weekly" : "monthly",
     priority: path === "" ? 1 : 0.6,

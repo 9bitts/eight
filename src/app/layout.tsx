@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     title: "eight — A rede dos profissionais de saúde",
     description:
       "A rede dos profissionais de saúde verificados. Doctor8.",
-    url: "https://doctor8.com.br",
     siteName: "eight",
     locale: "pt_BR",
   },

@@ -29,7 +29,12 @@ export default async function ProfilePage({ params }: Props) {
   if (isReservedHandle(handle)) notFound();
 
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) {
+    // Missing profiles must 404 for crawlers — not redirect to /login.
+    const exists = await getProfileByHandle(handle);
+    if (!exists) notFound();
+    redirect("/login");
+  }
 
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");

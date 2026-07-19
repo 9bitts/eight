@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { EightJourney } from "@/components/landing/EightJourney";
+import { marketingMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = marketingMetadata(
+  "",
+  "eight — A rede dos profissionais de saúde",
+  "A rede dos profissionais de saúde. Conhecimento, casos e conexões verificadas, no seu idioma, em qualquer país."
+);
 
 const CHIPS: { label: string; top: string; left: string; delay: string }[] = [
   { label: "SNCR · receita digital", top: "18%", left: "8%", delay: "0s" },
@@ -55,7 +63,7 @@ export default function Home() {
           </p>
 
           <div className="land-hero-ctas">
-            <Link href="/signup" className="land-btn land-btn-primary">
+            <Link href="/login" className="land-btn land-btn-primary">
               Acessar a Rede Eight
             </Link>
             <a
@@ -118,7 +126,6 @@ export default function Home() {
       <footer className="foot" style={{ position: "static", background: "var(--ink)" }}>
         <Link href="/sobre">Sobre</Link>
         <Link href="/como-funciona">Como funciona</Link>
-        <Link href="/verificacao">Verificação</Link>
         <Link href="/regras">Regras</Link>
         <Link href="/termos">Termos</Link>
         <Link href="/privacidade">Privacidade</Link>

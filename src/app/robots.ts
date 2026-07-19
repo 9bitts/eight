@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { resolveSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://doctor8.com.br";
+  const base = resolveSiteUrl();
 
   return {
     rules: [
@@ -10,9 +11,18 @@ export default function robots(): MetadataRoute.Robots {
         allow: ["/", "/sobre", "/como-funciona", "/termos", "/privacidade", "/regras", "/contato"],
         disallow: [
           "/feed",
+          "/explore",
+          "/notifications",
           "/messages",
+          "/cases",
           "/settings",
+          "/post",
+          "/verificacao",
           "/admin",
+          "/listas",
+          "/agendados",
+          "/salvos",
+          "/analytics",
           "/api",
           "/login",
           "/signup",

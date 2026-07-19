@@ -2,6 +2,16 @@ import { getGlobalSecurityHeaders } from "./security-headers.mjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.doctor8.com.br" }],
+        destination: "https://doctor8.com.br/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

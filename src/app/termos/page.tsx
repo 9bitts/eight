@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
+import { marketingMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Termos de Uso — eight" };
+export const metadata: Metadata = marketingMetadata("/termos", "Termos de Uso — eight");
 
 export default function TermsPage() {
   return (

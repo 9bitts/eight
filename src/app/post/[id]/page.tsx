@@ -20,7 +20,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PostPage({ params }: Props) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) {
+    const exists = await getPostById(params.id);
+    if (!exists) notFound();
+    redirect("/login");
+  }
 
   const user = await getSessionUser(session.user.id);
   if (!user) redirect("/signup/complete");

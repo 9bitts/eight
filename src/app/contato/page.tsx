@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
+import { marketingMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Contato — eight" };
+export const metadata: Metadata = marketingMetadata("/contato", "Contato — eight");
 
 export default function ContactPage() {
   return (
